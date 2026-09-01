@@ -1,4 +1,4 @@
-﻿# Extensible Class Meta & Architecture Specs
+# Extensible Class Meta & Architecture Specs
 
 > **Page**: Classes & Tier System (`design-system/pages/classes.md`)
 > **Core Feature**: Modular JSON Schema to support all 28+ BDO classes with Awakening / Succession variants.

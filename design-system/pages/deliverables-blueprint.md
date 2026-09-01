@@ -1,4 +1,4 @@
-﻿# Final Deliverables Master Blueprint
+# Final Deliverables Master Blueprint
 
 > **System Test Benchmark**: "Can a new BDO player determine their NEXT ACTION within 10 seconds?"
 > **Verdict**: 100% Guaranteed via Top Tactical HUD Hero Action Banner.

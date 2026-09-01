@@ -1,4 +1,4 @@
-﻿# Responsive Architecture & War Readiness Audit Specs
+# Responsive Architecture & War Readiness Audit Specs
 
 > **Pages**: `responsive-rules.md`, `war-readiness.md`
 > **Source of Truth**: `MASTER.md`

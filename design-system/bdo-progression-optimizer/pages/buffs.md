@@ -1,4 +1,4 @@
-﻿# Recommended Buffs & Consumables Architecture Specs
+# Recommended Buffs & Consumables Architecture Specs
 
 > **Category**: PvE / PvP Buff Optimization & Stacking Rules
 > **Key Feature**: Instant One-Click Buff Presets with Duration & Cost Tracker

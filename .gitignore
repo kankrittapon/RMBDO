@@ -1,4 +1,4 @@
-# Dependencies
+﻿# Dependencies
 node_modules/
 /.pnp
 .pnp.js
@@ -9,6 +9,7 @@ dist/
 out/
 build/
 .vercel/
+*.tsbuildinfo
 
 # Environment files & Secrets
 .env
@@ -20,13 +21,16 @@ build/
 .DS_Store
 Thumbs.db
 
-# Python & misc caches / temporary logs
-__pycache__/
-*.pyc
+# Local agent & environment tools (untracked in RMBDO)
+AGENT.md
+AGENTS.md
+CLAUDE.md
+mcp-config.json
+opencode.json
+session-*.md
 .antigravity/
 .claude/
 .codex/
 .freebuff/
-session-*.md
-
-*.tsbuildinfo
+__pycache__/
+*.pyc

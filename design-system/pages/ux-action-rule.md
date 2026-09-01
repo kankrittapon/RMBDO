@@ -1,4 +1,4 @@
-﻿# Core UX Law: ACTION > INFORMATION (5 Universal Questions)
+# Core UX Law: ACTION > INFORMATION (5 Universal Questions)
 
 > **Core System Philosophy**: Every major view and page must provide immediate actionability by answering the 5 Universal Questions.
 

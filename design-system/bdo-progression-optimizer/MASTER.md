@@ -1,4 +1,4 @@
-﻿# Design System Master File — BDO Progression Optimizer & Tactical HUD
+# Design System Master File — BDO Progression Optimizer & Tactical HUD
 
 > **Single Source of Truth** for UI/UX tokens, layout structures, and component rules.
 > Strictly adheres to the **High-Density, Dark-First Gaming Optimizer** design guidelines.

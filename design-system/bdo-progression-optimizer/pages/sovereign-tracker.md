@@ -1,4 +1,4 @@
-﻿# Blackstar & Sovereign Allocation Tracker Specs
+# Blackstar & Sovereign Allocation Tracker Specs
 
 > **Page**: Blackstar & Sovereign Tracker (`design-system/pages/sovereign-tracker.md`)
 > **Goal**: Prevent wasteful Blackstar weapon consumption and optimize Sovereign crafting pipeline.

@@ -1,4 +1,4 @@
-﻿# Gear Planner Slots & Blackstar/Sovereign Tracker Specs
+# Gear Planner Slots & Blackstar/Sovereign Tracker Specs
 
 > **Page**: Gear Planner & Sovereign Tracker (`design-system/pages/gear.md`)
 

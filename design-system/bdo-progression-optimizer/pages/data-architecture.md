@@ -1,4 +1,4 @@
-﻿# Data Architecture & Decoupled State Specs
+# Data Architecture & Decoupled State Specs
 
 > **Core Architecture Rule**: Data Must Be Strictly Separated from UI Components.
 > **Directory Blueprint**: `data/` serves as the centralized, strictly typed single source of game meta.

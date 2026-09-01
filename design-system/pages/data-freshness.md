@@ -1,4 +1,4 @@
-﻿# Data Freshness & Global Lab Badge Specs
+# Data Freshness & Global Lab Badge Specs
 
 > **Page**: Data Freshness UI Standard (`design-system/pages/data-freshness.md`)
 > **Goal**: Transparent metadata verification status on all meta-sensitive views.

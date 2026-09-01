@@ -1,4 +1,4 @@
-﻿# UI/UX Pro Max Pre-Delivery & Quality Audit Checklist
+# UI/UX Pro Max Pre-Delivery & Quality Audit Checklist
 
 > **Page**: Final Quality Assurance Protocol (`design-system/pages/qa-checklist.md`)
 > **Source of Truth**: `MASTER.md`

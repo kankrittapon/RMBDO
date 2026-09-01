@@ -1,4 +1,4 @@
-﻿# Dashboard Specific Design System & HUD Specs
+# Dashboard Specific Design System & HUD Specs
 
 > **Page**: Main Home Dashboard
 > **Source of Truth Parent**: `MASTER.md`

@@ -1,4 +1,4 @@
-﻿# Combat Special Attack & Modifier Specs (Back Attack Meta)
+# Combat Special Attack & Modifier Specs (Back Attack Meta)
 
 > **Category**: Damage Multiplier & Special Attack Optimizer
 > **Key Focus**: Back Attack vs Critical Hit vs Down Attack vs Air Attack Optimization

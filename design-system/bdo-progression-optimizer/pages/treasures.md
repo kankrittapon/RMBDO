@@ -1,4 +1,4 @@
-﻿# Comprehensive Treasure UI & Piece Breakdown Specs
+# Comprehensive Treasure UI & Piece Breakdown Specs
 
 > **Page**: Treasure UI Detail Specs (`design-system/pages/treasures.md`)
 > **Includes**: Rich Merchant's Ring, Star of Nostos, Archaeologist's Map, Lafi Compass, Telescope, Krogdalo, Ornette, Odore

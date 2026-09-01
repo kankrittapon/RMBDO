@@ -1,4 +1,4 @@
-﻿# Crystal Preset System Specs
+# Crystal Preset System Specs
 
 > **Page**: Crystal Presets & Build Synergy (`design-system/pages/crystals.md`)
 > **Preset A**: The Universal All-Monster AP + Critical Multiplier Standard Meta Preset

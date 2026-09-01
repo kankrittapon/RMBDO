@@ -1,4 +1,4 @@
-﻿# Master Roadmap UI & Progression Stages Specs
+# Master Roadmap UI & Progression Stages Specs
 
 > **Page**: Roadmap View (`design-system/pages/roadmap.md`)
 > **Source of Truth**: `MASTER.md`

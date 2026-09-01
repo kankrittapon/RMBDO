@@ -1,4 +1,4 @@
-﻿# Life Skill Matrix & Olvia Academy Specs
+# Life Skill Matrix & Olvia Academy Specs
 
 > **Page**: Life Skill Dashboard (`design-system/pages/lifeskill.md`)
 > **Features**: 11 Life Skill Professions + Olvia Academy Life Skill Checklist

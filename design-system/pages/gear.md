@@ -1,4 +1,4 @@
-﻿# Gear Planner Architecture Specs
+# Gear Planner Architecture Specs
 
 > **Page**: Gear Planner & Optimizer View (`design-system/pages/gear.md`)
 > **Core Flow**: CURRENT GEAR ➔ NEXT UPGRADE ➔ END TARGET

@@ -4,7 +4,8 @@ export interface MetaFreshness {
   verifiedAt: string;
   confidence: 'HIGH' | 'MEDIUM' | 'EXPERIMENTAL';
   globalLabNote?: string;
-  serverWorkspace: string;
+  repository: string;
+  appScope: string;
 }
 
 export const metaFreshness: MetaFreshness = {
@@ -13,5 +14,6 @@ export const metaFreshness: MetaFreshness = {
   verifiedAt: "2026-09-01",
   confidence: "HIGH",
   globalLabNote: "Inner Edania & Sovereign Sub-weapon expansion verified on Global Lab + Live TH-SEA roadmap sync",
-  serverWorkspace: "n8n-zort"
+  repository: "kankrittapon/RMBDO",
+  appScope: "RMBDO"
 };

@@ -1,4 +1,4 @@
-﻿# Core UX Law: 7 Actionable Questions & Tech Stack Specs
+# Core UX Law: 7 Actionable Questions & Tech Stack Specs
 
 > **Core Philosophy**: Actionable Progression over Encyclopedic Text
 > **Preferred Stack**: Next.js (App Router), TypeScript, Tailwind CSS, Lucide React, Radix/shadcn UI Patterns

@@ -1,4 +1,4 @@
-﻿# Verification Metadata & Live Meta Status
+# Verification Metadata & Live Meta Status
 
 > **Verified Date**: `2026-09-01`
 > **Region Target**: Asia / TH-SEA (Global Live Patch Sync)

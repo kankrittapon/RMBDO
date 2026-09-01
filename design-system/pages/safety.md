@@ -1,4 +1,4 @@
-﻿# Item Safety & Anti-Trap System Specs
+# Item Safety & Anti-Trap System Specs
 
 > **Category**: Item Safety System & Protection Rules
 > **Critical UX Requirement**: Visible Safety Badges & Clear Preservations

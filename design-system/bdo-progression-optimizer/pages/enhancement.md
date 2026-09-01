@@ -1,4 +1,4 @@
-﻿# Enhancement & Upgrade Logic Specs
+# Enhancement & Upgrade Logic Specs
 
 > **Page**: Enhancement Strategy & Cost Efficiency (`design-system/pages/gear.md`)
 

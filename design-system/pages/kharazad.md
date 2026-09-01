@@ -1,4 +1,4 @@
-﻿# Kharazad Accessories & Sovereign Tier Specs
+# Kharazad Accessories & Sovereign Tier Specs
 
 > **Category**: Kharazad Accessories (카라자드 악세서리) & Sovereign Awakening/Mainhand Meta (2026 Live Meta)
 

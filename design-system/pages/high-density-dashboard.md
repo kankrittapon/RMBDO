@@ -1,4 +1,4 @@
-﻿# High-Density Dashboard Implementation Specs
+# High-Density Dashboard Implementation Specs
 
 > **Page**: High-Density Dashboard Grid Specs (`design-system/pages/high-density-dashboard.md`)
 > **Goal**: Maximum tactical information density with zero clutter, instant readability, and crisp hierarchy.

@@ -1,4 +1,4 @@
-﻿# Grind Spot Optimizer, Class Guide & Life Skill Specs
+# Grind Spot Optimizer, Class Guide & Life Skill Specs
 
 > **Pages**: `grind-spots.md`, `classes.md`, `lifeskill.md`
 > **Source of Truth**: `MASTER.md`

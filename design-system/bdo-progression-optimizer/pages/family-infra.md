@@ -1,4 +1,4 @@
-﻿# Family Infrastructure & Account Progression Specs
+# Family Infrastructure & Account Progression Specs
 
 > **Page**: Family Infrastructure Dashboard (`design-system/pages/family-infra.md`)
 > **Focus**: Permanent Account-Wide Multipliers, Convenience & Passive Value

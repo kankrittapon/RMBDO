@@ -1,4 +1,4 @@
-﻿# War Readiness UI & Multi-Dimensional Readiness Specs
+# War Readiness UI & Multi-Dimensional Readiness Specs
 
 > **Page**: War Readiness Dashboard (`design-system/pages/war-readiness.md`)
 > **Core Principle**: Multi-dimensional breakdown with distinct tiers: MANDATORY, RECOMMENDED, COMPLETIONIST.
