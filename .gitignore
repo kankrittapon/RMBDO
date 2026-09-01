@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Production builds
+dist/
+.next/
+out/
+build/
+.vercel/
+
+# Environment files & Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.log
+.DS_Store
+Thumbs.db
+
+# Python & misc caches / temporary logs
+__pycache__/
+*.pyc
+.antigravity/
+.claude/
+.codex/
+.freebuff/
+session-*.md
+
+*.tsbuildinfo
