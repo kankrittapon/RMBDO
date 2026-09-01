@@ -1,0 +1,42 @@
+{
+  "_comment": "Central MCP config reference — synced with opencode.json 2026-08-26. cloudflare removed (deprecated pkg); sqlite removed (unused).",
+  "mcpServers": {
+    "ssh-remote": {
+      "command": "npx",
+      "args": ["-y", "@zachflint/ssh-mcp-server"],
+      "env": {
+        "SSH_HOST": "192.168.1.248",
+        "SSH_USERNAME": "kanfullbuster",
+        "SSH_PRIVATE_KEY": "C:\\Users\\telep\\.ssh\\id_ed25519"
+      },
+      "timeout": 60000,
+      "description": "SSH remote execution for ai-brain server"
+    },
+    "docker": {
+      "command": "node",
+      "args": ["C:\\Users\\telep\\AppData\\Roaming\\npm\\node_modules\\@0xshariq\\docker-mcp-server\\dist\\index.js"],
+      "env": {
+        "DOCKER_HOST": "ssh://kanfullbuster@192.168.1.248"
+      },
+      "timeout": 60000,
+      "description": "Docker management on ai-brain (node-direct: package bin is broken; win32 quote patch applied)"
+    },
+    "postgres": {
+      "command": "powershell",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "C:\\Users\\telep\\.config\\opencode\\pg-tunnel.ps1"],
+      "timeout": 60000,
+      "description": "PostgreSQL via auto SSH tunnel (127.0.0.1:15432) — DB port NOT exposed"
+    },
+    "n8n": {
+      "command": "npx",
+      "args": ["-y", "n8n-mcp"],
+      "env": {
+        "N8N_API_URL": "http://192.168.1.248:5678",
+        "N8N_API_KEY": "${N8N_API_KEY}",
+        "WEBHOOK_SECURITY_MODE": "permissive"
+      },
+      "timeout": 60000,
+      "description": "n8n workflow management (full mode, ~25 tools)"
+    }
+  }
+}

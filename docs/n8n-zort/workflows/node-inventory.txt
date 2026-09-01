@@ -1,0 +1,172 @@
+\n=== Private Budget (PRIVATE_BUDGET_V1) ===
+Private Budget Trigger :: executeWorkflowTrigger
+Private Budget Switch :: switch
+Parse Budget Start :: code
+Close Old Budget Cycle :: postgres
+Create Budget Cycle :: postgres
+Link Receipts To New Cycle :: postgres
+Format Budget Start Reply :: code
+Send Budget Start Reply :: telegram
+Get Budget Summary :: postgres
+Format Budget Summary Reply :: code
+Send Budget Summary Reply :: telegram
+Get Budget Cycle :: postgres
+Format Budget Cycle Reply :: code
+Send Budget Cycle Reply :: telegram
+Parse Slip Category :: code
+Update Slip Category :: postgres
+Format Slip Category Reply :: code
+Send Slip Category Reply :: telegram
+Get Budget Period Summary :: postgres
+Format Budget Period Reply :: code
+Send Budget Period Reply :: telegram
+Parse Budget Target :: code
+Upsert Budget Target :: postgres
+Format Budget Target Reply :: code
+Send Budget Target Reply :: telegram
+Get Budget Targets :: postgres
+Format Budget Targets Reply :: code
+Send Budget Targets Reply :: telegram
+Get Budget Categories :: postgres
+Format Budget Categories Reply :: code
+Send Budget Categories Reply :: telegram
+Parse Budget Detail :: code
+Get Budget Detail :: postgres
+Format Budget Detail Reply :: code
+Send Budget Detail Reply :: telegram
+Parse Slip Amount :: code
+Update Slip Amount :: postgres
+Format Slip Amount Reply :: code
+Send Slip Amount Reply :: telegram
+Parse Slip Delete :: code
+Soft Delete Slip :: postgres
+Format Slip Delete Reply :: code
+Send Slip Delete Reply :: telegram
+\n=== Private Food (PRIVATE_FOOD_V1) ===
+Private Food Trigger :: executeWorkflowTrigger
+Private Food Switch :: switch
+Prepare Scheduled CalEat :: code
+Prepare Food Estimate :: code
+Insert Food Log :: postgres
+Format Eat Reply :: code
+Send Eat Reply :: telegram
+Get Pending Food Logs Today :: postgres
+Build Groq Batch Nutrition Request :: code
+Estimate Today Food With Groq Chain :: chainLlm
+Groq Chat Model :: lmChatGroq
+Parse Groq Batch Food Estimate :: code
+Update Today Food Logs :: postgres
+Format CalEat Batch Reply :: code
+Send CalEat Batch Reply :: telegram
+Get Food Tracking :: postgres
+Format Food Tracking :: code
+Send Food Tracking :: telegram
+Daily Food Calorie Schedule :: scheduleTrigger
+Get Food Detail :: postgres
+Format Food Detail Reply :: code
+Send Food Detail Reply :: telegram
+Parse Food Delete :: code
+Soft Delete Food Log :: postgres
+Format Food Delete Reply :: code
+Send Food Delete Reply :: telegram
+\n=== Private (I6NB0SLUJxPVISQ9) ===
+OCR Slip :: httpRequest
+Format OCR Result :: code
+Insert rows in a table :: postgres
+Code in JavaScript :: code
+Telegram Trigger1 :: telegramTrigger
+HTTP Request :: httpRequest
+Code in JavaScript1 :: code
+Schedule Trigger :: scheduleTrigger
+Switch :: switch
+Execute a SQL query :: postgres
+Code in JavaScript2 :: code
+Analyze document :: googleGemini
+Send a text message :: telegram
+Send a text message1 :: telegram
+Execute a SQL query1 :: postgres
+Code in JavaScript3 :: code
+Insert rows in a table1 :: postgres
+Execute a SQL query2 :: postgres
+Send a text message2 :: telegram
+If :: if
+Send a text message3 :: telegram
+Send OCR Result :: telegram
+Detect Telegram Action :: code
+Send OCR Received :: telegram
+Get Routine Plan :: postgres
+Format Routine Reply :: code
+Send Routine Reply :: telegram
+Get Workout Summary :: postgres
+Format Workout Reply :: code
+Send Workout Reply :: telegram
+Save Routine Override :: postgres
+Format Routine Override Reply :: code
+Send Routine Override Reply :: telegram
+Get Workout Start Plan :: postgres
+Format Workout Start Reply :: code
+Send Workout Start Reply :: telegram
+Get Workout Compare :: postgres
+Format Workout Compare Reply :: code
+Send Workout Compare Reply :: telegram
+Prepare Food Estimate :: code
+Insert Food Log :: postgres
+Format Eat Reply :: code
+Send Eat Reply :: telegram
+Get Food Tracking :: postgres
+Format Food Tracking :: code
+Send Food Tracking :: telegram
+Get Pending Food Logs Today :: postgres
+Build Groq Batch Nutrition Request :: code
+Estimate Today Food With Groq Chain :: chainLlm
+Parse Groq Batch Food Estimate :: code
+Update Today Food Logs :: postgres
+Format CalEat Batch Reply :: code
+Send CalEat Batch Reply :: telegram
+Daily Food Calorie Schedule :: scheduleTrigger
+Groq Chat Model :: lmChatGroq
+Python OCR Webhook :: webhook
+Certificate PaddleOCR :: httpRequest
+Transform OCR Result :: code
+Return OCR Result :: respondToWebhook
+Log Incoming Telegram Command :: code
+Build Help Reply :: code
+Send Help Reply :: telegram
+Build Unknown Command Reply :: code
+Send Unknown Command Reply :: telegram
+Build OCR Wait Reply :: code
+Send OCR Wait Reply :: telegram
+Get Debug Last Commands :: postgres
+Format Debug Last Reply :: code
+Send Debug Last Reply :: telegram
+Build Unauthorized Reply :: code
+Send Unauthorized Reply :: telegram
+Mark Telegram Command Replied :: postgres
+Run Private Food :: executeWorkflow
+Log Incoming Telegram Command DB :: postgres
+Insert OCR Receipt Log :: postgres
+Get Recent OCR Receipts :: postgres
+Format Slips Reply :: code
+Send Slips Reply :: telegram
+Run Private OCR :: executeWorkflow
+Run Private Budget :: executeWorkflow
+Get Today Summary :: postgres
+Format Today Summary :: code
+Send Today Summary :: telegram
+Build Help Detail Reply :: code
+Send Help Detail Reply :: telegram
+Get Slip Batch Summary :: postgres
+Format Slip Batch Summary :: code
+Send Slip Batch Summary :: telegram
+\n=== Private OCR (PRIVATE_OCR_V1) ===
+Private OCR Trigger :: executeWorkflowTrigger
+Private OCR Switch :: switch
+Build OCR Wait Reply :: code
+Send OCR Wait Reply :: telegram
+OCR Slip :: httpRequest
+Format OCR Result :: code
+Insert OCR Receipt Log :: postgres
+Send OCR Result :: telegram
+Get Recent OCR Receipts :: postgres
+Format Slips Reply :: code
+Send Slips Reply :: telegram
