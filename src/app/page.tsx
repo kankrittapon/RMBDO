@@ -6,6 +6,8 @@ import { HeaderCommandBar } from '@/components/layout/HeaderCommandBar';
 import { NavigationSidebar, NavTabId } from '@/components/layout/NavigationSidebar';
 import { DashboardView } from '@/components/dashboard/DashboardView';
 import { RoadmapView } from '@/components/roadmap/RoadmapView';
+import { OlviaCombatView } from '@/components/olvia/OlviaCombatView';
+import { OlviaLifeView } from '@/components/olvia/OlviaLifeView';
 import { GearPlannerView } from '@/components/gear/GearPlannerView';
 import { SovereignTrackerView } from '@/components/sovereign/SovereignTrackerView';
 import { SafetyView } from '@/components/safety/SafetyView';
@@ -14,30 +16,67 @@ import { GrindSpotOptimizerView } from '@/components/grind-spots/GrindSpotOptimi
 import { ClassGuidesView } from '@/components/classes/ClassGuidesView';
 import { LifeSkillDashboardView } from '@/components/lifeskills/LifeSkillDashboardView';
 import { WarReadinessView } from '@/components/war-readiness/WarReadinessView';
+import { AccountSetupWizard } from '@/components/setup/AccountSetupWizard';
+import { MigrationModal } from '@/components/modals/MigrationModal';
+import { CheckpointDetailDrawer } from '@/components/modals/CheckpointDetailDrawer';
+import { ImportExportModal } from '@/components/modals/ImportExportModal';
+import { ResetConfirmModal } from '@/components/modals/ResetConfirmModal';
 
 export default function Home() {
   const store = useRoadmapStore();
   const [activeTab, setActiveTab] = useState<NavTabId>('dashboard');
+  const [isSetupOpen, setIsSetupOpen] = useState(false);
+  const [isImportExportOpen, setIsImportExportOpen] = useState(false);
+  const [isResetOpen, setIsResetOpen] = useState(false);
 
-  const currentPhaseTitle =
-    store.phases.find((p) => p.status === 'IN_PROGRESS')?.title || '5. Sovereign Weapon Forge';
+  const {
+    isHydrated,
+    hasV1Data,
+    migrateV1Data,
+    dismissV1Migration,
+    selectedDrawerNodeId,
+    setSelectedDrawerNodeId,
+    profile
+  } = store;
+
+  // Show setup wizard if user explicitly opened it or if they are a first-time user who hasn't completed setup
+  const showWizard = isSetupOpen || (!profile.hasCompletedSetup && isHydrated);
 
   const renderActiveView = () => {
+    if (showWizard) {
+      return (
+        <AccountSetupWizard
+          store={store}
+          onComplete={() => setIsSetupOpen(false)}
+        />
+      );
+    }
+
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardView onNavigate={(tab) => setActiveTab(tab)} store={store} />;
+        return (
+          <DashboardView
+            onNavigate={(tab) => setActiveTab(tab)}
+            store={store}
+            onOpenSetup={() => setIsSetupOpen(true)}
+          />
+        );
       case 'roadmap':
         return <RoadmapView store={store} />;
+      case 'olvia_combat':
+        return <OlviaCombatView store={store} />;
+      case 'olvia_life':
+        return <OlviaLifeView store={store} />;
       case 'gear':
-        return <GearPlannerView store={store} />;
+        return <GearPlannerView store={store as any} />;
       case 'sovereign':
-        return <SovereignTrackerView store={store} />;
+        return <SovereignTrackerView store={store as any} />;
       case 'safety':
         return <SafetyView />;
       case 'treasures':
         return (
           <TreasureView
-            store={store}
+            store={store as any}
             onNavigateToSpot={(spot) => {
               store.setSelectedSpotId('gyfin_underground');
               setActiveTab('spots');
@@ -49,15 +88,21 @@ export default function Home() {
           />
         );
       case 'spots':
-        return <GrindSpotOptimizerView store={store} />;
+        return <GrindSpotOptimizerView store={store as any} />;
       case 'classes':
-        return <ClassGuidesView store={store} />;
+        return <ClassGuidesView store={store as any} />;
       case 'lifeskills':
-        return <LifeSkillDashboardView store={store} />;
+        return <LifeSkillDashboardView store={store as any} />;
       case 'war':
-        return <WarReadinessView store={store} />;
+        return <WarReadinessView store={store as any} />;
       default:
-        return <DashboardView onNavigate={(tab) => setActiveTab(tab)} store={store} />;
+        return (
+          <DashboardView
+            onNavigate={(tab) => setActiveTab(tab)}
+            store={store}
+            onOpenSetup={() => setIsSetupOpen(true)}
+          />
+        );
     }
   };
 
@@ -65,22 +110,55 @@ export default function Home() {
     <div className="min-h-screen flex flex-col bg-bg-canvas text-text-primary">
       {/* Top Sticky Command Bar */}
       <HeaderCommandBar
-        stats={store.stats}
-        onUpdateStats={store.updateStats}
-        onReset={store.resetAllData}
-        currentPhaseTitle={currentPhaseTitle}
+        store={store}
+        onOpenSetup={() => setIsSetupOpen(true)}
+        onOpenImportExport={() => setIsImportExportOpen(true)}
+        onOpenReset={() => setIsResetOpen(true)}
       />
 
       {/* Main Layout Container */}
       <div className="flex flex-1 max-w-full">
         {/* Navigation Sidebar & Mobile Bottom Dock */}
-        <NavigationSidebar activeTab={activeTab} onSelectTab={setActiveTab} />
+        {!showWizard && (
+          <NavigationSidebar
+            activeTab={activeTab}
+            onSelectTab={setActiveTab}
+            seasonPct={store.progressStats.season.pct}
+            combatPct={store.progressStats.olviaCombat.pct}
+            lifePct={store.progressStats.olviaLife.pct}
+          />
+        )}
 
         {/* Dynamic Core View Content */}
         <main className="flex-1 p-3 md:p-5 overflow-y-auto max-w-7xl mx-auto w-full">
           {renderActiveView()}
         </main>
       </div>
+
+      {/* Modals & Drawers */}
+      <MigrationModal
+        isOpen={hasV1Data}
+        onMigrate={migrateV1Data}
+        onDismiss={dismissV1Migration}
+      />
+
+      <CheckpointDetailDrawer
+        nodeId={selectedDrawerNodeId}
+        onClose={() => setSelectedDrawerNodeId(null)}
+        store={store}
+      />
+
+      <ImportExportModal
+        isOpen={isImportExportOpen}
+        onClose={() => setIsImportExportOpen(false)}
+        store={store}
+      />
+
+      <ResetConfirmModal
+        isOpen={isResetOpen}
+        onClose={() => setIsResetOpen(false)}
+        store={store}
+      />
     </div>
   );
 }

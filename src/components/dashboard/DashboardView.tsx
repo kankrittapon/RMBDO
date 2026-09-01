@@ -14,7 +14,10 @@ import {
   ShieldAlert,
   Sparkles,
   Swords,
-  Zap
+  Zap,
+  HelpCircle,
+  Wheat,
+  RotateCcw
 } from 'lucide-react';
 import { useRoadmapStore } from '@/hooks/useRoadmapStore';
 import { NavTabId } from '../layout/NavigationSidebar';
@@ -23,116 +26,133 @@ import { cn } from '@/lib/utils';
 interface DashboardViewProps {
   onNavigate: (tab: NavTabId) => void;
   store: ReturnType<typeof useRoadmapStore>;
+  onOpenSetup: () => void;
 }
 
-export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, store }) => {
-  const { stats, phases, sovereign, toggleTask, journals, warReadiness } = store;
-
-  // Active sovereign phase tasks
-  const allCurrentTasks = phases
-    .flatMap((p) => p.tasks.map((t) => ({ ...t, phaseId: p.id, phaseTitle: p.title })))
-    .filter((t) => !t.completed);
-
-  const doNowTasks = allCurrentTasks.filter((t) => t.priority === 'DO_NOW').slice(0, 3);
-  const highPriorityTasks = allCurrentTasks.filter((t) => t.priority === 'HIGH').slice(0, 3);
-  const thisWeekTasks = allCurrentTasks.filter((t) => t.priority === 'THIS_WEEK').slice(0, 3);
+export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, store, onOpenSetup }) => {
+  const { profile, currentPhase, nextActions, unverifiedAudits, progressStats } = store;
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto pb-16 md:pb-6">
+    <div className="space-y-5 max-w-7xl mx-auto pb-16 md:pb-6">
       
-      {/* 🚀 Top 10-Second Tactical Decision Banner */}
+      {/* 🚀 Section 1: บัญชีของฉัน & สรุปเป้าหมายหลัก 10 วินาที */}
       <div className="bg-gradient-to-r from-bg-surface-1 via-bg-surface-2 to-bg-surface-1 border border-border-subtle rounded-xl p-4 md:p-5 shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 right-0 transform translate-x-4 -translate-y-4 w-40 h-40 bg-brand-primary/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute top-0 right-0 transform translate-x-4 -translate-y-4 w-48 h-48 bg-brand-primary/10 rounded-full blur-2xl pointer-events-none" />
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
           
-          {/* Left Summary Box */}
-          <div className="lg:col-span-4 border-b lg:border-b-0 lg:border-r border-border-subtle pb-3 lg:pb-0 lg:pr-4">
-            <div className="flex items-center gap-2 mb-1">
+          {/* Left Column: ข้อมูลบัญชี & GS */}
+          <div className="lg:col-span-4 border-b lg:border-b-0 lg:border-r border-border-subtle pb-3 lg:pb-0 lg:pr-4 space-y-2">
+            <div className="flex items-center gap-2">
               <span className="text-[10px] font-mono uppercase tracking-widest text-brand-primary bg-brand-primary/10 px-2 py-0.5 rounded border border-brand-primary/20">
-                Live Tactical Mission
+                บัญชีของฉัน (Account HUD)
               </span>
               <span className="text-[11px] text-text-muted font-mono">Asia / TH-SEA</span>
             </div>
+
             <h1 className="text-xl md:text-2xl font-heading font-bold text-text-primary tracking-tight">
-              BDO ACCOUNT ROADMAP
+              {profile.stats.characterClass}
             </h1>
-            <p className="text-xs text-text-secondary mt-1">
-              Current Target: <span className="text-brand-gold font-medium">HYPERBOOST → SOVEREIGN WEAPON FORGE</span>
+            <p className="text-xs text-text-secondary">
+              เป้าหมายปัจจุบัน: <span className="text-brand-gold font-bold">{currentPhase.name}</span>
             </p>
 
-            {/* Compact GS pill grid */}
-            <div className="grid grid-cols-4 gap-1.5 mt-3 text-center font-mono">
+            {/* GS & Stats Pill Grid */}
+            <div className="grid grid-cols-4 gap-1.5 pt-1 text-center font-mono">
               <div className="bg-bg-surface-3 p-1.5 rounded border border-border-subtle">
                 <div className="text-[9px] text-text-muted">GS</div>
-                <div className="text-xs font-bold text-text-primary">{stats.gearScore}</div>
+                <div className="text-xs font-bold text-brand-gold">
+                  {profile.stats.isUnknownStats ? '?' : profile.stats.gearScore || 0}
+                </div>
               </div>
               <div className="bg-bg-surface-3 p-1.5 rounded border border-border-subtle">
                 <div className="text-[9px] text-amber-400">AP</div>
-                <div className="text-xs font-bold text-amber-300">{stats.ap}</div>
+                <div className="text-xs font-bold text-amber-300">
+                  {profile.stats.isUnknownStats ? '?' : profile.stats.ap || 0}
+                </div>
               </div>
               <div className="bg-bg-surface-3 p-1.5 rounded border border-border-subtle">
                 <div className="text-[9px] text-purple-400">AAP</div>
-                <div className="text-xs font-bold text-purple-300">{stats.aap}</div>
+                <div className="text-xs font-bold text-purple-300">
+                  {profile.stats.isUnknownStats ? '?' : profile.stats.aap || profile.stats.ap || 0}
+                </div>
               </div>
               <div className="bg-bg-surface-3 p-1.5 rounded border border-border-subtle">
                 <div className="text-[9px] text-emerald-400">DP</div>
-                <div className="text-xs font-bold text-emerald-300">{stats.dp}</div>
+                <div className="text-xs font-bold text-emerald-300">
+                  {profile.stats.isUnknownStats ? '?' : profile.stats.dp || 0}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Center Next Objective & Blocker */}
+          {/* Center Column: ขั้นปัจจุบัน & คำอธิบาย */}
           <div className="lg:col-span-5 space-y-2">
-            <div className="bg-bg-surface-3/80 border border-brand-primary/30 rounded-lg p-3">
-              <div className="flex items-center gap-1.5 text-xs text-brand-primary font-medium mb-1">
+            <div className="bg-bg-surface-3/80 border border-brand-primary/30 rounded-lg p-3.5 space-y-1">
+              <div className="flex items-center gap-1.5 text-xs text-brand-primary font-bold">
                 <Zap className="w-3.5 h-3.5 animate-pulse" />
-                <span>NEXT PRIMARY OBJECTIVE:</span>
+                <span>ขั้นปัจจุบันที่คุณกำลังทำ:</span>
               </div>
-              <p className="text-sm font-semibold text-text-primary">
-                Complete Sovereign Awakening Weapon Synthesis
+              <p className="text-sm font-bold text-text-primary font-heading">
+                {currentPhase.name}
               </p>
-              <p className="text-xs text-text-secondary mt-0.5">
-                Synthesize 2x PEN Blackstar Awakening + Flame of Primordial for +5 Base Sheet AP.
+              <p className="text-xs text-text-secondary leading-relaxed">
+                {currentPhase.desc}
               </p>
             </div>
 
-            <div className="bg-red-950/30 border border-red-500/40 rounded-lg p-2.5 flex items-start gap-2.5 text-xs">
-              <ShieldAlert className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-              <div>
-                <span className="font-bold text-red-400 uppercase tracking-wide">CRITICAL BLOCKER: </span>
-                <span className="text-red-200">
-                  Missing 2nd PEN Blackstar Awakening (Currently {sovereign.awakening.ownedCount}/2).
-                </span>
-                <p className="text-[11px] text-red-300/80 mt-0.5">
-                  Do NOT open selectable Blackstar boxes randomly until Awakening is secured.
-                </p>
+            {/* Quick progress badges */}
+            <div className="grid grid-cols-3 gap-2 text-[11px] font-mono">
+              <div className="p-1.5 rounded bg-bg-surface-3/60 border border-border-subtle text-center">
+                <span className="text-[9px] text-text-muted block">ซีซั่น</span>
+                <span className="font-bold text-emerald-400">{progressStats.season.pct}%</span>
+              </div>
+              <div className="p-1.5 rounded bg-bg-surface-3/60 border border-border-subtle text-center">
+                <span className="text-[9px] text-text-muted block">Olvia ต่อสู้</span>
+                <span className="font-bold text-blue-400">{progressStats.olviaCombat.pct}%</span>
+              </div>
+              <div className="p-1.5 rounded bg-bg-surface-3/60 border border-border-subtle text-center">
+                <span className="text-[9px] text-text-muted block">Olvia Life</span>
+                <span className="font-bold text-purple-400">{progressStats.olviaLife.pct}%</span>
               </div>
             </div>
           </div>
 
-          {/* Right Fast Action Buttons */}
+          {/* Right Column: ทางลัด & ตรวจสอบ */}
           <div className="lg:col-span-3 flex flex-col gap-2">
-            <button
-              onClick={() => onNavigate('sovereign')}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-brand-primary hover:bg-purple-600 text-white font-medium text-xs shadow-md transition-all group"
-            >
-              <div className="flex items-center gap-2">
-                <Zap className="w-3.5 h-3.5" />
-                <span>Open Sovereign Forge</span>
-              </div>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-            </button>
+            {!profile.hasCompletedSetup && (
+              <button
+                onClick={onOpenSetup}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-brand-primary hover:bg-purple-600 text-white font-bold text-xs shadow-md transition-all group animate-bounce"
+              >
+                <div className="flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>เริ่มตั้งค่าเริ่มต้น (Setup)</span>
+                </div>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            )}
 
             <button
-              onClick={() => onNavigate('spots')}
+              onClick={() => onNavigate('olvia_combat')}
               className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-bg-surface-3 hover:bg-bg-surface-2 border border-border-subtle text-text-primary text-xs transition-colors group"
             >
               <div className="flex items-center gap-2">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                <span>Find Optimal Grind Spot</span>
+                <Swords className="w-3.5 h-3.5 text-blue-400" />
+                <span>Olvia Academy สายต่อสู้</span>
               </div>
-              <ArrowRight className="w-3.5 h-3.5 text-text-muted group-hover:text-text-primary transition-colors" />
+              <ArrowRight className="w-3.5 h-3.5 text-text-muted group-hover:text-text-primary" />
+            </button>
+
+            <button
+              onClick={() => onNavigate('sovereign')}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-bg-surface-3 hover:bg-bg-surface-2 border border-border-subtle text-text-primary text-xs transition-colors group"
+            >
+              <div className="flex items-center gap-2">
+                <Zap className="w-3.5 h-3.5 text-brand-gold" />
+                <span>แท่นหลอมอาวุธราชัน</span>
+              </div>
+              <ArrowRight className="w-3.5 h-3.5 text-text-muted group-hover:text-text-primary" />
             </button>
 
             <button
@@ -141,268 +161,97 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, store 
             >
               <div className="flex items-center gap-2">
                 <ShieldAlert className="w-3.5 h-3.5 text-red-400" />
-                <span>Audit Protected Items</span>
+                <span>เช็คความปลอดภัยไอเทม</span>
               </div>
-              <ArrowRight className="w-3.5 h-3.5 text-text-muted group-hover:text-text-primary transition-colors" />
+              <ArrowRight className="w-3.5 h-3.5 text-text-muted group-hover:text-text-primary" />
             </button>
           </div>
 
         </div>
       </div>
 
-      {/* 📋 3-Column Tactical Action Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        
-        {/* Left 7 Cols: Action Tasks Hierarchy */}
-        <div className="lg:col-span-7 space-y-3">
-          
-          <div className="flex items-center justify-between">
-            <h2 className="text-xs font-mono uppercase tracking-wider text-text-muted flex items-center gap-2">
-              <Clock className="w-3.5 h-3.5 text-brand-accent" />
-              Actionable Task Priority Queue
+      {/* 🎯 Section 2: "ตอนนี้ผมควรทำอะไร?" (Next Actions Engine) */}
+      <div className="bg-bg-surface-1 border border-border-subtle rounded-xl p-4 md:p-5 shadow-lg space-y-3">
+        <div className="flex items-center justify-between border-b border-border-subtle pb-2.5">
+          <div className="flex items-center gap-2">
+            <Zap className="w-4 h-4 text-brand-gold" />
+            <h2 className="text-sm md:text-base font-heading font-bold text-text-primary">
+              ตอนนี้ผมควรทำอะไรต่อ? (Next Recommended Actions)
             </h2>
-            <button
-              onClick={() => onNavigate('roadmap')}
-              className="text-xs text-brand-primary hover:underline flex items-center gap-1 font-mono"
-            >
-              View Full Timeline ({phases.length} Phases)
-            </button>
           </div>
-
-          {/* DO NOW */}
-          <div className="bg-bg-surface-1 border border-border-subtle rounded-lg p-3 space-y-2">
-            <div className="flex items-center justify-between pb-1.5 border-b border-border-subtle">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-red-400">
-                <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
-                [DO NOW] Immediate Priorities
-              </div>
-              <span className="text-[10px] font-mono text-text-muted">Max 3 items</span>
-            </div>
-            {doNowTasks.length > 0 ? (
-              <div className="space-y-1.5">
-                {doNowTasks.map((task) => (
-                  <label
-                    key={task.id}
-                    className="flex items-start gap-2.5 p-2 rounded bg-bg-surface-2/60 hover:bg-bg-surface-2 border border-transparent hover:border-border-subtle transition-all cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={task.completed}
-                      onChange={() => toggleTask(task.phaseId, task.id)}
-                      className="mt-0.5 rounded border-border-subtle text-brand-primary focus:ring-0 bg-bg-surface-3"
-                    />
-                    <div className="text-xs leading-relaxed">
-                      <span className="text-text-primary font-medium">{task.text}</span>
-                      <span className="text-[10px] font-mono text-text-muted block mt-0.5">
-                        Source: {task.phaseTitle}
-                      </span>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-text-muted italic py-1">All DO NOW tasks completed!</p>
-            )}
-          </div>
-
-          {/* HIGH PRIORITY */}
-          <div className="bg-bg-surface-1 border border-border-subtle rounded-lg p-3 space-y-2">
-            <div className="flex items-center justify-between pb-1.5 border-b border-border-subtle">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
-                <span className="w-2 h-2 rounded-full bg-amber-500" />
-                [HIGH PRIORITY] Core Upgrades
-              </div>
-              <span className="text-[10px] font-mono text-text-muted">Next steps</span>
-            </div>
-            {highPriorityTasks.length > 0 ? (
-              <div className="space-y-1.5">
-                {highPriorityTasks.map((task) => (
-                  <label
-                    key={task.id}
-                    className="flex items-start gap-2.5 p-2 rounded bg-bg-surface-2/60 hover:bg-bg-surface-2 border border-transparent hover:border-border-subtle transition-all cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={task.completed}
-                      onChange={() => toggleTask(task.phaseId, task.id)}
-                      className="mt-0.5 rounded border-border-subtle text-brand-primary focus:ring-0 bg-bg-surface-3"
-                    />
-                    <div className="text-xs leading-relaxed">
-                      <span className="text-text-primary font-medium">{task.text}</span>
-                      <span className="text-[10px] font-mono text-text-muted block mt-0.5">
-                        Source: {task.phaseTitle}
-                      </span>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-text-muted italic py-1">No pending high priority tasks.</p>
-            )}
-          </div>
-
-          {/* THIS WEEK */}
-          <div className="bg-bg-surface-1 border border-border-subtle rounded-lg p-3 space-y-2">
-            <div className="flex items-center justify-between pb-1.5 border-b border-border-subtle">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-blue-400">
-                <span className="w-2 h-2 rounded-full bg-blue-500" />
-                [THIS WEEK] Weekly Progression
-              </div>
-            </div>
-            {thisWeekTasks.length > 0 ? (
-              <div className="space-y-1.5">
-                {thisWeekTasks.map((task) => (
-                  <label
-                    key={task.id}
-                    className="flex items-start gap-2.5 p-2 rounded bg-bg-surface-2/60 hover:bg-bg-surface-2 border border-transparent hover:border-border-subtle transition-all cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={task.completed}
-                      onChange={() => toggleTask(task.phaseId, task.id)}
-                      className="mt-0.5 rounded border-border-subtle text-brand-primary focus:ring-0 bg-bg-surface-3"
-                    />
-                    <div className="text-xs leading-relaxed">
-                      <span className="text-text-primary font-medium">{task.text}</span>
-                      <span className="text-[10px] font-mono text-text-muted block mt-0.5">
-                        Source: {task.phaseTitle}
-                      </span>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-text-muted italic py-1">Weekly checklist is clean.</p>
-            )}
-          </div>
-
+          <span className="text-[10px] font-mono text-text-muted">
+            คำนวณจากสิ่งที่คุณเช็คแล้ว
+          </span>
         </div>
 
-        {/* Right 5 Cols: Strategic Meters & Anti-Trap Quick Lock */}
-        <div className="lg:col-span-5 space-y-3">
-          
-          {/* Sovereign Readiness Card */}
-          <div className="bg-bg-surface-1 border border-border-subtle rounded-lg p-3.5 space-y-3">
-            <div className="flex items-center justify-between border-b border-border-subtle pb-2">
-              <div className="flex items-center gap-2 text-xs font-bold text-text-primary">
-                <Zap className="w-4 h-4 text-brand-primary" />
-                <span>Sovereign Forge Status</span>
-              </div>
-              <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-bg-surface-3 text-text-secondary border border-border-subtle">
-                PEN BS: {sovereign.totalPenOwned} / {sovereign.totalPenRequired}
-              </span>
-            </div>
-
-            <div className="space-y-2 text-xs font-mono">
-              <div className="flex items-center justify-between p-2 rounded bg-bg-surface-2/60 border border-border-subtle">
-                <span className="text-text-secondary">Mainhand Sovereign:</span>
-                <span className="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
-                  [READY] (2/2 BS)
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-2 rounded bg-bg-surface-2/60 border border-red-500/30 bg-red-950/20">
-                <span className="text-text-secondary">Awakening Sovereign:</span>
-                <span className="text-red-400 font-bold bg-red-500/10 px-2 py-0.5 rounded border border-red-500/30">
-                  [BLOCKED] (1/2 BS)
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-2 rounded bg-bg-surface-2/60 border border-border-subtle">
-                <span className="text-text-secondary">Sub-weapon Sovereign:</span>
-                <span className="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
-                  [READY] (Gem of Twilight)
-                </span>
-              </div>
-            </div>
-
-            <button
-              onClick={() => onNavigate('sovereign')}
-              className="w-full text-center text-xs text-brand-primary hover:underline font-medium pt-1"
-            >
-              Manage PEN Blackstars & Forge Simulator →
-            </button>
-          </div>
-
-          {/* Protected Item Quick Warning Box */}
-          <div className="bg-bg-surface-1 border border-border-subtle rounded-lg p-3.5 space-y-2.5">
-            <div className="flex items-center justify-between border-b border-border-subtle pb-2">
-              <div className="flex items-center gap-2 text-xs font-bold text-amber-400">
-                <ShieldAlert className="w-4 h-4 text-amber-400" />
-                <span>Protected Items Safety Snapshot</span>
-              </div>
-              <button
-                onClick={() => onNavigate('safety')}
-                className="text-[11px] text-brand-accent hover:underline"
-              >
-                View All
-              </button>
-            </div>
-
-            <div className="space-y-1.5 text-xs">
-              <div className="p-2 rounded bg-bg-surface-2/70 border border-border-subtle flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Gem className="w-3.5 h-3.5 text-purple-400" />
-                  <span className="font-medium text-text-primary">Gem of Twilight</span>
-                </div>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 font-bold border border-red-500/30">
-                  DO NOT USE
-                </span>
-              </div>
-
-              <div className="p-2 rounded bg-bg-surface-2/70 border border-border-subtle flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Package className="w-3.5 h-3.5 text-amber-400" />
-                  <span className="font-medium text-text-primary">Selectable PEN BS Box</span>
-                </div>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold border border-amber-500/30">
-                  DO NOT OPEN YET
-                </span>
-              </div>
-
-              <div className="p-2 rounded bg-bg-surface-2/70 border border-border-subtle flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Flame className="w-3.5 h-3.5 text-orange-400" />
-                  <span className="font-medium text-text-primary">Flames of Slumbering Origin</span>
-                </div>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 font-bold border border-red-500/30">
-                  DO NOT SELL
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* War Readiness Quick Badge */}
-          <div className="bg-bg-surface-1 border border-border-subtle rounded-lg p-3.5 space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-bold text-text-primary">
-                <Swords className="w-4 h-4 text-brand-gold" />
-                <span>War Readiness Meter</span>
-              </div>
-              <span className="text-xs font-mono font-bold text-amber-400">
-                {warReadiness.totalScorePct}%
-              </span>
-            </div>
-
-            <div className="w-full bg-bg-surface-3 h-2 rounded-full overflow-hidden">
+        {nextActions.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {nextActions.map((action, idx) => (
               <div
-                className="bg-brand-gold h-full rounded-full transition-all"
-                style={{ width: `${warReadiness.totalScorePct}%` }}
-              />
-            </div>
-
-            <div className="text-[11px] text-text-secondary flex items-center justify-between pt-1 font-mono">
-              <span>Mandatory: {warReadiness.mandatoryCompletionPct}%</span>
-              <button
-                onClick={() => onNavigate('war')}
-                className="text-brand-accent hover:underline"
+                key={idx}
+                className="p-3.5 rounded-lg bg-bg-surface-2 border border-border-subtle space-y-2 flex flex-col justify-between hover:border-border-active transition-colors"
               >
-                Inspect Blockers ({warReadiness.criticalBlockers.length}) →
-              </button>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-brand-primary/20 text-brand-primary font-bold">
+                      อันดับ #{idx + 1}
+                    </span>
+                    <span className="text-[10px] font-mono text-text-muted">{action.category}</span>
+                  </div>
+                  <h3 className="font-bold text-xs text-text-primary leading-snug">
+                    {action.title}
+                  </h3>
+                  <p className="text-[11px] text-text-secondary leading-relaxed">
+                    {action.reason}
+                  </p>
+                </div>
+
+                {action.safetyNote && (
+                  <div className="pt-2 border-t border-border-subtle text-[10px] font-mono text-amber-300">
+                    ⚠️ {action.safetyNote}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-4 rounded-lg bg-bg-surface-2 text-center text-xs text-emerald-400 font-mono">
+            🎉 ยอดเยี่ยมมาก! คุณได้ทำภารกิจหลักในระดับปัจจุบันครบถ้วนแล้ว สามารถตรวจสอบขั้นถัดไปในหน้าเส้นทางพัฒนา
+          </div>
+        )}
+      </div>
+
+      {/* ⚠️ Section 3: สิ่งที่ยังไม่ได้ตรวจสอบ (Unverified Audits) */}
+      {unverifiedAudits.length > 0 && (
+        <div className="bg-bg-surface-1 border border-border-subtle rounded-xl p-4 md:p-5 shadow-lg space-y-3">
+          <div className="flex items-center justify-between border-b border-border-subtle pb-2.5">
+            <div className="flex items-center gap-2 text-amber-400">
+              <AlertTriangle className="w-4 h-4 text-amber-400" />
+              <h2 className="text-sm md:text-base font-heading font-bold text-text-primary">
+                สิ่งที่ยังไม่ได้ตรวจสอบในบัญชี (Unverified Audits)
+              </h2>
             </div>
+            <span className="text-[10px] font-mono text-text-muted">
+              {unverifiedAudits.length} รายการ
+            </span>
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+            {unverifiedAudits.map((item) => (
+              <div
+                key={item.id}
+                className="p-3 rounded-lg bg-bg-surface-2/80 border border-amber-500/20 flex items-start gap-2.5 text-xs font-mono"
+              >
+                <HelpCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <div className="text-[10px] text-text-muted font-bold">[{item.category}]</div>
+                  <div className="text-text-secondary font-medium">{item.title}</div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-
-      </div>
+      )}
 
     </div>
   );
