@@ -1,0 +1,251 @@
+{
+  "extDescription": {
+    "message": "Open-source CSS element picker."
+  },
+  "brandTagline": {
+    "message": "Pick an element, get its selector"
+  },
+  "popup_pickThisPage": {
+    "message": "Pick an element on this page"
+  },
+  "popup_settings": {
+    "message": "Settings"
+  },
+  "popup_docs": {
+    "message": "Docs"
+  },
+  "theme_light": {
+    "message": "Light"
+  },
+  "theme_dark": {
+    "message": "Dark"
+  },
+  "theme_system": {
+    "message": "System"
+  },
+  "options_authTitle": {
+    "message": "Authorization"
+  },
+  "options_authDesc": {
+    "message": "Choose which sites may use the element picker."
+  },
+  "options_allowAll": {
+    "message": "Allow all"
+  },
+  "options_allowAllNote": {
+    "message": "Any site can use the picker. Nothing is captured without you picking and confirming."
+  },
+  "options_ask": {
+    "message": "Ask each site"
+  },
+  "options_askNote": {
+    "message": "Each site is asked the first time; your choice is remembered in the list below."
+  },
+  "options_blocklist": {
+    "message": "Blocklist"
+  },
+  "options_blocklistNote": {
+    "message": "Every site is allowed except the ones you block below."
+  },
+  "options_sitePermsTitle": {
+    "message": "Site permissions"
+  },
+  "options_blockedSitesTitle": {
+    "message": "Blocked sites"
+  },
+  "options_sitePermsDesc": {
+    "message": "Allow or block specific sites ahead of time."
+  },
+  "options_blockedSitesDesc": {
+    "message": "Sites listed here can never use the picker."
+  },
+  "options_allow": {
+    "message": "Allow"
+  },
+  "options_block": {
+    "message": "Block"
+  },
+  "options_unblock": {
+    "message": "Unblock"
+  },
+  "options_reset": {
+    "message": "Reset"
+  },
+  "options_allowed": {
+    "message": "Allowed"
+  },
+  "options_blocked": {
+    "message": "Blocked"
+  },
+  "options_loading": {
+    "message": "Loading…"
+  },
+  "options_noBlocked": {
+    "message": "No sites blocked yet."
+  },
+  "options_noConfigured": {
+    "message": "No sites configured yet."
+  },
+  "options_invalidOrigin": {
+    "message": "Enter a valid origin, e.g. https://example.com"
+  },
+  "options_removeDecision": {
+    "message": "Remove this decision"
+  },
+  "options_appearanceTitle": {
+    "message": "Appearance"
+  },
+  "options_appearanceDesc": {
+    "message": "Theme for OpenPicker's own UI."
+  },
+  "options_selectorRulesTitle": {
+    "message": "Selector rules"
+  },
+  "options_selectorRulesDesc": {
+    "message": "Control how selectors are built — globally or per site."
+  },
+  "options_globalDefault": {
+    "message": "Global default"
+  },
+  "options_perSiteRules": {
+    "message": "Per-site rules"
+  },
+  "options_perSiteRulesDesc": {
+    "message": "Override the global default for specific sites."
+  },
+  "options_noSiteRules": {
+    "message": "No per-site rules yet."
+  },
+  "options_add": {
+    "message": "Add"
+  },
+  "options_edit": {
+    "message": "Edit"
+  },
+  "options_done": {
+    "message": "Done"
+  },
+  "picker_hoverHint": {
+    "message": "Move your mouse and click an element to select it."
+  },
+  "picker_noMatchingTarget": {
+    "message": "This element can't be selected."
+  },
+  "picker_ruleMismatch": {
+    "message": "This selector is outside your rules."
+  },
+  "picker_ruleEmpty": {
+    "message": "No selector matches your rules — pick another element or relax the rules."
+  },
+  "picker_selectorLabel": {
+    "message": "Selector"
+  },
+  "picker_hoverPlaceholder": {
+    "message": "hover an element…"
+  },
+  "picker_invalidSelector": {
+    "message": "Invalid selector"
+  },
+  "picker_matchCount": {
+    "message": "$1 match | $1 matches"
+  },
+  "picker_elementLabel": {
+    "message": "Element"
+  },
+  "picker_attributesLabel": {
+    "message": "Attributes"
+  },
+  "picker_filterAttrs": {
+    "message": "Filter attributes…"
+  },
+  "picker_noMatchingAttrs": {
+    "message": "No matching attributes."
+  },
+  "picker_showMore": {
+    "message": "Show more"
+  },
+  "picker_showLess": {
+    "message": "Show less"
+  },
+  "picker_empty": {
+    "message": "empty"
+  },
+  "picker_paused": {
+    "message": "Picking is paused. Go to the page that has your element, then resume."
+  },
+  "picker_resume": {
+    "message": "Resume picking"
+  },
+  "picker_ok": {
+    "message": "OK"
+  },
+  "picker_copy": {
+    "message": "Copy"
+  },
+  "picker_copied": {
+    "message": "Copied"
+  },
+  "picker_noContent": {
+    "message": "No Content"
+  },
+  "picker_swapSide": {
+    "message": "Swap side"
+  },
+  "picker_navigateAway": {
+    "message": "Navigate to another page"
+  },
+  "picker_selectorSettings": {
+    "message": "Selector settings"
+  },
+  "picker_close": {
+    "message": "Close"
+  },
+  "picker_pickAnother": {
+    "message": "Pick another element"
+  },
+  "picker_prevSibling": {
+    "message": "Previous sibling"
+  },
+  "picker_nextSibling": {
+    "message": "Next sibling"
+  },
+  "picker_scrollIntoView": {
+    "message": "Scroll into view"
+  },
+  "picker_selectParent": {
+    "message": "Select parent"
+  },
+  "picker_selectFirstChild": {
+    "message": "Select first child"
+  },
+  "settings_allowSelectorTypes": {
+    "message": "Allow selector types"
+  },
+  "settings_enableId": {
+    "message": "Enable ID"
+  },
+  "settings_enableClass": {
+    "message": "Enable Class"
+  },
+  "settings_enableAttribute": {
+    "message": "Enable Attribute"
+  },
+  "settings_enableTag": {
+    "message": "Enable tag"
+  },
+  "settings_allow": {
+    "message": "Allow"
+  },
+  "settings_ignore": {
+    "message": "Ignore"
+  },
+  "settings_regexHint": {
+    "message": "Regex of names. Allow = only matches; Ignore = never matches. Empty = smart default."
+  },
+  "settings_lockedBySite": {
+    "message": "Locked by the site"
+  },
+  "settings_requireUnique": {
+    "message": "Pick an element that matches exactly one."
+  }
+}

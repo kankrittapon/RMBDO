@@ -1,0 +1,251 @@
+{
+  "extDescription": {
+    "message": "Открытый инструмент выбора CSS-элементов."
+  },
+  "brandTagline": {
+    "message": "Выберите элемент и получите его селектор"
+  },
+  "popup_pickThisPage": {
+    "message": "Выбрать элемент на этой странице"
+  },
+  "popup_settings": {
+    "message": "Настройки"
+  },
+  "popup_docs": {
+    "message": "Документация"
+  },
+  "theme_light": {
+    "message": "Светлая"
+  },
+  "theme_dark": {
+    "message": "Тёмная"
+  },
+  "theme_system": {
+    "message": "Системная"
+  },
+  "options_authTitle": {
+    "message": "Авторизация"
+  },
+  "options_authDesc": {
+    "message": "Выберите, какие сайты могут использовать инструмент выбора элементов."
+  },
+  "options_allowAll": {
+    "message": "Разрешить все"
+  },
+  "options_allowAllNote": {
+    "message": "Любой сайт может использовать инструмент. Ничего не сохраняется, пока вы не выберете и не подтвердите."
+  },
+  "options_ask": {
+    "message": "Спрашивать на каждом сайте"
+  },
+  "options_askNote": {
+    "message": "На каждом сайте спрашивается в первый раз; ваш выбор запоминается в списке ниже."
+  },
+  "options_blocklist": {
+    "message": "Чёрный список"
+  },
+  "options_blocklistNote": {
+    "message": "Разрешены все сайты, кроме тех, которые вы заблокируете ниже."
+  },
+  "options_sitePermsTitle": {
+    "message": "Разрешения сайтов"
+  },
+  "options_blockedSitesTitle": {
+    "message": "Заблокированные сайты"
+  },
+  "options_sitePermsDesc": {
+    "message": "Заранее разрешите или заблокируйте определённые сайты."
+  },
+  "options_blockedSitesDesc": {
+    "message": "Сайты из этого списка никогда не смогут использовать инструмент."
+  },
+  "options_allow": {
+    "message": "Разрешить"
+  },
+  "options_block": {
+    "message": "Заблокировать"
+  },
+  "options_unblock": {
+    "message": "Разблокировать"
+  },
+  "options_reset": {
+    "message": "Сбросить"
+  },
+  "options_allowed": {
+    "message": "Разрешён"
+  },
+  "options_blocked": {
+    "message": "Заблокирован"
+  },
+  "options_loading": {
+    "message": "Загрузка…"
+  },
+  "options_noBlocked": {
+    "message": "Пока нет заблокированных сайтов."
+  },
+  "options_noConfigured": {
+    "message": "Пока нет настроенных сайтов."
+  },
+  "options_invalidOrigin": {
+    "message": "Введите корректный источник, например https://example.com"
+  },
+  "options_removeDecision": {
+    "message": "Удалить это решение"
+  },
+  "options_appearanceTitle": {
+    "message": "Оформление"
+  },
+  "options_appearanceDesc": {
+    "message": "Тема собственного интерфейса OpenPicker."
+  },
+  "options_selectorRulesTitle": {
+    "message": "Правила селектора"
+  },
+  "options_selectorRulesDesc": {
+    "message": "Управляйте построением селекторов — глобально или для сайта."
+  },
+  "options_globalDefault": {
+    "message": "Глобальное значение по умолчанию"
+  },
+  "options_perSiteRules": {
+    "message": "Правила для сайтов"
+  },
+  "options_perSiteRulesDesc": {
+    "message": "Переопределите глобальное значение для конкретных сайтов."
+  },
+  "options_noSiteRules": {
+    "message": "Пока нет правил для сайтов."
+  },
+  "options_add": {
+    "message": "Добавить"
+  },
+  "options_edit": {
+    "message": "Изменить"
+  },
+  "options_done": {
+    "message": "Готово"
+  },
+  "picker_hoverHint": {
+    "message": "Переместите курсор и щёлкните по элементу, чтобы выбрать его."
+  },
+  "picker_noMatchingTarget": {
+    "message": "Этот элемент нельзя выбрать"
+  },
+  "picker_ruleMismatch": {
+    "message": "Этот селектор не соответствует вашим правилам"
+  },
+  "picker_ruleEmpty": {
+    "message": "Нет селектора, соответствующего правилам — выберите другой элемент или смягчите правила"
+  },
+  "picker_selectorLabel": {
+    "message": "Селектор"
+  },
+  "picker_hoverPlaceholder": {
+    "message": "наведите курсор на элемент…"
+  },
+  "picker_invalidSelector": {
+    "message": "Недопустимый селектор"
+  },
+  "picker_matchCount": {
+    "message": "$1 совпадение | $1 совпадений"
+  },
+  "picker_elementLabel": {
+    "message": "Элемент"
+  },
+  "picker_attributesLabel": {
+    "message": "Атрибуты"
+  },
+  "picker_filterAttrs": {
+    "message": "Фильтр атрибутов…"
+  },
+  "picker_noMatchingAttrs": {
+    "message": "Нет подходящих атрибутов."
+  },
+  "picker_showMore": {
+    "message": "Показать больше"
+  },
+  "picker_showLess": {
+    "message": "Свернуть"
+  },
+  "picker_empty": {
+    "message": "пусто"
+  },
+  "picker_paused": {
+    "message": "Выбор приостановлен. Перейдите на страницу с нужным элементом и продолжите."
+  },
+  "picker_resume": {
+    "message": "Продолжить выбор"
+  },
+  "picker_ok": {
+    "message": "ОК"
+  },
+  "picker_copy": {
+    "message": "Копировать"
+  },
+  "picker_copied": {
+    "message": "Скопировано"
+  },
+  "picker_noContent": {
+    "message": "Нет содержимого"
+  },
+  "picker_swapSide": {
+    "message": "Сменить сторону"
+  },
+  "picker_navigateAway": {
+    "message": "Перейти на другую страницу"
+  },
+  "picker_selectorSettings": {
+    "message": "Настройки селектора"
+  },
+  "picker_close": {
+    "message": "Закрыть"
+  },
+  "picker_pickAnother": {
+    "message": "Выбрать другой элемент"
+  },
+  "picker_prevSibling": {
+    "message": "Предыдущий соседний элемент"
+  },
+  "picker_nextSibling": {
+    "message": "Следующий соседний элемент"
+  },
+  "picker_scrollIntoView": {
+    "message": "Прокрутить до элемента"
+  },
+  "picker_selectParent": {
+    "message": "Выбрать родительский элемент"
+  },
+  "picker_selectFirstChild": {
+    "message": "Выбрать первый дочерний элемент"
+  },
+  "settings_allowSelectorTypes": {
+    "message": "Разрешённые типы селекторов"
+  },
+  "settings_enableId": {
+    "message": "Включить ID"
+  },
+  "settings_enableClass": {
+    "message": "Включить Class"
+  },
+  "settings_enableAttribute": {
+    "message": "Включить атрибут"
+  },
+  "settings_enableTag": {
+    "message": "Включить тег"
+  },
+  "settings_allow": {
+    "message": "Разрешить"
+  },
+  "settings_ignore": {
+    "message": "Игнорировать"
+  },
+  "settings_regexHint": {
+    "message": "Регулярное выражение имён. Разрешить — только совпадения; Игнорировать — исключить; пусто — авто."
+  },
+  "settings_lockedBySite": {
+    "message": "Заблокировано сайтом"
+  },
+  "settings_requireUnique": {
+    "message": "Выберите элемент, совпадающий ровно с одним."
+  }
+}

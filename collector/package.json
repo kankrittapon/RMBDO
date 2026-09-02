@@ -1,0 +1,20 @@
+{
+  "name": "@rmbdo/collector",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "install-browser": "playwright install chromium",
+    "collect:fishing": "tsx src/scrapers/fishing.ts",
+    "collect:grindspots": "tsx src/scrapers/grindSpots.ts",
+    "collect:all": "npm run collect:fishing && npm run collect:grindspots"
+  },
+  "dependencies": {
+    "playwright": "^1.48.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "@types/node": "^22.0.0"
+  }
+}

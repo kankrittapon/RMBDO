@@ -1,67 +1,95 @@
-# ⚔️ RMBDO — Black Desert Online Progression Optimizer & Tactical HUD
+# RMBDO — BDO Progression Optimizer & Tactical HUD
 
-> High-density gaming progression, build optimizer, and analytics dashboard for **Black Desert Online** (Asia / TH-SEA 2026 Meta).
-> Built with Next.js 14, React, TypeScript, and Tailwind CSS adhering strictly to **UI UX Pro Max** design standards.
+Personal BDO progression & decision intelligence. This repo is the merge of
+two things that were built separately and joined on 2026-09-02:
 
----
+1. **The app** (`src/app`, `src/components`, `src/data`, `src/hooks`,
+   `design-system/`) — a fully client-side Next.js 14 + Tailwind dashboard.
+   Player state (gear, AP/DP, checkpoint progress, treasure pieces) lives in
+   `localStorage` via `useRoadmapStore`. Reference data (grind spots,
+   treasures, checkpoints, journals, gear slots) is hand-authored TypeScript
+   under `src/data/*` — same category of "plausible but unverified" content
+   as the extension's old `BDO_MASTER_GRIND_SPOTS` (see
+   `docs/audit-and-plan-2026-09-02.md`), not scraped from anywhere.
+2. **The backend** (`schema/`, `data/*.sql`, `collector/`, `scripts/`) — a
+   Postgres/Supabase reference-data layer, populated either by hand
+   (`data/*.sql`, confidence noted per file in `data/README.md`) or by the
+   `collector/` Playwright scraper, which reads bdolytics.com's own internal
+   API/DOM automatically instead of requiring the openclick_private browser
+   extension to be run by hand each time.
 
-## 🚀 Core Systems & Features
+See [docs/audit-and-plan-2026-09-02.md](docs/audit-and-plan-2026-09-02.md)
+and [docs/data-collection-checklist.md](docs/data-collection-checklist.md)
+for the fuller history/reasoning.
 
-1. **Tactical Dashboard (10-Second Action Engine)**: Instant visibility of Account Gear Score, AP/AAP/DP brackets, Current Phase, Next Objective, Active Blockers, and Priority Action Queue (`[DO NOW]`, `[HIGH PRIORITY]`, `[THIS WEEK]`, `[LATER]`).
-2. **Master Progression Roadmap (11 Phases)**: Interactive timeline tracking Season Graduation → Hyperboost → Olvia Academy → Sovereign Forge → Kharazad Accessories → Slumbering Origin → Edania & Inner Edania → Permanent Completion → War Readiness.
-3. **Sovereign Weapon Forge & Blackstar Allocation Engine**: Dedicated PEN (V) Blackstar inventory audit with anti-trap selection warnings to prevent irreversible mistakes.
-4. **Item Safety & Storage Lock System**: High-contrast semantic safety badges (`[DO NOT USE]`, `[DO NOT SELL]`, `[DO NOT HEAT]`, `[DO NOT OPEN YET]`) for rare and time-gated materials.
-5. **Tactical Gear Planner**: 14 equipment slot planner with projected AP/DP/Accuracy deltas, silver cost estimates, and status tracking.
-6. **Treasure Collection Tracker**: Piece-by-piece checkboxes and progress bars for Ornette, Odore, Map, Compass, Telescope, Krogdalo's Sanctuary, and Merchant Ring.
-7. **Grind Spot Optimizer & Custom Presets**: Searchable monster zone matrix with dynamic loadout presets (`BUDGET`, `BALANCED`, `MAX_DPS`, `DEFENSIVE`, `TREASURE_FARM`).
-8. **Class Guides & Spot-Specific Build Matrix**: Combat radar ratings, protected rotations (SA/FG/Iframe), Tier 3 Add-ons, and spot-specific builds for Witch, Wizard, Nova, Agent, and extensible classes.
-9. **Life Skill Mastery & Olvia Economy**: 11 life skill mastery brackets, next threshold yield bonuses, and Olvia Academy task lists.
-10. **7-Pillar War Readiness Meter**: Structured readiness evaluation separating Mandatory combat criteria from Recommended family infrastructure.
+## Layout
 
----
-
-## 🎨 Design System
-
-The project's design system is documented in:
-- [`design-system/MASTER.md`](./design-system/MASTER.md) — Single Source of Truth for tokens, typography, dark gaming palette, and anti-patterns.
-- [`design-system/pages/`](./design-system/pages/) — Detailed page-level overrides and layout specifications.
-
----
-
-## 🛠️ Tech Stack & Architecture
-
-- **Framework**: Next.js 14 (App Router)
-- **Language**: TypeScript (Strict Mode)
-- **Styling**: Tailwind CSS
-- **Icons**: Lucide React
-- **State Management**: Client-safe LocalStorage hydration with fallback rendering
-- **Data Layer**: Cleanly isolated in `src/data/` (patches, progression, gear, treasures, spots, builds, classes, lifeskills, war-readiness, permanent journals)
-
----
-
-## 💻 Local Development
-
-```bash
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Type check
-npm run typecheck
-
-# Production build
-npm run build
+```
+design-system/            UI/UX spec (MASTER.md + per-page specs) - unchanged from the original app
+src/app/                  Next.js pages + API routes
+src/app/api/grind-spots/  GET - real AP/DP/coordinates from Postgres (collector-verified)
+src/app/api/fishing-spots/ GET - real Depth-4 fishing zone coordinates from Postgres
+src/components/           All UI views (Dashboard, GrindSpotOptimizer, Roadmap, Treasures, ...) - unchanged
+src/data/                 Hand-authored reference data (unverified) - unchanged, still the UI's default source
+src/hooks/useRoadmapStore.ts  Client-side player state (localStorage) - unchanged
+src/lib/db/               Postgres client (pool.ts) + typed queries (queries.ts) - NEW
+src/lib/intelligence/     Decision-layer engines (Location Engine v1) - NEW, not yet wired into any view
+schema/schema.sql         Postgres DDL (reference-data layer)
+data/*.sql                Manually curated seed INSERTs
+collector/                Playwright scraper (see its own section below)
+scripts/                  DB migrate/normalize/cron entrypoint
+extension/, and the openclick_private repo it's built from  Manual browser-extension scraper (superseded by collector/ for routine use, still useful for one-off/interactive digging)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the application.
+## What's wired together, and what isn't yet
 
----
+- `/api/grind-spots` and `/api/fishing-spots` **exist and query Postgres
+  successfully** (verified with `npm run build` + `npm run typecheck`, both
+  pass).
+- **Nothing in `src/components` or `src/data` reads from these API routes
+  yet.** `GrindSpotOptimizerView` and the rest of the UI still render
+  entirely from the hand-authored `src/data/*` files, exactly as before the
+  merge. Wiring a view to overlay `db-verified` data (real AP/DP/coordinates)
+  on top of the static list, matched by `name`, is the next concrete step -
+  not done in this pass to avoid changing UI behavior without you seeing it
+  first.
+- `src/lib/intelligence/locationEngine.ts` (Location Engine v1) is not
+  called from any page in the merged app yet either.
 
-## 🌐 Deployment (Vercel)
+## First-time setup
 
-This repository is optimized for zero-configuration deployment on **Vercel**:
-1. Import repository `kankrittapon/RMBDO` into Vercel.
-2. Framework Preset: **Next.js** (auto-detected).
-3. Deploy to production on `main` branch.
+```bash
+cp .env.example .env        # fill in DATABASE_URL from Supabase (done already for this checkout)
+npm install
+npm run db:migrate          # creates tables + loads the curated seed data - already run once
+npx playwright install chromium --with-deps   # collector browser, needed before running collect:*
+npm run dev                 # the actual app, http://localhost:3000
+```
+
+## Running the collector manually
+
+```bash
+npm run collect:fishing      # writes collector/out/fishing-depth4-*.json
+npm run collect:grindspots   # writes collector/out/grindspots-*.json
+npm run normalize            # upserts both into Postgres
+```
+
+Or all at once (also what cron runs): `./scripts/collect-and-sync.sh`
+
+## Automating it (no more manually running the extension)
+
+Add to crontab (`crontab -e`) — see the comment at the top of
+`scripts/collect-and-sync.sh`. BDO's world data doesn't change often, so
+weekly is plenty. The collector adds a 3-8s randomized delay between every
+action and aborts the run the moment it detects a Cloudflare block instead
+of retrying into a longer ban.
+
+## Data trust
+
+- `src/data/*` (the app's current default data source): hand-authored,
+  unverified, same risk category flagged in the extension audit - treat as
+  placeholder/plausible, not ground truth.
+- `data/*.sql` (Postgres seed): confidence noted per file in `data/README.md`.
+- Rows written by `collector/` + `scripts/normalize.mjs`: tagged
+  `dataSource: "live-click" | "live-api" | "unresolved"` at collection time,
+  and the `notes` column on the Postgres row records which.

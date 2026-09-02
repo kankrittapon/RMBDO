@@ -1,36 +1,9 @@
-﻿# Dependencies
 node_modules/
-/.pnp
-.pnp.js
-
-# Production builds
-dist/
-.next/
-out/
-build/
-.vercel/
-*.tsbuildinfo
-
-# Environment files & Secrets
 .env
-.env.*
-!.env.example
-*.pem
-*.key
+.env.local
+.next/
+dist/
+collector/out/*.json
+!collector/out/.gitkeep
 *.log
-.DS_Store
-Thumbs.db
-
-# Local agent & environment tools (untracked in RMBDO)
-AGENT.md
-AGENTS.md
-CLAUDE.md
-mcp-config.json
-opencode.json
-session-*.md
-.antigravity/
-.claude/
-.codex/
-.freebuff/
-__pycache__/
-*.pyc
+*.tsbuildinfo

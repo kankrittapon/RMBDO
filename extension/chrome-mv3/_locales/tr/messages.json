@@ -1,0 +1,251 @@
+{
+  "extDescription": {
+    "message": "Açık kaynaklı CSS öğe seçici."
+  },
+  "brandTagline": {
+    "message": "Bir öğe seç, seçicisini al"
+  },
+  "popup_pickThisPage": {
+    "message": "Bu sayfada bir öğe seç"
+  },
+  "popup_settings": {
+    "message": "Ayarlar"
+  },
+  "popup_docs": {
+    "message": "Belgeler"
+  },
+  "theme_light": {
+    "message": "Açık"
+  },
+  "theme_dark": {
+    "message": "Koyu"
+  },
+  "theme_system": {
+    "message": "Sistem"
+  },
+  "options_authTitle": {
+    "message": "Yetkilendirme"
+  },
+  "options_authDesc": {
+    "message": "Öğe seçiciyi hangi sitelerin kullanabileceğini seçin."
+  },
+  "options_allowAll": {
+    "message": "Tümüne izin ver"
+  },
+  "options_allowAllNote": {
+    "message": "Her site seçiciyi kullanabilir. Siz seçip onaylamadan hiçbir şey yakalanmaz."
+  },
+  "options_ask": {
+    "message": "Her siteye sor"
+  },
+  "options_askNote": {
+    "message": "Her siteye ilk seferde sorulur; seçiminiz aşağıdaki listede hatırlanır."
+  },
+  "options_blocklist": {
+    "message": "Engelleme listesi"
+  },
+  "options_blocklistNote": {
+    "message": "Aşağıda engellediğiniz siteler dışında tüm sitelere izin verilir."
+  },
+  "options_sitePermsTitle": {
+    "message": "Site izinleri"
+  },
+  "options_blockedSitesTitle": {
+    "message": "Engellenen siteler"
+  },
+  "options_sitePermsDesc": {
+    "message": "Belirli sitelere önceden izin verin veya bunları engelleyin."
+  },
+  "options_blockedSitesDesc": {
+    "message": "Burada listelenen siteler seçiciyi asla kullanamaz."
+  },
+  "options_allow": {
+    "message": "İzin ver"
+  },
+  "options_block": {
+    "message": "Engelle"
+  },
+  "options_unblock": {
+    "message": "Engeli kaldır"
+  },
+  "options_reset": {
+    "message": "Sıfırla"
+  },
+  "options_allowed": {
+    "message": "İzin verildi"
+  },
+  "options_blocked": {
+    "message": "Engellendi"
+  },
+  "options_loading": {
+    "message": "Yükleniyor…"
+  },
+  "options_noBlocked": {
+    "message": "Henüz engellenen site yok."
+  },
+  "options_noConfigured": {
+    "message": "Henüz yapılandırılmış site yok."
+  },
+  "options_invalidOrigin": {
+    "message": "Geçerli bir kaynak girin, örn. https://example.com"
+  },
+  "options_removeDecision": {
+    "message": "Bu kararı kaldır"
+  },
+  "options_appearanceTitle": {
+    "message": "Görünüm"
+  },
+  "options_appearanceDesc": {
+    "message": "OpenPicker'ın kendi arayüzünün teması."
+  },
+  "options_selectorRulesTitle": {
+    "message": "Seçici kuralları"
+  },
+  "options_selectorRulesDesc": {
+    "message": "Seçicilerin nasıl oluşturulacağını denetleyin: genel veya site bazlı."
+  },
+  "options_globalDefault": {
+    "message": "Genel varsayılan"
+  },
+  "options_perSiteRules": {
+    "message": "Site bazlı kurallar"
+  },
+  "options_perSiteRulesDesc": {
+    "message": "Belirli siteler için genel varsayılanı geçersiz kılın."
+  },
+  "options_noSiteRules": {
+    "message": "Henüz site bazlı kural yok."
+  },
+  "options_add": {
+    "message": "Ekle"
+  },
+  "options_edit": {
+    "message": "Düzenle"
+  },
+  "options_done": {
+    "message": "Bitti"
+  },
+  "picker_hoverHint": {
+    "message": "Fareyi hareket ettirin ve seçmek için bir öğeye tıklayın."
+  },
+  "picker_noMatchingTarget": {
+    "message": "Bu öğe seçilemez"
+  },
+  "picker_ruleMismatch": {
+    "message": "Bu seçici kurallarınıza uymuyor"
+  },
+  "picker_ruleEmpty": {
+    "message": "Kurallarınıza uyan seçici yok — başka bir öğe seçin veya kuralları gevşetin"
+  },
+  "picker_selectorLabel": {
+    "message": "Seçici"
+  },
+  "picker_hoverPlaceholder": {
+    "message": "bir öğenin üzerine gelin…"
+  },
+  "picker_invalidSelector": {
+    "message": "Geçersiz seçici"
+  },
+  "picker_matchCount": {
+    "message": "$1 eşleşme | $1 eşleşme"
+  },
+  "picker_elementLabel": {
+    "message": "Öğe"
+  },
+  "picker_attributesLabel": {
+    "message": "Öznitelikler"
+  },
+  "picker_filterAttrs": {
+    "message": "Öznitelikleri filtrele…"
+  },
+  "picker_noMatchingAttrs": {
+    "message": "Eşleşen öznitelik yok."
+  },
+  "picker_showMore": {
+    "message": "Daha fazla göster"
+  },
+  "picker_showLess": {
+    "message": "Daha az göster"
+  },
+  "picker_empty": {
+    "message": "boş"
+  },
+  "picker_paused": {
+    "message": "Seçim duraklatıldı. Öğenizin bulunduğu sayfaya gidin, sonra devam edin."
+  },
+  "picker_resume": {
+    "message": "Seçime devam et"
+  },
+  "picker_ok": {
+    "message": "Tamam"
+  },
+  "picker_copy": {
+    "message": "Kopyala"
+  },
+  "picker_copied": {
+    "message": "Kopyalandı"
+  },
+  "picker_noContent": {
+    "message": "İçerik yok"
+  },
+  "picker_swapSide": {
+    "message": "Tarafı değiştir"
+  },
+  "picker_navigateAway": {
+    "message": "Başka bir sayfaya git"
+  },
+  "picker_selectorSettings": {
+    "message": "Seçici ayarları"
+  },
+  "picker_close": {
+    "message": "Kapat"
+  },
+  "picker_pickAnother": {
+    "message": "Başka bir öğe seç"
+  },
+  "picker_prevSibling": {
+    "message": "Önceki kardeş öğe"
+  },
+  "picker_nextSibling": {
+    "message": "Sonraki kardeş öğe"
+  },
+  "picker_scrollIntoView": {
+    "message": "Görünüme kaydır"
+  },
+  "picker_selectParent": {
+    "message": "Üst öğeyi seç"
+  },
+  "picker_selectFirstChild": {
+    "message": "İlk alt öğeyi seç"
+  },
+  "settings_allowSelectorTypes": {
+    "message": "İzin verilen seçici türleri"
+  },
+  "settings_enableId": {
+    "message": "ID'yi etkinleştir"
+  },
+  "settings_enableClass": {
+    "message": "Class'ı etkinleştir"
+  },
+  "settings_enableAttribute": {
+    "message": "Özniteliği etkinleştir"
+  },
+  "settings_enableTag": {
+    "message": "Etiketi etkinleştir"
+  },
+  "settings_allow": {
+    "message": "İzin ver"
+  },
+  "settings_ignore": {
+    "message": "Yoksay"
+  },
+  "settings_regexHint": {
+    "message": "Ad regex'i. İzin ver = yalnızca eşleşenler; Yoksay = asla; boş = otomatik."
+  },
+  "settings_lockedBySite": {
+    "message": "Site tarafından kilitlendi"
+  },
+  "settings_requireUnique": {
+    "message": "Tam olarak bir öğeyle eşleşen bir öğe seçin."
+  }
+}

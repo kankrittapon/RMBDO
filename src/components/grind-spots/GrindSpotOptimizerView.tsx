@@ -17,6 +17,7 @@ import {
 import { grindSpotsList, GrindSpotItem } from '@/data/grind-spots/spots';
 import { buildPresets, BuildPreset } from '@/data/builds/presets';
 import { useRoadmapStore } from '@/hooks/useRoadmapStore';
+import { useDbGrindSpots } from '@/hooks/useDbGrindSpots';
 import { cn } from '@/lib/utils';
 
 interface GrindSpotOptimizerViewProps {
@@ -29,8 +30,10 @@ export const GrindSpotOptimizerView: React.FC<GrindSpotOptimizerViewProps> = ({ 
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('ALL');
   const [selectedSpecies, setSelectedSpecies] = useState<string>('ALL');
   const [activeBuildMode, setActiveBuildMode] = useState<string>('BALANCED');
+  const { getVerified } = useDbGrindSpots();
 
   const selectedSpot = grindSpotsList.find((s) => s.id === selectedSpotId) || grindSpotsList[0];
+  const selectedVerified = getVerified(selectedSpot.name);
   const currentPreset: BuildPreset = buildPresets[activeBuildMode] || buildPresets.BALANCED;
 
   const playerAP = profile.stats.ap || 0;
@@ -104,8 +107,11 @@ export const GrindSpotOptimizerView: React.FC<GrindSpotOptimizerViewProps> = ({ 
         <div className="lg:col-span-6 space-y-2.5">
           {filteredSpots.map((spot) => {
             const isSelected = spot.id === selectedSpotId;
-            const isApReady = playerAP >= spot.recommendedAP;
-            const isDpReady = playerDP >= spot.recommendedDP;
+            const verified = getVerified(spot.name);
+            const effectiveAP = verified?.recommendedAP ?? spot.recommendedAP;
+            const effectiveDP = verified?.recommendedDP ?? spot.recommendedDP;
+            const isApReady = playerAP >= effectiveAP;
+            const isDpReady = playerDP >= effectiveDP;
 
             return (
               <div
@@ -120,7 +126,17 @@ export const GrindSpotOptimizerView: React.FC<GrindSpotOptimizerViewProps> = ({ 
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-bold text-xs md:text-sm text-text-primary">{spot.name}</h3>
+                    <h3 className="font-bold text-xs md:text-sm text-text-primary flex items-center gap-1.5">
+                      {spot.name}
+                      {verified && (
+                        <span
+                          title="AP/DP ยืนยันจากข้อมูล bdolytics จริง (collector)"
+                          className="text-[9px] px-1 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono"
+                        >
+                          ✓ DB
+                        </span>
+                      )}
+                    </h3>
                     <span className="text-[10px] font-mono text-text-muted">
                       {spot.region} • เผ่า: {spot.species}
                     </span>
@@ -142,13 +158,17 @@ export const GrindSpotOptimizerView: React.FC<GrindSpotOptimizerViewProps> = ({ 
 
                 <div className="grid grid-cols-3 gap-1.5 text-[11px] font-mono text-text-secondary bg-bg-surface-3/60 p-2 rounded-lg border border-border-subtle/40">
                   <div>
-                    AP แนะนำ: <span className={isApReady ? "text-amber-400 font-bold" : "text-text-muted"}>{spot.recommendedAP}</span>
+                    AP แนะนำ: <span className={isApReady ? "text-amber-400 font-bold" : "text-text-muted"}>{effectiveAP}</span>
                   </div>
                   <div>
-                    DP แนะนำ: <span className={isDpReady ? "text-emerald-400 font-bold" : "text-text-muted"}>{spot.recommendedDP}</span>
+                    DP แนะนำ: <span className={isDpReady ? "text-emerald-400 font-bold" : "text-text-muted"}>{effectiveDP}</span>
                   </div>
                   <div className="text-text-primary truncate">
-                    {spot.silverPerHour}
+                    {/* silverPerHour isn't in the DB (collector never scraped a real
+                        figure for it) - once AP/DP come from the DB, mixing in the
+                        old hand-guessed silver/hr would look verified when it isn't,
+                        so it's hidden rather than shown next to a "✓ DB" badge. */}
+                    {verified ? 'ไม่ทราบ (รอข้อมูล collector)' : spot.silverPerHour}
                   </div>
                 </div>
 
@@ -170,15 +190,30 @@ export const GrindSpotOptimizerView: React.FC<GrindSpotOptimizerViewProps> = ({ 
           
           <div className="border-b border-border-subtle pb-3 space-y-1">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-heading font-bold text-text-primary">
+              <h2 className="text-base font-heading font-bold text-text-primary flex items-center gap-2">
                 {selectedSpot.name}
+                {selectedVerified && (
+                  <span
+                    title="ยืนยันจากข้อมูล bdolytics จริง (collector)"
+                    className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono"
+                  >
+                    ✓ DB Verified
+                  </span>
+                )}
               </h2>
-              <span className="text-xs font-mono text-emerald-400 font-bold">
-                {selectedSpot.silverPerHour}
-              </span>
+              {!selectedVerified && (
+                <span className="text-xs font-mono text-emerald-400 font-bold">
+                  {selectedSpot.silverPerHour}
+                </span>
+              )}
             </div>
             <p className="text-xs text-text-secondary font-mono">
               ภูมิภาค: {selectedSpot.region} | Monster AP Cap: <span className="text-text-primary font-bold">{selectedSpot.monsterAPCap}</span> | Accuracy: <span className="text-text-primary font-bold">{selectedSpot.accuracyRequirement}</span>
+              {selectedVerified?.coordinates && (
+                <>
+                  {' '}| พิกัด: <span className="text-text-primary font-bold">[{selectedVerified.coordinates[0]}, {selectedVerified.coordinates[1]}]</span>
+                </>
+              )}
             </p>
           </div>
 

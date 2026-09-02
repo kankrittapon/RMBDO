@@ -1,0 +1,251 @@
+{
+  "extDescription": {
+    "message": "開源的 CSS 元素選擇器。"
+  },
+  "brandTagline": {
+    "message": "選取一個元素，取得它的選擇器"
+  },
+  "popup_pickThisPage": {
+    "message": "在此頁面選取元素"
+  },
+  "popup_settings": {
+    "message": "設定"
+  },
+  "popup_docs": {
+    "message": "文件"
+  },
+  "theme_light": {
+    "message": "淺色"
+  },
+  "theme_dark": {
+    "message": "深色"
+  },
+  "theme_system": {
+    "message": "跟隨系統"
+  },
+  "options_authTitle": {
+    "message": "授權"
+  },
+  "options_authDesc": {
+    "message": "選擇哪些網站可以使用元素選擇器。"
+  },
+  "options_allowAll": {
+    "message": "允許全部"
+  },
+  "options_allowAllNote": {
+    "message": "任何網站都可以使用選擇器。只有在你選取並確認後才會擷取內容。"
+  },
+  "options_ask": {
+    "message": "每個網站都詢問"
+  },
+  "options_askNote": {
+    "message": "每個網站首次使用時都會詢問；你的選擇會記錄在下方清單中。"
+  },
+  "options_blocklist": {
+    "message": "黑名單"
+  },
+  "options_blocklistNote": {
+    "message": "除你在下方封鎖的網站外，所有網站都被允許。"
+  },
+  "options_sitePermsTitle": {
+    "message": "網站權限"
+  },
+  "options_blockedSitesTitle": {
+    "message": "已封鎖的網站"
+  },
+  "options_sitePermsDesc": {
+    "message": "提前允許或封鎖特定網站。"
+  },
+  "options_blockedSitesDesc": {
+    "message": "此處列出的網站永遠無法使用選擇器。"
+  },
+  "options_allow": {
+    "message": "允許"
+  },
+  "options_block": {
+    "message": "封鎖"
+  },
+  "options_unblock": {
+    "message": "解除封鎖"
+  },
+  "options_reset": {
+    "message": "重設"
+  },
+  "options_allowed": {
+    "message": "已允許"
+  },
+  "options_blocked": {
+    "message": "已封鎖"
+  },
+  "options_loading": {
+    "message": "載入中…"
+  },
+  "options_noBlocked": {
+    "message": "尚無已封鎖的網站。"
+  },
+  "options_noConfigured": {
+    "message": "尚無已設定的網站。"
+  },
+  "options_invalidOrigin": {
+    "message": "請輸入有效的來源，例如 https://example.com"
+  },
+  "options_removeDecision": {
+    "message": "移除此項設定"
+  },
+  "options_appearanceTitle": {
+    "message": "外觀"
+  },
+  "options_appearanceDesc": {
+    "message": "OpenPicker 自身介面的主題。"
+  },
+  "options_selectorRulesTitle": {
+    "message": "選擇器規則"
+  },
+  "options_selectorRulesDesc": {
+    "message": "控制選擇器如何產生——全域或依網站。"
+  },
+  "options_globalDefault": {
+    "message": "全域預設"
+  },
+  "options_perSiteRules": {
+    "message": "各網站規則"
+  },
+  "options_perSiteRulesDesc": {
+    "message": "為特定網站覆寫全域預設。"
+  },
+  "options_noSiteRules": {
+    "message": "尚無各網站規則。"
+  },
+  "options_add": {
+    "message": "新增"
+  },
+  "options_edit": {
+    "message": "編輯"
+  },
+  "options_done": {
+    "message": "完成"
+  },
+  "picker_hoverHint": {
+    "message": "移動滑鼠並點擊一個元素以選取它。"
+  },
+  "picker_noMatchingTarget": {
+    "message": "無法選擇此元素"
+  },
+  "picker_ruleMismatch": {
+    "message": "此選擇器不符合你的規則"
+  },
+  "picker_ruleEmpty": {
+    "message": "沒有符合規則的選擇器 —— 換個元素或放寬規則"
+  },
+  "picker_selectorLabel": {
+    "message": "選擇器"
+  },
+  "picker_hoverPlaceholder": {
+    "message": "將游標停在某個元素上…"
+  },
+  "picker_invalidSelector": {
+    "message": "選擇器無效"
+  },
+  "picker_matchCount": {
+    "message": "符合 $1 個 | 符合 $1 個"
+  },
+  "picker_elementLabel": {
+    "message": "元素"
+  },
+  "picker_attributesLabel": {
+    "message": "屬性"
+  },
+  "picker_filterAttrs": {
+    "message": "篩選屬性…"
+  },
+  "picker_noMatchingAttrs": {
+    "message": "沒有符合的屬性。"
+  },
+  "picker_showMore": {
+    "message": "顯示更多"
+  },
+  "picker_showLess": {
+    "message": "收合"
+  },
+  "picker_empty": {
+    "message": "空"
+  },
+  "picker_paused": {
+    "message": "選取已暫停。請前往包含目標元素的頁面，然後繼續。"
+  },
+  "picker_resume": {
+    "message": "繼續選取"
+  },
+  "picker_ok": {
+    "message": "確定"
+  },
+  "picker_copy": {
+    "message": "複製"
+  },
+  "picker_copied": {
+    "message": "已複製"
+  },
+  "picker_noContent": {
+    "message": "無內容"
+  },
+  "picker_swapSide": {
+    "message": "切換位置"
+  },
+  "picker_navigateAway": {
+    "message": "前往其他頁面"
+  },
+  "picker_selectorSettings": {
+    "message": "選擇器設定"
+  },
+  "picker_close": {
+    "message": "關閉"
+  },
+  "picker_pickAnother": {
+    "message": "重新選取元素"
+  },
+  "picker_prevSibling": {
+    "message": "上一個同層元素"
+  },
+  "picker_nextSibling": {
+    "message": "下一個同層元素"
+  },
+  "picker_scrollIntoView": {
+    "message": "捲動到可視範圍"
+  },
+  "picker_selectParent": {
+    "message": "選擇父元素"
+  },
+  "picker_selectFirstChild": {
+    "message": "選擇第一個子元素"
+  },
+  "settings_allowSelectorTypes": {
+    "message": "允許的選擇器類型"
+  },
+  "settings_enableId": {
+    "message": "啟用 ID"
+  },
+  "settings_enableClass": {
+    "message": "啟用 Class"
+  },
+  "settings_enableAttribute": {
+    "message": "啟用屬性"
+  },
+  "settings_enableTag": {
+    "message": "啟用標籤"
+  },
+  "settings_allow": {
+    "message": "允許"
+  },
+  "settings_ignore": {
+    "message": "忽略"
+  },
+  "settings_regexHint": {
+    "message": "名稱正規表達式。允許＝只用符合項;忽略＝排除符合項;留空＝智慧預設。"
+  },
+  "settings_lockedBySite": {
+    "message": "由網站鎖定"
+  },
+  "settings_requireUnique": {
+    "message": "請選擇唯一符合的元素。"
+  }
+}

@@ -1,0 +1,251 @@
+{
+  "extDescription": {
+    "message": "Công cụ chọn phần tử CSS mã nguồn mở."
+  },
+  "brandTagline": {
+    "message": "Chọn một phần tử, nhận selector của nó"
+  },
+  "popup_pickThisPage": {
+    "message": "Chọn một phần tử trên trang này"
+  },
+  "popup_settings": {
+    "message": "Cài đặt"
+  },
+  "popup_docs": {
+    "message": "Tài liệu"
+  },
+  "theme_light": {
+    "message": "Sáng"
+  },
+  "theme_dark": {
+    "message": "Tối"
+  },
+  "theme_system": {
+    "message": "Hệ thống"
+  },
+  "options_authTitle": {
+    "message": "Ủy quyền"
+  },
+  "options_authDesc": {
+    "message": "Chọn những trang nào có thể dùng công cụ chọn phần tử."
+  },
+  "options_allowAll": {
+    "message": "Cho phép tất cả"
+  },
+  "options_allowAllNote": {
+    "message": "Bất kỳ trang nào cũng có thể dùng công cụ. Không có gì được thu thập cho đến khi bạn chọn và xác nhận."
+  },
+  "options_ask": {
+    "message": "Hỏi từng trang"
+  },
+  "options_askNote": {
+    "message": "Mỗi trang được hỏi trong lần đầu tiên; lựa chọn của bạn được ghi nhớ trong danh sách bên dưới."
+  },
+  "options_blocklist": {
+    "message": "Danh sách chặn"
+  },
+  "options_blocklistNote": {
+    "message": "Mọi trang đều được phép trừ những trang bạn chặn bên dưới."
+  },
+  "options_sitePermsTitle": {
+    "message": "Quyền của trang"
+  },
+  "options_blockedSitesTitle": {
+    "message": "Các trang bị chặn"
+  },
+  "options_sitePermsDesc": {
+    "message": "Cho phép hoặc chặn trước những trang cụ thể."
+  },
+  "options_blockedSitesDesc": {
+    "message": "Các trang liệt kê ở đây không bao giờ có thể dùng công cụ."
+  },
+  "options_allow": {
+    "message": "Cho phép"
+  },
+  "options_block": {
+    "message": "Chặn"
+  },
+  "options_unblock": {
+    "message": "Bỏ chặn"
+  },
+  "options_reset": {
+    "message": "Đặt lại"
+  },
+  "options_allowed": {
+    "message": "Đã cho phép"
+  },
+  "options_blocked": {
+    "message": "Đã chặn"
+  },
+  "options_loading": {
+    "message": "Đang tải…"
+  },
+  "options_noBlocked": {
+    "message": "Chưa có trang nào bị chặn."
+  },
+  "options_noConfigured": {
+    "message": "Chưa có trang nào được cấu hình."
+  },
+  "options_invalidOrigin": {
+    "message": "Nhập một nguồn hợp lệ, ví dụ https://example.com"
+  },
+  "options_removeDecision": {
+    "message": "Xóa quyết định này"
+  },
+  "options_appearanceTitle": {
+    "message": "Giao diện"
+  },
+  "options_appearanceDesc": {
+    "message": "Chủ đề cho giao diện của chính OpenPicker."
+  },
+  "options_selectorRulesTitle": {
+    "message": "Quy tắc selector"
+  },
+  "options_selectorRulesDesc": {
+    "message": "Kiểm soát cách tạo selector — toàn cục hoặc theo trang."
+  },
+  "options_globalDefault": {
+    "message": "Mặc định toàn cục"
+  },
+  "options_perSiteRules": {
+    "message": "Quy tắc theo trang"
+  },
+  "options_perSiteRulesDesc": {
+    "message": "Ghi đè mặc định toàn cục cho các trang cụ thể."
+  },
+  "options_noSiteRules": {
+    "message": "Chưa có quy tắc theo trang."
+  },
+  "options_add": {
+    "message": "Thêm"
+  },
+  "options_edit": {
+    "message": "Sửa"
+  },
+  "options_done": {
+    "message": "Xong"
+  },
+  "picker_hoverHint": {
+    "message": "Di chuyển chuột và nhấp vào một phần tử để chọn nó."
+  },
+  "picker_noMatchingTarget": {
+    "message": "Không thể chọn phần tử này"
+  },
+  "picker_ruleMismatch": {
+    "message": "Bộ chọn này không tuân theo quy tắc của bạn"
+  },
+  "picker_ruleEmpty": {
+    "message": "Không có bộ chọn nào phù hợp quy tắc — chọn phần tử khác hoặc nới lỏng quy tắc"
+  },
+  "picker_selectorLabel": {
+    "message": "Selector"
+  },
+  "picker_hoverPlaceholder": {
+    "message": "di chuột lên một phần tử…"
+  },
+  "picker_invalidSelector": {
+    "message": "Selector không hợp lệ"
+  },
+  "picker_matchCount": {
+    "message": "$1 kết quả khớp | $1 kết quả khớp"
+  },
+  "picker_elementLabel": {
+    "message": "Phần tử"
+  },
+  "picker_attributesLabel": {
+    "message": "Thuộc tính"
+  },
+  "picker_filterAttrs": {
+    "message": "Lọc thuộc tính…"
+  },
+  "picker_noMatchingAttrs": {
+    "message": "Không có thuộc tính nào khớp."
+  },
+  "picker_showMore": {
+    "message": "Hiện thêm"
+  },
+  "picker_showLess": {
+    "message": "Thu gọn"
+  },
+  "picker_empty": {
+    "message": "trống"
+  },
+  "picker_paused": {
+    "message": "Việc chọn đã tạm dừng. Hãy đến trang có phần tử của bạn rồi tiếp tục."
+  },
+  "picker_resume": {
+    "message": "Tiếp tục chọn"
+  },
+  "picker_ok": {
+    "message": "OK"
+  },
+  "picker_copy": {
+    "message": "Sao chép"
+  },
+  "picker_copied": {
+    "message": "Đã sao chép"
+  },
+  "picker_noContent": {
+    "message": "Không có nội dung"
+  },
+  "picker_swapSide": {
+    "message": "Đổi bên"
+  },
+  "picker_navigateAway": {
+    "message": "Đi đến trang khác"
+  },
+  "picker_selectorSettings": {
+    "message": "Cài đặt selector"
+  },
+  "picker_close": {
+    "message": "Đóng"
+  },
+  "picker_pickAnother": {
+    "message": "Chọn phần tử khác"
+  },
+  "picker_prevSibling": {
+    "message": "Phần tử anh em trước"
+  },
+  "picker_nextSibling": {
+    "message": "Phần tử anh em sau"
+  },
+  "picker_scrollIntoView": {
+    "message": "Cuộn đến vùng hiển thị"
+  },
+  "picker_selectParent": {
+    "message": "Chọn phần tử cha"
+  },
+  "picker_selectFirstChild": {
+    "message": "Chọn phần tử con đầu tiên"
+  },
+  "settings_allowSelectorTypes": {
+    "message": "Các loại selector được phép"
+  },
+  "settings_enableId": {
+    "message": "Bật ID"
+  },
+  "settings_enableClass": {
+    "message": "Bật Class"
+  },
+  "settings_enableAttribute": {
+    "message": "Bật thuộc tính"
+  },
+  "settings_enableTag": {
+    "message": "Bật thẻ"
+  },
+  "settings_allow": {
+    "message": "Cho phép"
+  },
+  "settings_ignore": {
+    "message": "Bỏ qua"
+  },
+  "settings_regexHint": {
+    "message": "Regex tên. Cho phép = chỉ khớp; Bỏ qua = không bao giờ; trống = tự động."
+  },
+  "settings_lockedBySite": {
+    "message": "Bị khóa bởi trang"
+  },
+  "settings_requireUnique": {
+    "message": "Hãy chọn một phần tử khớp đúng một."
+  }
+}

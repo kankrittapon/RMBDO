@@ -1,0 +1,251 @@
+{
+  "extDescription": {
+    "message": "オープンソースの CSS 要素ピッカー。"
+  },
+  "brandTagline": {
+    "message": "要素を選んで、そのセレクターを取得"
+  },
+  "popup_pickThisPage": {
+    "message": "このページで要素を選択"
+  },
+  "popup_settings": {
+    "message": "設定"
+  },
+  "popup_docs": {
+    "message": "ドキュメント"
+  },
+  "theme_light": {
+    "message": "ライト"
+  },
+  "theme_dark": {
+    "message": "ダーク"
+  },
+  "theme_system": {
+    "message": "システム"
+  },
+  "options_authTitle": {
+    "message": "認可"
+  },
+  "options_authDesc": {
+    "message": "要素ピッカーを使用できるサイトを選択します。"
+  },
+  "options_allowAll": {
+    "message": "すべて許可"
+  },
+  "options_allowAllNote": {
+    "message": "どのサイトでもピッカーを使用できます。選択して確定するまで何も取得されません。"
+  },
+  "options_ask": {
+    "message": "サイトごとに確認"
+  },
+  "options_askNote": {
+    "message": "各サイトで初回に確認します。選択内容は下のリストに記憶されます。"
+  },
+  "options_blocklist": {
+    "message": "ブロックリスト"
+  },
+  "options_blocklistNote": {
+    "message": "下でブロックしたサイトを除き、すべてのサイトが許可されます。"
+  },
+  "options_sitePermsTitle": {
+    "message": "サイトの権限"
+  },
+  "options_blockedSitesTitle": {
+    "message": "ブロックしたサイト"
+  },
+  "options_sitePermsDesc": {
+    "message": "特定のサイトを事前に許可またはブロックします。"
+  },
+  "options_blockedSitesDesc": {
+    "message": "ここに表示されたサイトはピッカーを使用できません。"
+  },
+  "options_allow": {
+    "message": "許可"
+  },
+  "options_block": {
+    "message": "ブロック"
+  },
+  "options_unblock": {
+    "message": "ブロック解除"
+  },
+  "options_reset": {
+    "message": "リセット"
+  },
+  "options_allowed": {
+    "message": "許可済み"
+  },
+  "options_blocked": {
+    "message": "ブロック済み"
+  },
+  "options_loading": {
+    "message": "読み込み中…"
+  },
+  "options_noBlocked": {
+    "message": "ブロックしたサイトはまだありません。"
+  },
+  "options_noConfigured": {
+    "message": "設定済みのサイトはまだありません。"
+  },
+  "options_invalidOrigin": {
+    "message": "有効なオリジンを入力してください（例: https://example.com）"
+  },
+  "options_removeDecision": {
+    "message": "この設定を削除"
+  },
+  "options_appearanceTitle": {
+    "message": "外観"
+  },
+  "options_appearanceDesc": {
+    "message": "OpenPicker 自体の UI のテーマ。"
+  },
+  "options_selectorRulesTitle": {
+    "message": "セレクターのルール"
+  },
+  "options_selectorRulesDesc": {
+    "message": "セレクターの作り方を制御（全体またはサイト単位）。"
+  },
+  "options_globalDefault": {
+    "message": "全体のデフォルト"
+  },
+  "options_perSiteRules": {
+    "message": "サイト別ルール"
+  },
+  "options_perSiteRulesDesc": {
+    "message": "特定のサイトで全体のデフォルトを上書きします。"
+  },
+  "options_noSiteRules": {
+    "message": "サイト別ルールはまだありません。"
+  },
+  "options_add": {
+    "message": "追加"
+  },
+  "options_edit": {
+    "message": "編集"
+  },
+  "options_done": {
+    "message": "完了"
+  },
+  "picker_hoverHint": {
+    "message": "マウスを動かして要素をクリックすると選択できます。"
+  },
+  "picker_noMatchingTarget": {
+    "message": "この要素は選択できません"
+  },
+  "picker_ruleMismatch": {
+    "message": "このセレクターはルールに合致しません"
+  },
+  "picker_ruleEmpty": {
+    "message": "ルールに合うセレクターがありません。別の要素を選ぶかルールを緩めてください"
+  },
+  "picker_selectorLabel": {
+    "message": "セレクター"
+  },
+  "picker_hoverPlaceholder": {
+    "message": "要素にカーソルを合わせてください…"
+  },
+  "picker_invalidSelector": {
+    "message": "無効なセレクター"
+  },
+  "picker_matchCount": {
+    "message": "$1 件一致 | $1 件一致"
+  },
+  "picker_elementLabel": {
+    "message": "要素"
+  },
+  "picker_attributesLabel": {
+    "message": "属性"
+  },
+  "picker_filterAttrs": {
+    "message": "属性を絞り込み…"
+  },
+  "picker_noMatchingAttrs": {
+    "message": "一致する属性がありません。"
+  },
+  "picker_showMore": {
+    "message": "もっと見る"
+  },
+  "picker_showLess": {
+    "message": "折りたたむ"
+  },
+  "picker_empty": {
+    "message": "空"
+  },
+  "picker_paused": {
+    "message": "選択を一時停止しました。目的の要素があるページに移動してから再開してください。"
+  },
+  "picker_resume": {
+    "message": "選択を再開"
+  },
+  "picker_ok": {
+    "message": "OK"
+  },
+  "picker_copy": {
+    "message": "コピー"
+  },
+  "picker_copied": {
+    "message": "コピーしました"
+  },
+  "picker_noContent": {
+    "message": "コンテンツなし"
+  },
+  "picker_swapSide": {
+    "message": "位置を切り替え"
+  },
+  "picker_navigateAway": {
+    "message": "別のページへ移動"
+  },
+  "picker_selectorSettings": {
+    "message": "セレクター設定"
+  },
+  "picker_close": {
+    "message": "閉じる"
+  },
+  "picker_pickAnother": {
+    "message": "別の要素を選択"
+  },
+  "picker_prevSibling": {
+    "message": "前の兄弟要素"
+  },
+  "picker_nextSibling": {
+    "message": "次の兄弟要素"
+  },
+  "picker_scrollIntoView": {
+    "message": "表示領域にスクロール"
+  },
+  "picker_selectParent": {
+    "message": "親要素を選択"
+  },
+  "picker_selectFirstChild": {
+    "message": "最初の子要素を選択"
+  },
+  "settings_allowSelectorTypes": {
+    "message": "許可するセレクターの種類"
+  },
+  "settings_enableId": {
+    "message": "ID を有効化"
+  },
+  "settings_enableClass": {
+    "message": "Class を有効化"
+  },
+  "settings_enableAttribute": {
+    "message": "属性を有効化"
+  },
+  "settings_enableTag": {
+    "message": "タグを有効化"
+  },
+  "settings_allow": {
+    "message": "許可"
+  },
+  "settings_ignore": {
+    "message": "無視"
+  },
+  "settings_regexHint": {
+    "message": "名前の正規表現。許可＝一致のみ／無視＝一致を除外／空＝自動。"
+  },
+  "settings_lockedBySite": {
+    "message": "サイトによりロック"
+  },
+  "settings_requireUnique": {
+    "message": "ちょうど1つに一致する要素を選んでください。"
+  }
+}

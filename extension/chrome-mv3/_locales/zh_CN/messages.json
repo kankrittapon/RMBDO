@@ -1,0 +1,251 @@
+{
+  "extDescription": {
+    "message": "开源的 CSS 元素选择器。"
+  },
+  "brandTagline": {
+    "message": "选中一个元素，得到它的选择器"
+  },
+  "popup_pickThisPage": {
+    "message": "在此页面选取元素"
+  },
+  "popup_settings": {
+    "message": "设置"
+  },
+  "popup_docs": {
+    "message": "文档"
+  },
+  "theme_light": {
+    "message": "浅色"
+  },
+  "theme_dark": {
+    "message": "深色"
+  },
+  "theme_system": {
+    "message": "跟随系统"
+  },
+  "options_authTitle": {
+    "message": "授权"
+  },
+  "options_authDesc": {
+    "message": "选择哪些网站可以使用元素选择器。"
+  },
+  "options_allowAll": {
+    "message": "允许全部"
+  },
+  "options_allowAllNote": {
+    "message": "任何网站都可以使用选择器。只有在你选取并确认后才会捕获内容。"
+  },
+  "options_ask": {
+    "message": "每个网站都询问"
+  },
+  "options_askNote": {
+    "message": "每个网站首次使用时都会询问；你的选择会记录在下方列表中。"
+  },
+  "options_blocklist": {
+    "message": "黑名单"
+  },
+  "options_blocklistNote": {
+    "message": "除你在下方屏蔽的网站外，所有网站都被允许。"
+  },
+  "options_sitePermsTitle": {
+    "message": "网站权限"
+  },
+  "options_blockedSitesTitle": {
+    "message": "已屏蔽的网站"
+  },
+  "options_sitePermsDesc": {
+    "message": "提前允许或屏蔽特定网站。"
+  },
+  "options_blockedSitesDesc": {
+    "message": "此处列出的网站永远无法使用选择器。"
+  },
+  "options_allow": {
+    "message": "允许"
+  },
+  "options_block": {
+    "message": "屏蔽"
+  },
+  "options_unblock": {
+    "message": "取消屏蔽"
+  },
+  "options_reset": {
+    "message": "重置"
+  },
+  "options_allowed": {
+    "message": "已允许"
+  },
+  "options_blocked": {
+    "message": "已屏蔽"
+  },
+  "options_loading": {
+    "message": "加载中…"
+  },
+  "options_noBlocked": {
+    "message": "暂无已屏蔽的网站。"
+  },
+  "options_noConfigured": {
+    "message": "暂无已配置的网站。"
+  },
+  "options_invalidOrigin": {
+    "message": "请输入有效的来源，例如 https://example.com"
+  },
+  "options_removeDecision": {
+    "message": "移除此项设置"
+  },
+  "options_appearanceTitle": {
+    "message": "外观"
+  },
+  "options_appearanceDesc": {
+    "message": "OpenPicker 自身界面的主题。"
+  },
+  "options_selectorRulesTitle": {
+    "message": "选择器规则"
+  },
+  "options_selectorRulesDesc": {
+    "message": "控制选择器如何生成——全局或按站点。"
+  },
+  "options_globalDefault": {
+    "message": "全局默认"
+  },
+  "options_perSiteRules": {
+    "message": "按站点规则"
+  },
+  "options_perSiteRulesDesc": {
+    "message": "为特定站点覆盖全局默认。"
+  },
+  "options_noSiteRules": {
+    "message": "暂无按站点规则。"
+  },
+  "options_add": {
+    "message": "添加"
+  },
+  "options_edit": {
+    "message": "编辑"
+  },
+  "options_done": {
+    "message": "完成"
+  },
+  "picker_hoverHint": {
+    "message": "移动鼠标并点击一个元素以选中它。"
+  },
+  "picker_noMatchingTarget": {
+    "message": "无法选择此元素"
+  },
+  "picker_ruleMismatch": {
+    "message": "此选择器不符合你的规则"
+  },
+  "picker_ruleEmpty": {
+    "message": "没有符合规则的选择器 —— 换个元素或放宽规则"
+  },
+  "picker_selectorLabel": {
+    "message": "选择器"
+  },
+  "picker_hoverPlaceholder": {
+    "message": "悬停在某个元素上…"
+  },
+  "picker_invalidSelector": {
+    "message": "选择器无效"
+  },
+  "picker_matchCount": {
+    "message": "匹配 $1 个 | 匹配 $1 个"
+  },
+  "picker_elementLabel": {
+    "message": "元素"
+  },
+  "picker_attributesLabel": {
+    "message": "属性"
+  },
+  "picker_filterAttrs": {
+    "message": "筛选属性…"
+  },
+  "picker_noMatchingAttrs": {
+    "message": "没有匹配的属性。"
+  },
+  "picker_showMore": {
+    "message": "显示更多"
+  },
+  "picker_showLess": {
+    "message": "收起"
+  },
+  "picker_empty": {
+    "message": "空"
+  },
+  "picker_paused": {
+    "message": "选取已暂停。请前往包含目标元素的页面，然后恢复。"
+  },
+  "picker_resume": {
+    "message": "恢复选取"
+  },
+  "picker_ok": {
+    "message": "确定"
+  },
+  "picker_copy": {
+    "message": "复制"
+  },
+  "picker_copied": {
+    "message": "已复制"
+  },
+  "picker_noContent": {
+    "message": "无内容"
+  },
+  "picker_swapSide": {
+    "message": "切换位置"
+  },
+  "picker_navigateAway": {
+    "message": "前往其他页面"
+  },
+  "picker_selectorSettings": {
+    "message": "选择器设置"
+  },
+  "picker_close": {
+    "message": "关闭"
+  },
+  "picker_pickAnother": {
+    "message": "重新选取元素"
+  },
+  "picker_prevSibling": {
+    "message": "上一个同级元素"
+  },
+  "picker_nextSibling": {
+    "message": "下一个同级元素"
+  },
+  "picker_scrollIntoView": {
+    "message": "滚动到视图中"
+  },
+  "picker_selectParent": {
+    "message": "选择父元素"
+  },
+  "picker_selectFirstChild": {
+    "message": "选择第一个子元素"
+  },
+  "settings_allowSelectorTypes": {
+    "message": "允许的选择器类型"
+  },
+  "settings_enableId": {
+    "message": "启用 ID"
+  },
+  "settings_enableClass": {
+    "message": "启用 Class"
+  },
+  "settings_enableAttribute": {
+    "message": "启用属性"
+  },
+  "settings_enableTag": {
+    "message": "启用标签"
+  },
+  "settings_allow": {
+    "message": "允许"
+  },
+  "settings_ignore": {
+    "message": "忽略"
+  },
+  "settings_regexHint": {
+    "message": "名称正则。允许=只用匹配项;忽略=排除匹配项;留空=智能默认。"
+  },
+  "settings_lockedBySite": {
+    "message": "由站点锁定"
+  },
+  "settings_requireUnique": {
+    "message": "请选择唯一匹配的元素。"
+  }
+}

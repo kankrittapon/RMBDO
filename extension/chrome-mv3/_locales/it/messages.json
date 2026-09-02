@@ -1,0 +1,251 @@
+{
+  "extDescription": {
+    "message": "Selettore di elementi CSS open source."
+  },
+  "brandTagline": {
+    "message": "Scegli un elemento e ottieni il suo selettore"
+  },
+  "popup_pickThisPage": {
+    "message": "Scegli un elemento in questa pagina"
+  },
+  "popup_settings": {
+    "message": "Impostazioni"
+  },
+  "popup_docs": {
+    "message": "Docs"
+  },
+  "theme_light": {
+    "message": "Chiaro"
+  },
+  "theme_dark": {
+    "message": "Scuro"
+  },
+  "theme_system": {
+    "message": "Sistema"
+  },
+  "options_authTitle": {
+    "message": "Autorizzazione"
+  },
+  "options_authDesc": {
+    "message": "Scegli quali siti possono usare il selettore di elementi."
+  },
+  "options_allowAll": {
+    "message": "Consenti tutti"
+  },
+  "options_allowAllNote": {
+    "message": "Qualsiasi sito può usare il selettore. Niente viene catturato finché non scegli e confermi."
+  },
+  "options_ask": {
+    "message": "Chiedi per ogni sito"
+  },
+  "options_askNote": {
+    "message": "A ogni sito viene chiesto la prima volta; la tua scelta è ricordata nell'elenco qui sotto."
+  },
+  "options_blocklist": {
+    "message": "Elenco di blocco"
+  },
+  "options_blocklistNote": {
+    "message": "Tutti i siti sono consentiti tranne quelli che blocchi qui sotto."
+  },
+  "options_sitePermsTitle": {
+    "message": "Autorizzazioni dei siti"
+  },
+  "options_blockedSitesTitle": {
+    "message": "Siti bloccati"
+  },
+  "options_sitePermsDesc": {
+    "message": "Consenti o blocca siti specifici in anticipo."
+  },
+  "options_blockedSitesDesc": {
+    "message": "I siti elencati qui non possono mai usare il selettore."
+  },
+  "options_allow": {
+    "message": "Consenti"
+  },
+  "options_block": {
+    "message": "Blocca"
+  },
+  "options_unblock": {
+    "message": "Sblocca"
+  },
+  "options_reset": {
+    "message": "Reimposta"
+  },
+  "options_allowed": {
+    "message": "Consentito"
+  },
+  "options_blocked": {
+    "message": "Bloccato"
+  },
+  "options_loading": {
+    "message": "Caricamento…"
+  },
+  "options_noBlocked": {
+    "message": "Nessun sito bloccato per ora."
+  },
+  "options_noConfigured": {
+    "message": "Nessun sito configurato per ora."
+  },
+  "options_invalidOrigin": {
+    "message": "Inserisci un'origine valida, ad es. https://example.com"
+  },
+  "options_removeDecision": {
+    "message": "Rimuovi questa decisione"
+  },
+  "options_appearanceTitle": {
+    "message": "Aspetto"
+  },
+  "options_appearanceDesc": {
+    "message": "Tema dell'interfaccia di OpenPicker."
+  },
+  "options_selectorRulesTitle": {
+    "message": "Regole del selettore"
+  },
+  "options_selectorRulesDesc": {
+    "message": "Controlla come vengono costruiti i selettori: globale o per sito."
+  },
+  "options_globalDefault": {
+    "message": "Predefinito globale"
+  },
+  "options_perSiteRules": {
+    "message": "Regole per sito"
+  },
+  "options_perSiteRulesDesc": {
+    "message": "Sovrascrivi il predefinito globale per siti specifici."
+  },
+  "options_noSiteRules": {
+    "message": "Ancora nessuna regola per sito."
+  },
+  "options_add": {
+    "message": "Aggiungi"
+  },
+  "options_edit": {
+    "message": "Modifica"
+  },
+  "options_done": {
+    "message": "Fatto"
+  },
+  "picker_hoverHint": {
+    "message": "Muovi il mouse e fai clic su un elemento per selezionarlo."
+  },
+  "picker_noMatchingTarget": {
+    "message": "Impossibile selezionare questo elemento"
+  },
+  "picker_ruleMismatch": {
+    "message": "Questo selettore non rispetta le tue regole"
+  },
+  "picker_ruleEmpty": {
+    "message": "Nessun selettore rispetta le tue regole: scegli un altro elemento o allenta le regole"
+  },
+  "picker_selectorLabel": {
+    "message": "Selettore"
+  },
+  "picker_hoverPlaceholder": {
+    "message": "passa il cursore su un elemento…"
+  },
+  "picker_invalidSelector": {
+    "message": "Selettore non valido"
+  },
+  "picker_matchCount": {
+    "message": "$1 corrispondenza | $1 corrispondenze"
+  },
+  "picker_elementLabel": {
+    "message": "Elemento"
+  },
+  "picker_attributesLabel": {
+    "message": "Attributi"
+  },
+  "picker_filterAttrs": {
+    "message": "Filtra gli attributi…"
+  },
+  "picker_noMatchingAttrs": {
+    "message": "Nessun attributo corrispondente."
+  },
+  "picker_showMore": {
+    "message": "Mostra altro"
+  },
+  "picker_showLess": {
+    "message": "Mostra meno"
+  },
+  "picker_empty": {
+    "message": "vuoto"
+  },
+  "picker_paused": {
+    "message": "La selezione è in pausa. Vai alla pagina che contiene il tuo elemento, poi riprendi."
+  },
+  "picker_resume": {
+    "message": "Riprendi la selezione"
+  },
+  "picker_ok": {
+    "message": "OK"
+  },
+  "picker_copy": {
+    "message": "Copia"
+  },
+  "picker_copied": {
+    "message": "Copiato"
+  },
+  "picker_noContent": {
+    "message": "Nessun contenuto"
+  },
+  "picker_swapSide": {
+    "message": "Cambia lato"
+  },
+  "picker_navigateAway": {
+    "message": "Vai a un'altra pagina"
+  },
+  "picker_selectorSettings": {
+    "message": "Impostazioni del selettore"
+  },
+  "picker_close": {
+    "message": "Chiudi"
+  },
+  "picker_pickAnother": {
+    "message": "Scegli un altro elemento"
+  },
+  "picker_prevSibling": {
+    "message": "Fratello precedente"
+  },
+  "picker_nextSibling": {
+    "message": "Fratello successivo"
+  },
+  "picker_scrollIntoView": {
+    "message": "Scorri fino a renderlo visibile"
+  },
+  "picker_selectParent": {
+    "message": "Seleziona l'elemento padre"
+  },
+  "picker_selectFirstChild": {
+    "message": "Seleziona il primo figlio"
+  },
+  "settings_allowSelectorTypes": {
+    "message": "Tipi di selettore consentiti"
+  },
+  "settings_enableId": {
+    "message": "Abilita ID"
+  },
+  "settings_enableClass": {
+    "message": "Abilita Class"
+  },
+  "settings_enableAttribute": {
+    "message": "Abilita attributo"
+  },
+  "settings_enableTag": {
+    "message": "Abilita tag"
+  },
+  "settings_allow": {
+    "message": "Consenti"
+  },
+  "settings_ignore": {
+    "message": "Ignora"
+  },
+  "settings_regexHint": {
+    "message": "Regex dei nomi. Consenti = solo corrispondenze; Ignora = mai; vuoto = automatico."
+  },
+  "settings_lockedBySite": {
+    "message": "Bloccato dal sito"
+  },
+  "settings_requireUnique": {
+    "message": "Scegli un elemento che corrisponda a uno solo."
+  }
+}

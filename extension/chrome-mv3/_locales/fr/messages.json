@@ -1,0 +1,251 @@
+{
+  "extDescription": {
+    "message": "Sélecteur d'éléments CSS open source."
+  },
+  "brandTagline": {
+    "message": "Choisissez un élément, obtenez son sélecteur"
+  },
+  "popup_pickThisPage": {
+    "message": "Choisir un élément sur cette page"
+  },
+  "popup_settings": {
+    "message": "Paramètres"
+  },
+  "popup_docs": {
+    "message": "Docs"
+  },
+  "theme_light": {
+    "message": "Clair"
+  },
+  "theme_dark": {
+    "message": "Sombre"
+  },
+  "theme_system": {
+    "message": "Système"
+  },
+  "options_authTitle": {
+    "message": "Autorisation"
+  },
+  "options_authDesc": {
+    "message": "Choisissez quels sites peuvent utiliser le sélecteur d'éléments."
+  },
+  "options_allowAll": {
+    "message": "Tout autoriser"
+  },
+  "options_allowAllNote": {
+    "message": "N'importe quel site peut utiliser le sélecteur. Rien n'est capturé tant que vous n'avez pas choisi et confirmé."
+  },
+  "options_ask": {
+    "message": "Demander pour chaque site"
+  },
+  "options_askNote": {
+    "message": "Chaque site est interrogé la première fois ; votre choix est mémorisé dans la liste ci-dessous."
+  },
+  "options_blocklist": {
+    "message": "Liste de blocage"
+  },
+  "options_blocklistNote": {
+    "message": "Tous les sites sont autorisés, sauf ceux que vous bloquez ci-dessous."
+  },
+  "options_sitePermsTitle": {
+    "message": "Autorisations des sites"
+  },
+  "options_blockedSitesTitle": {
+    "message": "Sites bloqués"
+  },
+  "options_sitePermsDesc": {
+    "message": "Autorisez ou bloquez des sites précis à l'avance."
+  },
+  "options_blockedSitesDesc": {
+    "message": "Les sites listés ici ne peuvent jamais utiliser le sélecteur."
+  },
+  "options_allow": {
+    "message": "Autoriser"
+  },
+  "options_block": {
+    "message": "Bloquer"
+  },
+  "options_unblock": {
+    "message": "Débloquer"
+  },
+  "options_reset": {
+    "message": "Réinitialiser"
+  },
+  "options_allowed": {
+    "message": "Autorisé"
+  },
+  "options_blocked": {
+    "message": "Bloqué"
+  },
+  "options_loading": {
+    "message": "Chargement…"
+  },
+  "options_noBlocked": {
+    "message": "Aucun site bloqué pour l'instant."
+  },
+  "options_noConfigured": {
+    "message": "Aucun site configuré pour l'instant."
+  },
+  "options_invalidOrigin": {
+    "message": "Saisissez une origine valide, p. ex. https://example.com"
+  },
+  "options_removeDecision": {
+    "message": "Supprimer cette décision"
+  },
+  "options_appearanceTitle": {
+    "message": "Apparence"
+  },
+  "options_appearanceDesc": {
+    "message": "Thème de l'interface d'OpenPicker."
+  },
+  "options_selectorRulesTitle": {
+    "message": "Règles de sélecteur"
+  },
+  "options_selectorRulesDesc": {
+    "message": "Contrôlez la construction des sélecteurs : globalement ou par site."
+  },
+  "options_globalDefault": {
+    "message": "Valeur par défaut globale"
+  },
+  "options_perSiteRules": {
+    "message": "Règles par site"
+  },
+  "options_perSiteRulesDesc": {
+    "message": "Remplacez la valeur par défaut globale pour des sites précis."
+  },
+  "options_noSiteRules": {
+    "message": "Aucune règle par site pour l'instant."
+  },
+  "options_add": {
+    "message": "Ajouter"
+  },
+  "options_edit": {
+    "message": "Modifier"
+  },
+  "options_done": {
+    "message": "Terminé"
+  },
+  "picker_hoverHint": {
+    "message": "Déplacez la souris et cliquez sur un élément pour le sélectionner."
+  },
+  "picker_noMatchingTarget": {
+    "message": "Impossible de sélectionner cet élément"
+  },
+  "picker_ruleMismatch": {
+    "message": "Ce sélecteur ne respecte pas vos règles"
+  },
+  "picker_ruleEmpty": {
+    "message": "Aucun sélecteur ne respecte vos règles — choisissez un autre élément ou assouplissez les règles"
+  },
+  "picker_selectorLabel": {
+    "message": "Sélecteur"
+  },
+  "picker_hoverPlaceholder": {
+    "message": "survolez un élément…"
+  },
+  "picker_invalidSelector": {
+    "message": "Sélecteur invalide"
+  },
+  "picker_matchCount": {
+    "message": "$1 correspondance | $1 correspondances"
+  },
+  "picker_elementLabel": {
+    "message": "Élément"
+  },
+  "picker_attributesLabel": {
+    "message": "Attributs"
+  },
+  "picker_filterAttrs": {
+    "message": "Filtrer les attributs…"
+  },
+  "picker_noMatchingAttrs": {
+    "message": "Aucun attribut correspondant."
+  },
+  "picker_showMore": {
+    "message": "Afficher plus"
+  },
+  "picker_showLess": {
+    "message": "Afficher moins"
+  },
+  "picker_empty": {
+    "message": "vide"
+  },
+  "picker_paused": {
+    "message": "La sélection est en pause. Allez sur la page qui contient votre élément, puis reprenez."
+  },
+  "picker_resume": {
+    "message": "Reprendre la sélection"
+  },
+  "picker_ok": {
+    "message": "OK"
+  },
+  "picker_copy": {
+    "message": "Copier"
+  },
+  "picker_copied": {
+    "message": "Copié"
+  },
+  "picker_noContent": {
+    "message": "Aucun contenu"
+  },
+  "picker_swapSide": {
+    "message": "Changer de côté"
+  },
+  "picker_navigateAway": {
+    "message": "Aller sur une autre page"
+  },
+  "picker_selectorSettings": {
+    "message": "Réglages du sélecteur"
+  },
+  "picker_close": {
+    "message": "Fermer"
+  },
+  "picker_pickAnother": {
+    "message": "Choisir un autre élément"
+  },
+  "picker_prevSibling": {
+    "message": "Frère précédent"
+  },
+  "picker_nextSibling": {
+    "message": "Frère suivant"
+  },
+  "picker_scrollIntoView": {
+    "message": "Faire défiler jusqu'à l'élément"
+  },
+  "picker_selectParent": {
+    "message": "Sélectionner le parent"
+  },
+  "picker_selectFirstChild": {
+    "message": "Sélectionner le premier enfant"
+  },
+  "settings_allowSelectorTypes": {
+    "message": "Types de sélecteur autorisés"
+  },
+  "settings_enableId": {
+    "message": "Activer l'ID"
+  },
+  "settings_enableClass": {
+    "message": "Activer Class"
+  },
+  "settings_enableAttribute": {
+    "message": "Activer l'attribut"
+  },
+  "settings_enableTag": {
+    "message": "Activer la balise"
+  },
+  "settings_allow": {
+    "message": "Autoriser"
+  },
+  "settings_ignore": {
+    "message": "Ignorer"
+  },
+  "settings_regexHint": {
+    "message": "Regex de noms. Autoriser = uniquement les correspondances ; Ignorer = jamais ; vide = auto."
+  },
+  "settings_lockedBySite": {
+    "message": "Verrouillé par le site"
+  },
+  "settings_requireUnique": {
+    "message": "Choisissez un élément qui correspond à un seul."
+  }
+}

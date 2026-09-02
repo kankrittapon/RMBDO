@@ -1,0 +1,251 @@
+{
+  "extDescription": {
+    "message": "Otwartoźródłowy selektor elementów CSS."
+  },
+  "brandTagline": {
+    "message": "Wybierz element i uzyskaj jego selektor"
+  },
+  "popup_pickThisPage": {
+    "message": "Wybierz element na tej stronie"
+  },
+  "popup_settings": {
+    "message": "Ustawienia"
+  },
+  "popup_docs": {
+    "message": "Dokumentacja"
+  },
+  "theme_light": {
+    "message": "Jasny"
+  },
+  "theme_dark": {
+    "message": "Ciemny"
+  },
+  "theme_system": {
+    "message": "Systemowy"
+  },
+  "options_authTitle": {
+    "message": "Autoryzacja"
+  },
+  "options_authDesc": {
+    "message": "Wybierz, które witryny mogą używać selektora elementów."
+  },
+  "options_allowAll": {
+    "message": "Zezwól na wszystkie"
+  },
+  "options_allowAllNote": {
+    "message": "Każda witryna może używać selektora. Nic nie jest przechwytywane, dopóki nie wybierzesz i nie potwierdzisz."
+  },
+  "options_ask": {
+    "message": "Pytaj na każdej witrynie"
+  },
+  "options_askNote": {
+    "message": "Każda witryna jest pytana za pierwszym razem; Twój wybór jest zapamiętywany na liście poniżej."
+  },
+  "options_blocklist": {
+    "message": "Lista blokowania"
+  },
+  "options_blocklistNote": {
+    "message": "Dozwolone są wszystkie witryny z wyjątkiem tych, które zablokujesz poniżej."
+  },
+  "options_sitePermsTitle": {
+    "message": "Uprawnienia witryn"
+  },
+  "options_blockedSitesTitle": {
+    "message": "Zablokowane witryny"
+  },
+  "options_sitePermsDesc": {
+    "message": "Z wyprzedzeniem zezwalaj na konkretne witryny lub je blokuj."
+  },
+  "options_blockedSitesDesc": {
+    "message": "Witryny z tej listy nigdy nie mogą używać selektora."
+  },
+  "options_allow": {
+    "message": "Zezwól"
+  },
+  "options_block": {
+    "message": "Zablokuj"
+  },
+  "options_unblock": {
+    "message": "Odblokuj"
+  },
+  "options_reset": {
+    "message": "Resetuj"
+  },
+  "options_allowed": {
+    "message": "Dozwolona"
+  },
+  "options_blocked": {
+    "message": "Zablokowana"
+  },
+  "options_loading": {
+    "message": "Ładowanie…"
+  },
+  "options_noBlocked": {
+    "message": "Brak zablokowanych witryn."
+  },
+  "options_noConfigured": {
+    "message": "Brak skonfigurowanych witryn."
+  },
+  "options_invalidOrigin": {
+    "message": "Wpisz prawidłowe źródło, np. https://example.com"
+  },
+  "options_removeDecision": {
+    "message": "Usuń tę decyzję"
+  },
+  "options_appearanceTitle": {
+    "message": "Wygląd"
+  },
+  "options_appearanceDesc": {
+    "message": "Motyw własnego interfejsu OpenPicker."
+  },
+  "options_selectorRulesTitle": {
+    "message": "Reguły selektora"
+  },
+  "options_selectorRulesDesc": {
+    "message": "Steruj sposobem budowania selektorów — globalnie lub dla witryny."
+  },
+  "options_globalDefault": {
+    "message": "Domyślne globalne"
+  },
+  "options_perSiteRules": {
+    "message": "Reguły dla witryn"
+  },
+  "options_perSiteRulesDesc": {
+    "message": "Zastąp domyślne globalne dla wybranych witryn."
+  },
+  "options_noSiteRules": {
+    "message": "Brak reguł dla witryn."
+  },
+  "options_add": {
+    "message": "Dodaj"
+  },
+  "options_edit": {
+    "message": "Edytuj"
+  },
+  "options_done": {
+    "message": "Gotowe"
+  },
+  "picker_hoverHint": {
+    "message": "Przesuń myszą i kliknij element, aby go wybrać."
+  },
+  "picker_noMatchingTarget": {
+    "message": "Nie można wybrać tego elementu"
+  },
+  "picker_ruleMismatch": {
+    "message": "Ten selektor nie spełnia Twoich reguł"
+  },
+  "picker_ruleEmpty": {
+    "message": "Żaden selektor nie spełnia reguł — wybierz inny element lub poluzuj reguły"
+  },
+  "picker_selectorLabel": {
+    "message": "Selektor"
+  },
+  "picker_hoverPlaceholder": {
+    "message": "najedź na element…"
+  },
+  "picker_invalidSelector": {
+    "message": "Nieprawidłowy selektor"
+  },
+  "picker_matchCount": {
+    "message": "$1 dopasowanie | $1 dopasowań"
+  },
+  "picker_elementLabel": {
+    "message": "Element"
+  },
+  "picker_attributesLabel": {
+    "message": "Atrybuty"
+  },
+  "picker_filterAttrs": {
+    "message": "Filtruj atrybuty…"
+  },
+  "picker_noMatchingAttrs": {
+    "message": "Brak pasujących atrybutów."
+  },
+  "picker_showMore": {
+    "message": "Pokaż więcej"
+  },
+  "picker_showLess": {
+    "message": "Pokaż mniej"
+  },
+  "picker_empty": {
+    "message": "puste"
+  },
+  "picker_paused": {
+    "message": "Wybieranie jest wstrzymane. Przejdź na stronę z Twoim elementem, a następnie wznów."
+  },
+  "picker_resume": {
+    "message": "Wznów wybieranie"
+  },
+  "picker_ok": {
+    "message": "OK"
+  },
+  "picker_copy": {
+    "message": "Kopiuj"
+  },
+  "picker_copied": {
+    "message": "Skopiowano"
+  },
+  "picker_noContent": {
+    "message": "Brak treści"
+  },
+  "picker_swapSide": {
+    "message": "Zamień stronę"
+  },
+  "picker_navigateAway": {
+    "message": "Przejdź na inną stronę"
+  },
+  "picker_selectorSettings": {
+    "message": "Ustawienia selektora"
+  },
+  "picker_close": {
+    "message": "Zamknij"
+  },
+  "picker_pickAnother": {
+    "message": "Wybierz inny element"
+  },
+  "picker_prevSibling": {
+    "message": "Poprzedni element równorzędny"
+  },
+  "picker_nextSibling": {
+    "message": "Następny element równorzędny"
+  },
+  "picker_scrollIntoView": {
+    "message": "Przewiń do widoku"
+  },
+  "picker_selectParent": {
+    "message": "Wybierz element nadrzędny"
+  },
+  "picker_selectFirstChild": {
+    "message": "Wybierz pierwszy element podrzędny"
+  },
+  "settings_allowSelectorTypes": {
+    "message": "Dozwolone typy selektora"
+  },
+  "settings_enableId": {
+    "message": "Włącz ID"
+  },
+  "settings_enableClass": {
+    "message": "Włącz Class"
+  },
+  "settings_enableAttribute": {
+    "message": "Włącz atrybut"
+  },
+  "settings_enableTag": {
+    "message": "Włącz tag"
+  },
+  "settings_allow": {
+    "message": "Zezwól"
+  },
+  "settings_ignore": {
+    "message": "Ignoruj"
+  },
+  "settings_regexHint": {
+    "message": "Regex nazw. Zezwól = tylko dopasowania; Ignoruj = nigdy; puste = automatycznie."
+  },
+  "settings_lockedBySite": {
+    "message": "Zablokowane przez witrynę"
+  },
+  "settings_requireUnique": {
+    "message": "Wybierz element pasujący do dokładnie jednego."
+  }
+}

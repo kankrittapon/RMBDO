@@ -1,0 +1,251 @@
+{
+  "extDescription": {
+    "message": "Selector de elementos CSS de código abierto."
+  },
+  "brandTagline": {
+    "message": "Elige un elemento y obtén su selector"
+  },
+  "popup_pickThisPage": {
+    "message": "Elegir un elemento en esta página"
+  },
+  "popup_settings": {
+    "message": "Ajustes"
+  },
+  "popup_docs": {
+    "message": "Docs"
+  },
+  "theme_light": {
+    "message": "Claro"
+  },
+  "theme_dark": {
+    "message": "Oscuro"
+  },
+  "theme_system": {
+    "message": "Sistema"
+  },
+  "options_authTitle": {
+    "message": "Autorización"
+  },
+  "options_authDesc": {
+    "message": "Elige qué sitios pueden usar el selector de elementos."
+  },
+  "options_allowAll": {
+    "message": "Permitir todos"
+  },
+  "options_allowAllNote": {
+    "message": "Cualquier sitio puede usar el selector. No se captura nada hasta que eliges y confirmas."
+  },
+  "options_ask": {
+    "message": "Preguntar en cada sitio"
+  },
+  "options_askNote": {
+    "message": "Se pregunta en cada sitio la primera vez; tu elección se recuerda en la lista de abajo."
+  },
+  "options_blocklist": {
+    "message": "Lista de bloqueo"
+  },
+  "options_blocklistNote": {
+    "message": "Todos los sitios están permitidos excepto los que bloquees abajo."
+  },
+  "options_sitePermsTitle": {
+    "message": "Permisos de sitios"
+  },
+  "options_blockedSitesTitle": {
+    "message": "Sitios bloqueados"
+  },
+  "options_sitePermsDesc": {
+    "message": "Permite o bloquea sitios concretos por adelantado."
+  },
+  "options_blockedSitesDesc": {
+    "message": "Los sitios de esta lista nunca pueden usar el selector."
+  },
+  "options_allow": {
+    "message": "Permitir"
+  },
+  "options_block": {
+    "message": "Bloquear"
+  },
+  "options_unblock": {
+    "message": "Desbloquear"
+  },
+  "options_reset": {
+    "message": "Restablecer"
+  },
+  "options_allowed": {
+    "message": "Permitido"
+  },
+  "options_blocked": {
+    "message": "Bloqueado"
+  },
+  "options_loading": {
+    "message": "Cargando…"
+  },
+  "options_noBlocked": {
+    "message": "Aún no hay sitios bloqueados."
+  },
+  "options_noConfigured": {
+    "message": "Aún no hay sitios configurados."
+  },
+  "options_invalidOrigin": {
+    "message": "Introduce un origen válido, p. ej. https://example.com"
+  },
+  "options_removeDecision": {
+    "message": "Eliminar esta decisión"
+  },
+  "options_appearanceTitle": {
+    "message": "Apariencia"
+  },
+  "options_appearanceDesc": {
+    "message": "Tema de la propia interfaz de OpenPicker."
+  },
+  "options_selectorRulesTitle": {
+    "message": "Reglas de selector"
+  },
+  "options_selectorRulesDesc": {
+    "message": "Controla cómo se construyen los selectores: global o por sitio."
+  },
+  "options_globalDefault": {
+    "message": "Valor global por defecto"
+  },
+  "options_perSiteRules": {
+    "message": "Reglas por sitio"
+  },
+  "options_perSiteRulesDesc": {
+    "message": "Anula el valor global por defecto para sitios concretos."
+  },
+  "options_noSiteRules": {
+    "message": "Aún no hay reglas por sitio."
+  },
+  "options_add": {
+    "message": "Añadir"
+  },
+  "options_edit": {
+    "message": "Editar"
+  },
+  "options_done": {
+    "message": "Listo"
+  },
+  "picker_hoverHint": {
+    "message": "Mueve el ratón y haz clic en un elemento para seleccionarlo."
+  },
+  "picker_noMatchingTarget": {
+    "message": "No se puede seleccionar este elemento"
+  },
+  "picker_ruleMismatch": {
+    "message": "Este selector no cumple tus reglas"
+  },
+  "picker_ruleEmpty": {
+    "message": "Ningún selector cumple tus reglas: elige otro elemento o relaja las reglas"
+  },
+  "picker_selectorLabel": {
+    "message": "Selector"
+  },
+  "picker_hoverPlaceholder": {
+    "message": "pasa el cursor sobre un elemento…"
+  },
+  "picker_invalidSelector": {
+    "message": "Selector no válido"
+  },
+  "picker_matchCount": {
+    "message": "$1 coincidencia | $1 coincidencias"
+  },
+  "picker_elementLabel": {
+    "message": "Elemento"
+  },
+  "picker_attributesLabel": {
+    "message": "Atributos"
+  },
+  "picker_filterAttrs": {
+    "message": "Filtrar atributos…"
+  },
+  "picker_noMatchingAttrs": {
+    "message": "No hay atributos coincidentes."
+  },
+  "picker_showMore": {
+    "message": "Mostrar más"
+  },
+  "picker_showLess": {
+    "message": "Mostrar menos"
+  },
+  "picker_empty": {
+    "message": "vacío"
+  },
+  "picker_paused": {
+    "message": "La selección está en pausa. Ve a la página que tiene tu elemento y luego reanuda."
+  },
+  "picker_resume": {
+    "message": "Reanudar selección"
+  },
+  "picker_ok": {
+    "message": "Aceptar"
+  },
+  "picker_copy": {
+    "message": "Copiar"
+  },
+  "picker_copied": {
+    "message": "Copiado"
+  },
+  "picker_noContent": {
+    "message": "Sin contenido"
+  },
+  "picker_swapSide": {
+    "message": "Cambiar de lado"
+  },
+  "picker_navigateAway": {
+    "message": "Ir a otra página"
+  },
+  "picker_selectorSettings": {
+    "message": "Ajustes del selector"
+  },
+  "picker_close": {
+    "message": "Cerrar"
+  },
+  "picker_pickAnother": {
+    "message": "Elegir otro elemento"
+  },
+  "picker_prevSibling": {
+    "message": "Hermano anterior"
+  },
+  "picker_nextSibling": {
+    "message": "Hermano siguiente"
+  },
+  "picker_scrollIntoView": {
+    "message": "Desplazar hasta verlo"
+  },
+  "picker_selectParent": {
+    "message": "Seleccionar el elemento padre"
+  },
+  "picker_selectFirstChild": {
+    "message": "Seleccionar el primer hijo"
+  },
+  "settings_allowSelectorTypes": {
+    "message": "Tipos de selector permitidos"
+  },
+  "settings_enableId": {
+    "message": "Activar ID"
+  },
+  "settings_enableClass": {
+    "message": "Activar Class"
+  },
+  "settings_enableAttribute": {
+    "message": "Activar atributo"
+  },
+  "settings_enableTag": {
+    "message": "Activar etiqueta"
+  },
+  "settings_allow": {
+    "message": "Permitir"
+  },
+  "settings_ignore": {
+    "message": "Ignorar"
+  },
+  "settings_regexHint": {
+    "message": "Regex de nombres. Permitir = solo coincidencias; Ignorar = nunca; vacío = automático."
+  },
+  "settings_lockedBySite": {
+    "message": "Bloqueado por el sitio"
+  },
+  "settings_requireUnique": {
+    "message": "Elige un elemento que coincida con exactamente uno."
+  }
+}
