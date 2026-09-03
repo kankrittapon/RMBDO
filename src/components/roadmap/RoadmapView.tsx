@@ -64,6 +64,12 @@ export const RoadmapView: React.FC<RoadmapViewProps> = ({ store }) => {
     if (node.id === 'cp_olvia_life') {
       return progressStats.olviaLife;
     }
+    if (node.id === 'cp_slumbering_armors') {
+      return progressStats.slumberingOrigin;
+    }
+    if (node.id === 'cp_kharazad_accessories') {
+      return progressStats.kharazad;
+    }
     if (node.id === 'cp_infinite_potions') {
       return progressStats.treasures;
     }

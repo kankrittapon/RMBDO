@@ -24,16 +24,30 @@ interface SovereignTrackerViewProps {
 export const SovereignTrackerView: React.FC<SovereignTrackerViewProps> = ({ store }) => {
   const { profile, setHyperboostClaim, resetCategory } = store;
 
+  // Rewritten 2026-09-03 to match the verified material chain (see the
+  // comment block at the top of hyperboostTasks.ts): 2x PEN Mainhand (1
+  // direct from the Olvia Combat Academy capstone + 1 upgraded from TET via
+  // hb_tet_mainhand_to_pen), 2x PEN Awakening (both direct from the
+  // Y-Challenge), 1x PEN Offhand + Gem of Twilight + Flame of Primordial
+  // (tracked as a single "ready" checkpoint since it's 3 different items,
+  // not 2 identical claims like the other two slots).
+  const combatAcademyCapstone = profile.olviaCombatTasks['oc_sovereign_preparation'] === 'COMPLETED';
+  const combatAcademyCapstoneClaim = {
+    claimed: combatAcademyCapstone,
+    used: false,
+    status: combatAcademyCapstone ? ('COMPLETED' as const) : ('UNKNOWN' as const)
+  };
+
   const bsMainClaims = [
-    profile.hyperboostClaims['hb_tet_bs_challenge'],
-    profile.hyperboostClaims['hb_olvia_welcome_pen_bs']
+    combatAcademyCapstoneClaim,
+    profile.hyperboostClaims['hb_tet_mainhand_to_pen']
   ];
   const bsAwakeningClaims = [
-    profile.hyperboostClaims['hb_pen_bs_lv61_challenge'],
-    profile.hyperboostClaims['hb_sovereign_awakening_ready']
+    profile.hyperboostClaims['hb_y_pen_awakening_1'],
+    profile.hyperboostClaims['hb_y_pen_awakening_2']
   ];
   const bsSubClaims = [
-    profile.hyperboostClaims['hb_olvia_combat_pen_bs']
+    profile.hyperboostClaims['hb_sovereign_sub_ready']
   ];
 
   const mainOwnedCount = bsMainClaims.filter((c) => c?.claimed).length;

@@ -8,6 +8,8 @@ import { DashboardView } from '@/components/dashboard/DashboardView';
 import { RoadmapView } from '@/components/roadmap/RoadmapView';
 import { OlviaCombatView } from '@/components/olvia/OlviaCombatView';
 import { OlviaLifeView } from '@/components/olvia/OlviaLifeView';
+import { SlumberingOriginView } from '@/components/gear/SlumberingOriginView';
+import { KharazadAccessoriesView } from '@/components/gear/KharazadAccessoriesView';
 import { GearPlannerView } from '@/components/gear/GearPlannerView';
 import { SovereignTrackerView } from '@/components/sovereign/SovereignTrackerView';
 import { SafetyView } from '@/components/safety/SafetyView';
@@ -67,6 +69,10 @@ export default function Home() {
         return <OlviaCombatView store={store} />;
       case 'olvia_life':
         return <OlviaLifeView store={store} />;
+      case 'slumbering_origin':
+        return <SlumberingOriginView store={store} />;
+      case 'kharazad':
+        return <KharazadAccessoriesView store={store} />;
       case 'gear':
         return <GearPlannerView store={store as any} />;
       case 'sovereign':

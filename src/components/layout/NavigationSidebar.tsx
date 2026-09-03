@@ -11,7 +11,8 @@ import {
   MapPin,
   BookOpen,
   Wheat,
-  Swords
+  Swords,
+  Gem
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -20,6 +21,8 @@ export type NavTabId =
   | 'roadmap'
   | 'olvia_combat'
   | 'olvia_life'
+  | 'slumbering_origin'
+  | 'kharazad'
   | 'gear'
   | 'sovereign'
   | 'safety'
@@ -39,9 +42,11 @@ interface NavigationSidebarProps {
 
 const navItems: Array<{ id: NavTabId; label: string; englishLabel: string; icon: React.ElementType; badge?: string; badgeColor?: string }> = [
   { id: 'dashboard', label: 'ภาพรวมบัญชี', englishLabel: 'Dashboard', icon: LayoutDashboard },
-  { id: 'roadmap', label: 'เส้นทางพัฒนา', englishLabel: 'Roadmap Timeline', icon: Milestone, badge: '9 จุดตรวจ' },
+  { id: 'roadmap', label: 'เส้นทางพัฒนา', englishLabel: 'Roadmap Timeline', icon: Milestone, badge: '10 จุดตรวจ' },
   { id: 'olvia_combat', label: 'Olvia สายต่อสู้', englishLabel: 'Olvia Combat', icon: Swords, badge: 'แนะนำ' },
   { id: 'olvia_life', label: 'Olvia สาย Life', englishLabel: 'Olvia Life', icon: Wheat },
+  { id: 'slumbering_origin', label: 'เกราะเทพผู้ล่วงลับ', englishLabel: 'Slumbering Origin', icon: Shield, badge: '4 ชิ้น' },
+  { id: 'kharazad', label: 'เครื่องประดับคาราซัด', englishLabel: 'Kharazad Accessories', icon: Gem, badge: '6 ชิ้น' },
   { id: 'gear', label: 'อุปกรณ์', englishLabel: 'Gear Planner', icon: Shield },
   { id: 'sovereign', label: 'ตีบวกราชัน', englishLabel: 'Sovereign Forge', icon: Zap, badge: 'สำคัญ', badgeColor: 'bg-red-500/20 text-red-400 border border-red-500/30' },
   { id: 'safety', label: 'ความปลอดภัยไอเทม', englishLabel: 'Item Safety', icon: ShieldAlert, badge: 'กันพลาด' },

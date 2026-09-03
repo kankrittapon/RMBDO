@@ -12,6 +12,8 @@ import { seasonTasksList } from '@/data/progression/seasonTasks';
 import { hyperboostTasksList } from '@/data/progression/hyperboostTasks';
 import { olviaCombatTasksList } from '@/data/progression/olviaCombatTasks';
 import { olviaLifeTasksList } from '@/data/progression/olviaLifeTasks';
+import { slumberingOriginPiecesList } from '@/data/gear/slumberingOriginArmor';
+import { kharazadPiecesList } from '@/data/gear/kharazadAccessories';
 import { masterCheckpointsList } from '@/data/progression/checkpoints';
 import { treasureList } from '@/data/treasures/treasureList';
 import { permanentJournals } from '@/data/permanent/journals';
@@ -59,6 +61,14 @@ export const initialEmptyProfile: PlayerProfile = {
     return acc;
   }, {} as Record<string, CheckpointStatus>),
   olviaLifeTasks: olviaLifeTasksList.reduce((acc, t) => {
+    acc[t.id] = 'UNKNOWN';
+    return acc;
+  }, {} as Record<string, CheckpointStatus>),
+  slumberingOriginTasks: slumberingOriginPiecesList.reduce((acc, t) => {
+    acc[t.id] = 'UNKNOWN';
+    return acc;
+  }, {} as Record<string, CheckpointStatus>),
+  kharazadTasks: kharazadPiecesList.reduce((acc, t) => {
     acc[t.id] = 'UNKNOWN';
     return acc;
   }, {} as Record<string, CheckpointStatus>),
@@ -141,6 +151,11 @@ export function useRoadmapStore() {
       if (v2Raw) {
         const parsed = JSON.parse(v2Raw);
         if (parsed.version === 'v2') {
+          // Backfill fields added after this profile was first saved
+          // (slumberingOriginTasks/kharazadTasks, added 2026-09-03) so older
+          // saved profiles don't crash on missing keys.
+          if (!parsed.slumberingOriginTasks) parsed.slumberingOriginTasks = initialEmptyProfile.slumberingOriginTasks;
+          if (!parsed.kharazadTasks) parsed.kharazadTasks = initialEmptyProfile.kharazadTasks;
           setProfile(parsed);
         }
       }
@@ -249,6 +264,26 @@ export function useRoadmapStore() {
     }));
   }, []);
 
+  const setSlumberingOriginTaskStatus = useCallback((taskId: string, status: CheckpointStatus) => {
+    setProfile((prev) => ({
+      ...prev,
+      slumberingOriginTasks: {
+        ...prev.slumberingOriginTasks,
+        [taskId]: status
+      }
+    }));
+  }, []);
+
+  const setKharazadTaskStatus = useCallback((taskId: string, status: CheckpointStatus) => {
+    setProfile((prev) => ({
+      ...prev,
+      kharazadTasks: {
+        ...prev.kharazadTasks,
+        [taskId]: status
+      }
+    }));
+  }, []);
+
   const setJournalChapterStatus = useCallback((chapterId: string, status: CheckpointStatus) => {
     setProfile((prev) => ({
       ...prev,
@@ -294,7 +329,7 @@ export function useRoadmapStore() {
   }, []);
 
   // Category Resets
-  const resetCategory = useCallback((category: 'SEASON' | 'HYPERBOOST' | 'OLVIA_COMBAT' | 'OLVIA_LIFE' | 'GEAR' | 'TREASURES' | 'ALL') => {
+  const resetCategory = useCallback((category: 'SEASON' | 'HYPERBOOST' | 'OLVIA_COMBAT' | 'OLVIA_LIFE' | 'SLUMBERING_ORIGIN' | 'KHARAZAD' | 'GEAR' | 'TREASURES' | 'ALL') => {
     setProfile((prev) => {
       switch (category) {
         case 'SEASON':
@@ -305,6 +340,10 @@ export function useRoadmapStore() {
           return { ...prev, olviaCombatTasks: initialEmptyProfile.olviaCombatTasks };
         case 'OLVIA_LIFE':
           return { ...prev, olviaLifeTasks: initialEmptyProfile.olviaLifeTasks };
+        case 'SLUMBERING_ORIGIN':
+          return { ...prev, slumberingOriginTasks: initialEmptyProfile.slumberingOriginTasks };
+        case 'KHARAZAD':
+          return { ...prev, kharazadTasks: initialEmptyProfile.kharazadTasks };
         case 'GEAR':
           return { ...prev, gear: initialEmptyProfile.gear };
         case 'TREASURES':
@@ -390,6 +429,16 @@ export function useRoadmapStore() {
     const lifeCompleted = Object.values(profile.olviaLifeTasks).filter((s) => s === 'COMPLETED').length;
     const lifeUnknown = Object.values(profile.olviaLifeTasks).filter((s) => s === 'UNKNOWN').length;
 
+    // Slumbering Origin armor (4 pieces via Black Spirit Support quests)
+    const slumberingOriginTotal = slumberingOriginPiecesList.length;
+    const slumberingOriginCompleted = Object.values(profile.slumberingOriginTasks).filter((s) => s === 'COMPLETED').length;
+    const slumberingOriginUnknown = Object.values(profile.slumberingOriginTasks).filter((s) => s === 'UNKNOWN').length;
+
+    // Kharazad accessories (6 pieces + OCT upgrade via Alustin's Support)
+    const kharazadTotal = kharazadPiecesList.length;
+    const kharazadCompleted = Object.values(profile.kharazadTasks).filter((s) => s === 'COMPLETED').length;
+    const kharazadUnknown = Object.values(profile.kharazadTasks).filter((s) => s === 'UNKNOWN').length;
+
     // Treasures
     const treasureTotal = Object.keys(profile.treasurePieces).length;
     const treasureCompleted = Object.values(profile.treasurePieces).filter(Boolean).length;
@@ -403,6 +452,8 @@ export function useRoadmapStore() {
       hyperboost: { completed: hbCompleted, total: hbTotal, unknown: hbUnknown, pct: Math.round((hbCompleted / hbTotal) * 100) },
       olviaCombat: { completed: combatCompleted, total: combatTotal, unknown: combatUnknown, pct: Math.round((combatCompleted / combatTotal) * 100) },
       olviaLife: { completed: lifeCompleted, total: lifeTotal, unknown: lifeUnknown, pct: Math.round((lifeCompleted / lifeTotal) * 100) },
+      slumberingOrigin: { completed: slumberingOriginCompleted, total: slumberingOriginTotal, unknown: slumberingOriginUnknown, pct: Math.round((slumberingOriginCompleted / slumberingOriginTotal) * 100) },
+      kharazad: { completed: kharazadCompleted, total: kharazadTotal, unknown: kharazadUnknown, pct: Math.round((kharazadCompleted / kharazadTotal) * 100) },
       treasures: { completed: treasureCompleted, total: treasureTotal, pct: Math.round((treasureCompleted / treasureTotal) * 100) },
       war: { completed: warCompleted, total: warTotal, pct: Math.round((warCompleted / warTotal) * 100) }
     };
@@ -434,7 +485,7 @@ export function useRoadmapStore() {
         name: '2. สถาบัน Olvia Academy & จัดการอาวุธดวงดาวรัตติกาล PEN',
         category: 'ACADEMY',
         badge: 'ไฮเปอร์บูสต์ / Olvia',
-        desc: 'เคลียร์ภารกิจสถาบัน รับกล่อง PEN Blackstar #1, #2, #3 และหัวใจของกามอส'
+        desc: 'เคลียร์ภารกิจสถาบัน รับกล่อง PEN/TET Blackstar จากภารกิจท้าทาย Y และ Combat Academy Capstone พร้อมหัวใจของกามอส'
       };
     }
     return {
@@ -506,6 +557,12 @@ export function useRoadmapStore() {
     if (progressStats.olviaLife.unknown > 0) {
       items.push({ id: 'life_unknown', title: `แบบฝึกหัด Olvia สาย Life Skill ยังไม่ได้ตรวจสอบ (${progressStats.olviaLife.unknown} ข้อ)`, category: 'Olvia Life' });
     }
+    if (progressStats.slumberingOrigin.unknown > 0) {
+      items.push({ id: 'slumbering_origin_unknown', title: `ชุดเกราะ Slumbering Origin ยังไม่ได้ตรวจสอบ (${progressStats.slumberingOrigin.unknown} ชิ้น)`, category: 'เกราะเทพผู้ล่วงลับ' });
+    }
+    if (progressStats.kharazad.unknown > 0) {
+      items.push({ id: 'kharazad_unknown', title: `เครื่องประดับ Kharazad ยังไม่ได้ตรวจสอบ (${progressStats.kharazad.unknown} ชิ้น)`, category: 'เครื่องประดับคาราซัด' });
+    }
     return items;
   }, [profile.stats, progressStats]);
 
@@ -526,6 +583,8 @@ export function useRoadmapStore() {
     setHyperboostClaim,
     setOlviaCombatTaskStatus,
     setOlviaLifeTaskStatus,
+    setSlumberingOriginTaskStatus,
+    setKharazadTaskStatus,
     setJournalChapterStatus,
     toggleTreasurePiece,
     toggleWarReadinessCheck,

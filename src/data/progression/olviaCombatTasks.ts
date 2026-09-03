@@ -117,13 +117,13 @@ export const olviaCombatTasksList: OlviaCombatTaskItem[] = [
   },
   {
     id: "oc_sovereign_preparation",
-    title: "11. ภารกิจจัดเตรียมวัตถุดิบราชัน (Sovereign Weapon Synthesis Capstone)",
+    title: "11. จบคอร์ส Olvia Combat Academy (Combat Course Completion)",
     category: "CAPSTONE",
-    objective: "ครอบครอง PEN Blackstar 2 ชิ้น และทำเควสแท่นหลอม ณ ช่างตีเหล็กแห่งอรุณ",
-    reward: "กล่องเลือกอาวุธดวงดาวรัตติกาล PEN Blackstar Box #3 (Grand Finale)",
+    objective: "เคลียร์ภารกิจ Combat Course ครบทั้ง 11 ข้อ (ข้อ 1-10 ด้านบน) เพื่อสำเร็จการศึกษา",
+    reward: "PEN (V) Blackstar Mainhand x1 + TET (IV) Blackstar Mainhand x1 + Obsidian Hammer x15 + Gem of Twilight x1 + Darkstar Black Stone x1",
     isImportantReward: true,
     safetyTag: "DO_NOT_OPEN_YET",
-    importantNote: "อย่าเพิ่งเปิดกล่องทันทีจนกว่าจะตรวจเช็คว่าต้องการใช้เป็น Mainhand, Awakening หรือ Sub-weapon",
+    importantNote: "รางวัลนี้เป็นคนละชุดกับ PEN/TET Blackstar 3 ชิ้นที่ได้จากภารกิจท้าทาย Lv.61 (ปุ่ม Y) — รวมกันแล้วคือวัตถุดิบราชันครบชุด (ดูจุดตรวจ #2 Hyperboost) Obsidian Hammer x15 ใช้ตี TET Mainhand ให้เป็น PEN, Darkstar Black Stone ใช้กับ TET Offhand จากภารกิจ Y (ยืนยันรางวัลจาก blackdesertfoundry.com/new-player-guide, 2026-09-03)",
     order: 11
   }
 ];

@@ -45,6 +45,8 @@ export interface PlayerProfile {
   hyperboostClaims: Record<string, { claimed: boolean; used: boolean; status: CheckpointStatus }>;
   olviaCombatTasks: Record<string, CheckpointStatus>;
   olviaLifeTasks: Record<string, CheckpointStatus>;
+  slumberingOriginTasks: Record<string, CheckpointStatus>;
+  kharazadTasks: Record<string, CheckpointStatus>;
   journalChapters: Record<string, CheckpointStatus>;
   treasurePieces: Record<string, boolean>;
   warReadinessChecks: Record<string, boolean>;
