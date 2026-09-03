@@ -31,8 +31,25 @@ export interface FishingZoneRecord {
   dataSource: "live-click" | "unresolved"
 }
 
+// bdolytics has TWO inputs sharing this placeholder: the global nav search
+// (top-right, "Ctrl K") and the map's own Filters/search panel (docked at
+// the left edge). Picking .first() (DOM order) silently grabbed the global
+// nav one - it "worked" (real result counts came back) but those were
+// generic item-database matches with no zone/"Depth 4" rows at all, which
+// is why every run reported 0 zones with no error. The extension version
+// this was ported from explicitly sorts by bounding-box left position to
+// avoid exactly this; this port had dropped that and needs the same fix.
 async function searchInput(page: Page) {
-  return page.locator('input[placeholder="Search.."]').first()
+  const candidates = page.locator('input[placeholder="Search.."]')
+  const count = await candidates.count()
+  let leftmost: { index: number; left: number } | null = null
+  for (let i = 0; i < count; i++) {
+    const box = await candidates.nth(i).boundingBox()
+    if (!box) continue
+    if (!leftmost || box.x < leftmost.left) leftmost = { index: i, left: box.x }
+  }
+  if (!leftmost) return candidates.first()
+  return candidates.nth(leftmost.index)
 }
 
 async function resultTitles(page: Page): Promise<string[]> {
@@ -139,15 +156,22 @@ async function main() {
     // the openclick_private extension version which relied on the user having
     // already turned it on by hand. Without this, phase 1's searches return
     // plain item results with no zone rows at all (confirmed: 0 zones found
-    // on the first automated run before this fix was added).
+    // on the first automated run before this fix was added). The toggle
+    // button's active state uses `border-accent/25 bg-accent/10 opacity-100`
+    // vs `border-transparent bg-white/[0.04] opacity-60` when off (checked
+    // via debug script against the live class names, not guessed) - an
+    // earlier version of this check looked for 'orange'/'active' substrings
+    // that don't exist in bdolytics' actual classes, so it always fell
+    // through to clicking anyway (harmless from a fresh session, but wrong).
     const fishingToggle = page.getByText("Fishing Zones", { exact: true }).first()
     if (await fishingToggle.isVisible().catch(() => false)) {
-      const alreadyOn = await fishingToggle
-        .locator("xpath=ancestor::*[contains(@class,'orange') or contains(@class,'active')][1]")
+      const toggleButton = fishingToggle.locator("xpath=ancestor::button[1]")
+      const alreadyOn = await toggleButton
+        .locator("xpath=self::*[contains(@class,'accent')]")
         .count()
         .catch(() => 0)
       if (!alreadyOn) {
-        await fishingToggle.click()
+        await toggleButton.click()
         await politeDelay()
       }
     }
