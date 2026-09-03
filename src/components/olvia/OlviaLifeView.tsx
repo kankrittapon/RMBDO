@@ -36,8 +36,8 @@ export const OlviaLifeView: React.FC<OlviaLifeViewProps> = ({ store }) => {
     { id: 'training', name: 'ฝึกสัตว์' },
     { id: 'fishing', name: 'ตกปลา' },
     { id: 'farming', name: 'เพาะปลูก' },
-    { id: 'sailing', name: 'เดินเรือ' },
-    { id: 'bartering', name: 'แลกเปลี่ยนสินค้า' }
+    { id: 'sailing_barter', name: 'เดินเรือ/แลกเปลี่ยน' },
+    { id: 'family_reward', name: 'รางวัลรวม' }
   ];
 
   const filteredTasks = olviaLifeTasksList.filter((task) => {
@@ -57,10 +57,10 @@ export const OlviaLifeView: React.FC<OlviaLifeViewProps> = ({ store }) => {
               <span>Olvia Academy — สายอาชีพ (Life Skill Academy)</span>
             </div>
             <h1 className="text-lg md:text-xl font-heading font-bold text-text-primary">
-              หลักสูตรสายอาชีพ 9-10 สาขา & รางวัลจบครบคอร์ส
+              หลักสูตรสายอาชีพ 9 สาขา & รางวัลจบครบคอร์ส
             </h1>
             <p className="text-xs text-text-secondary mt-0.5">
-              ติ๊กเลือกคอร์สที่คุณทำสำเร็จแล้ว - รายละเอียดเควส/จำนวนของแต่ละคอร์สยังไม่มีแหล่งข้อมูลทางการยืนยัน ต้องเช็คในเกมจริง
+              ติ๊กเลือกขั้นตอนที่คุณทำสำเร็จแล้ว (สายเควส / Final Proof / รางวัลจบคอร์ส) เพื่อคำนวณความคืบหน้า
             </p>
           </div>
 

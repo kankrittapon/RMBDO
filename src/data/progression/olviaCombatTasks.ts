@@ -47,10 +47,10 @@ export const olviaCombatTasksList: OlviaCombatTaskItem[] = [
     title: "13. เคลม Family Rewards - Combat (หลังจบทั้ง Basic Tactics + Field Tactics)",
     category: "CAPSTONE",
     objective: "เคลียร์ Basic Tactics (12 เควส) และ Field Tactics (19 เควส) ให้ครบ แล้วกดเคลม 'Family Rewards - Combat' ในหน้าต่าง Olvia Academy",
-    reward: "PEN (V) Blackstar Mainhand x1 + TET (IV) Blackstar Mainhand x1 + Obsidian Hammer x15 + Gem of Twilight x1 + Darkstar Black Stone x1",
+    reward: "Choose Your PEN (V) Blackstar Weapon Box + Choose Your TET (IV) Blackstar Weapon Box + Darkstar Black Stone x1 (TET→PEN สำเร็จ 100%) + Choose Your PEN (V) Boss Defense Gear Box + Obsidian Hammer x12 + Gem of Twilight x1 + Inverted Heart of Garmoth x1 + Cron Stone x6,000 + Atanis' Element x100 + Essence of Dawn x60 + Marni's Unstable Fuel x200 + Advice of Valks +150/+180/+200/+250 + Patrigio's Pocket Watch + Old Moon Guild's Support Box x2 + Imp Boss's Knife ฯลฯ",
     isImportantReward: true,
     safetyTag: "DO_NOT_OPEN_YET",
-    importantNote: "รางวัลนี้เป็นคนละชุดกับ PEN/TET Blackstar 3 ชิ้นที่ได้จากภารกิจท้าทาย Lv.61 (ปุ่ม Y) — รวมกันแล้วคือวัตถุดิบราชันครบชุด (ดูจุดตรวจ #2 Hyperboost) Obsidian Hammer x15 ใช้ตี TET Mainhand ให้เป็น PEN, Darkstar Black Stone ใช้กับ TET Offhand จากภารกิจ Y (item breakdown ยืนยันจาก blackdesertfoundry.com/new-player-guide; ปุ่มเคลม 'Family Rewards - Combat' ยืนยันจากสกรีนช็อตในเกมจริงของผู้ใช้, 2026-09-03)",
+    importantNote: "แก้ไข 2026-09-03 ตามข้อมูล Class 3 ที่ผู้ใช้ทำ research มาละเอียด (Obsidian Hammer แก้จาก x15 เป็น x12 ตามของจริง Class 3) — รางวัลก้อนนี้แยกจาก PEN/TET Blackstar 3 ชิ้นที่ได้จากภารกิจท้าทาย Lv.61 (ปุ่ม Y) รวมกันแล้วคือวัตถุดิบราชันครบชุด (จุดตรวจ #2 Hyperboost) นอกจากนี้ PEN Boss Defense Gear Box และ Inverted Heart of Garmoth จากที่นี่ยังเชื่อมกับจุดตรวจ #6 Slumbering Origin ด้วย ต้องวางแผนเลือกให้ดี",
     order: 13
   }
 ];

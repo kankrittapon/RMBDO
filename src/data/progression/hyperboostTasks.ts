@@ -19,12 +19,12 @@ export interface HyperboostTaskItem {
 // Blackstar claim; it's actually 3 separate box claims). Full material
 // chain, cross-checked against olviaCombatTasks.ts's capstone reward
 // (oc_sovereign_preparation, which supplies the other PEN Mainhand + the
-// TET Mainhand + Obsidian Hammer x15 + Gem of Twilight + Darkstar Black
+// TET Mainhand + Obsidian Hammer x12 + Gem of Twilight + Darkstar Black
 // Stone that steps below consume):
 //
 //   Combat Course (see olviaCombatTasks.ts) -> PEN Mainhand x1, TET Mainhand x1
 //   Y-Challenge (this file, 3 claims)       -> PEN Awakening x2, TET Offhand x1
-//   Obsidian Hammer x15 (from Combat Course) -> upgrades TET Mainhand to PEN
+//   Obsidian Hammer x12 (from Combat Course) -> upgrades TET Mainhand to PEN
 //   Darkstar Black Stone x1 (from Combat Course) -> upgrades TET Offhand to PEN
 //   ------------------------------------------------------------------
 //   Final: PEN Mainhand x2, PEN Awakening x2, PEN Offhand x1
@@ -73,7 +73,7 @@ export const hyperboostTasksList: HyperboostTaskItem[] = [
     id: "hb_tet_mainhand_to_pen",
     title: "4. อัปเกรด TET Mainhand → PEN (จาก Combat Course)",
     category: "ENHANCEMENT",
-    description: "ใช้ Obsidian Hammer x15 (ได้จากจุดตรวจ #3 Olvia Combat Academy) ตี TET Blackstar Mainhand ให้เป็น PEN",
+    description: "ใช้ Obsidian Hammer x12 (ได้จากจุดตรวจ #3 Olvia Combat Academy) ตี TET Blackstar Mainhand ให้เป็น PEN",
     sourceType: "Enhancement Forge",
     targetSlot: "MAIN",
     rewardItem: "PEN (V) Blackstar Mainhand Weapon",
