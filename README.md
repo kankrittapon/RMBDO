@@ -35,12 +35,13 @@ src/app/api/grind-spots/  GET - real AP/DP/coordinates from Postgres (collector-
 src/app/api/fishing-spots/ GET - real Depth-4 fishing zone coordinates from Postgres
 src/app/api/market-items/ GET - real Central Market prices from Postgres (?q= to search)
 src/app/api/crafting-recipes/ GET - Cooking/Alchemy/Processing/Imperial Crates profit/hour ranking (?q=, ?category=)
-src/components/           All UI views (Dashboard, GrindSpotOptimizer, Roadmap, Treasures, Market, Crafting Profit, ...)
+src/app/api/player-settings/ GET/POST - your real Mastery per skill (Postgres, not localStorage - see Life Skill Hub below)
+src/components/           All UI views (Dashboard, GrindSpotOptimizer, Roadmap, Treasures, Market, Life Skill Hub, ...)
 src/data/                 Reference data - mixed trust, see "Data trust" below
 src/hooks/useRoadmapStore.ts  Client-side player state (localStorage)
 src/lib/db/               Postgres client (pool.ts) + typed queries (queries.ts)
 src/lib/intelligence/     Decision-layer engines (Location Engine v1) - not yet wired into any view
-schema/schema.sql         Postgres DDL (reference-data layer, incl. market_items, crafting_recipes)
+schema/schema.sql         Postgres DDL (reference-data layer, incl. market_items, crafting_recipes, player_settings)
 data/*.sql                Manually curated seed INSERTs
 collector/                Playwright scraper: fishing, grind spots, Central Market prices, crafting profit/hour
 scripts/                  DB migrate/normalize/cron entrypoint
@@ -58,56 +59,79 @@ extension/, and the openclick_private repo it's built from  Manual browser-exten
   `src/data/grind-spots/spots.ts` list, matched by name, with a "✓ DB"
   badge when a match exists.
 - **`MarketPriceView` (the "ตลาดกลาง" tab) reads live from `/api/market-items`**
-  — it's not a static-data view at all, just a price browser + shopping
-  cart over whatever `market_items` currently holds.
-- **`CraftingProfitView` (the "กำไร Life Skill" tab) reads live from
-  `/api/crafting-recipes`** — a Cooking/Alchemy/Processing/Imperial Crates
-  Silver/Hour ranking. This is the actual "Buy-vs-Farm for Life Skill"
-  feature: the number is scraped directly from bdolytics' own Crafting
-  Calculator output, not recomputed by RMBDO, because it depends on BDO's
-  unpublished mastery-speed/success-rate/market-tax formulas — see
-  **Known gaps** for exactly what that number does and doesn't mean.
-- Every other view (Treasures, Classes, Life Skills, War Readiness, Gear
-  Planner, Sovereign Forge) still renders entirely from static
-  `src/data/*` files. None of them have been cross-checked against a real
-  source the way Olvia/Hyperboost and the Central Market were — see
-  **Known gaps** below.
+  — a generic price browser + shopping cart over whatever `market_items`
+  currently holds. Explicitly **not** the app's main feature (the user
+  decides gear/item buy-vs-farm calls themselves) — kept as a plain lookup
+  tool, not positioned as a decision engine.
+- **`LifeSkillHubView` (the "Life Skill Hub" tab, first item in the nav) is
+  the app's main feature** — "what should I do today" for
+  Cooking/Alchemy/Processing/Imperial Crates. It reads live from
+  `/api/crafting-recipes` (Silver/Hour per recipe, scraped directly from
+  bdolytics' own Crafting Calculator, never recomputed locally — that
+  needs BDO's unpublished mastery-speed/success-rate/market-tax formulas)
+  and `/api/player-settings` (your real Mastery per skill, which you enter
+  in this page). See **Personalizing the Life Skill ranking** below for
+  how the two connect, and **Known gaps** for what it still doesn't do
+  (no recipe-tree / buy-vs-gather-per-ingredient breakdown yet).
+- Every other view (Treasures, Classes, Life Skills dashboard, War
+  Readiness, Gear Planner, Sovereign Forge, Grind Spots) still renders
+  entirely from static `src/data/*` files or the collector-verified AP/DP
+  overlay. None of them have been cross-checked against a real source the
+  way Olvia/Hyperboost and the Central Market were — see **Known gaps**
+  below.
 - `src/lib/intelligence/locationEngine.ts` (Location Engine v1) is not
   called from any page yet.
+
+## Personalizing the Life Skill ranking
+
+The Life Skill Hub's Silver/Hour numbers can be **your own real numbers**,
+not bdolytics' generic default, but it's a two-step process, not instant:
+
+1. Enter your Cooking/Alchemy/Processing Mastery in the Life Skill Hub page
+   (saved to Postgres via `POST /api/player-settings` — Postgres, not
+   `localStorage`, because step 2 needs it and the collector is a
+   standalone cron process, not the browser).
+2. The next `npm run collect:crafting` run reads `player_settings`, opens
+   bdolytics' own Settings drawer, fills in your Mastery per skill (only
+   the ones you've set — anything left blank uses bdolytics' default), and
+   *then* scrapes — so bdolytics itself recomputes Silver/Hour using your
+   numbers. Each row is tagged `personalized: true` only for the category
+   whose own Mastery you actually set; other categories in that same run
+   stay `false` and keep showing bdolytics' default until you fill those
+   in too. Imperial Crates is always `personalized: false` — its recipes
+   bundle already-made Cooking/Alchemy/Processing goods, so no single
+   Mastery stat governs it.
+
+A change you make in the Life Skill Hub page takes effect on the **next**
+collector run, not immediately — the page shows a note when your settings
+are saved but the currently-displayed numbers still predate them.
 
 ## Known gaps / what's explicitly NOT done
 
 Listed here instead of silently left out, so a gap reads as "not built yet"
 rather than "forgotten":
 
-- **No automatic Buy-vs-Farm verdict.** `MarketPriceView` shows real
-  Central Market prices and a running cart total, but it does **not**
-  compute "you should buy this" or "you should farm this" for you. That
-  calculation needs the player's own silver/hour rate (how much they
-  actually earn farming per hour), which RMBDO doesn't track anywhere yet
-  — there's no grind-spot-to-silver-per-hour data, no session timer, no
-  player throughput input. Rather than invent a plausible-looking formula
-  with a made-up default rate (exactly the kind of fabricated-but-authoritative-looking
-  number this project has had to repeatedly strip out of `src/data/*` this
-  session), the UI just shows the total buy cost and tells the player to
-  compare it against their own time estimate by hand. Building the real
-  version needs, at minimum: a `player_state.silverPerHour` field (or a
-  derived one from logged sessions), and matching material names in
-  `market_items` against what a grind spot/quest/craft recipe actually
-  requires and in what quantity - none of which exists yet. This gap is
-  about *items/gear* specifically - Life Skill (Cooking/Alchemy/Processing)
-  now has its own ranking, see the next point.
-- **Crafting Profit ranking (`CraftingProfitView`) uses bdolytics' DEFAULT
-  settings, not your personal mastery/buffs.** The Silver/Hour number for
-  each recipe reflects bdolytics' own calculator at its default
-  configuration (~1000-1500 mastery in every skill, no Value Pack/Kama
-  Blessing/personal buffs applied) - useful as a general "which recipe is
-  worth doing" ranking, but not the exact silver/hour you'd personally
-  earn. Getting a personalized number would mean either scraping bdolytics
-  with a per-player settings profile (fragile - one extra collector run
-  per player-stat change) or implementing BDO's mastery-speed/success-rate/
-  tax formulas locally, which is exactly the "invent a formula" risk this
-  project avoids elsewhere. Left as a known limitation, not attempted.
+- **No automatic Buy-vs-Farm verdict for gear/items.** Explicitly out of
+  scope by the user's own call — they decide gear/item buy-vs-farm
+  themselves; `MarketPriceView` stays a plain price lookup, not a decision
+  engine. This gap is about *items/gear* specifically — Life Skill
+  (Cooking/Alchemy/Processing/Imperial Crates) has its own ranking in the
+  Life Skill Hub instead, see the next points.
+- **No recipe-tree / per-ingredient buy-vs-gather breakdown yet.** The
+  Life Skill Hub currently shows each recipe's *overall* Silver/Hour, not
+  a breakdown of "this ingredient — buy on market for X, or worth
+  gathering/processing yourself instead". bdolytics has this data (its own
+  recipe detail pages show a full nested ingredient tree down to base
+  materials, with Crafting Cost/Profit/Profit-per-Hour/Time computed per
+  node), but RMBDO doesn't scrape it yet — this is the next concrete piece
+  of the Life Skill Hub to build, not a "someday" item.
+- **Personalized Silver/Hour only covers Cooking/Alchemy/Processing.**
+  Imperial Crates recipes bundle already-made goods from those three
+  skills, so no single Mastery stat governs it — it always shows
+  bdolytics' default number, tagged `personalized: false`. See
+  **Personalizing the Life Skill ranking** above for exactly how the
+  Cooking/Alchemy/Processing personalization works and its one-run-behind
+  timing.
 - **Crafting Profit data has a real name-collision gap for Imperial Crates
   (and a smaller one for Processing).** `crafting_recipes` is unique on
   `(recipe_name, category, region)`, but several Imperial Crates entries
@@ -175,18 +199,30 @@ npm run collect:fishing      # writes collector/out/fishing-depth4-*.json
 npm run collect:grindspots   # writes collector/out/grindspots-*.json
 npm run collect:market       # writes collector/out/market-*.json (Southeast Asia region)
 npm run collect:crafting     # writes collector/out/crafting-*.json (Cooking/Alchemy/Processing/Imperial Crates profit/hour)
-npm run normalize            # upserts all four into Postgres
+npm run collect:daily        # collect:market + collect:crafting only (the two that change day to day)
+npm run normalize            # upserts whatever the latest collector/out/*.json files hold into Postgres
 ```
 
-Or all at once (also what cron runs): `./scripts/collect-and-sync.sh`
+Weekly full run (also what `scripts/collect-and-sync.sh` runs via cron):
+`npm run collect:all && npm run normalize`
+
+Daily run (also what `scripts/collect-and-sync-daily.sh` runs via cron):
+`npm run collect:daily && npm run normalize`
 
 ## Automating it (no more manually running the extension)
 
-Add to crontab (`crontab -e`) — see the comment at the top of
-`scripts/collect-and-sync.sh`. BDO's world data doesn't change often, so
-weekly is plenty. The collector adds a 4-10s randomized delay between every
-action and aborts the run the moment it detects a Cloudflare block instead
-of retrying into a longer ban.
+Two cron entries (`crontab -e`) — see the comments at the top of each
+script for the exact lines:
+
+- `scripts/collect-and-sync.sh` — weekly, everything (fishing/grind spots
+  world data barely changes, no reason to hit it daily).
+- `scripts/collect-and-sync-daily.sh` — daily, Central Market + Life Skill
+  Hub only (real player trading moves these every day, and this is where
+  a personalized Mastery setting takes effect on its next run).
+
+The collector adds a 4-10s randomized delay between every action and
+aborts the run the moment it detects a Cloudflare block instead of
+retrying into a longer ban.
 
 The browser is launched via `playwright-extra` + `puppeteer-extra-plugin-stealth`
 (see `collector/src/lib/browser.ts`) rather than plain Playwright - a plain
@@ -200,10 +236,11 @@ first place. One `collect:all` run per cron cycle (i.e. per week) is the
 intended usage; if a run does get blocked, wait several hours before
 trying again, not minutes.
 
-Central Market prices update far more often than fishing/grind spot world
-data (real players trading), so `collect:market` is worth running more
-frequently than the weekly cadence above if price accuracy matters — just
-still not back-to-back with other collectors in the same run.
+`collect:daily` (Central Market + Life Skill Hub) runs separately from
+`collect:all` for exactly this reason — real player trading moves prices
+daily, but the two still shouldn't run back-to-back with each other on a
+manual trigger; space them out the same way as any other pair of
+`collect:*` runs.
 
 ## Data trust
 

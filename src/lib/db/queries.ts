@@ -93,14 +93,17 @@ export interface DbCraftingRecipe {
   price: number | null
   volume14dAvg: number | null
   experience: string | null
+  personalized: boolean
   collectedAt: string
 }
 
 /** Cooking/Alchemy/Processing/Imperial Crates profit-per-hour ranking,
  * scraped directly from bdolytics' own Crafting Calculator by
- * collector/src/scrapers/crafting.ts - the profit/hour number reflects
- * bdolytics' default mastery/settings, not this player's personal mastery
- * (see the "Known gaps" note in README.md and the comment in crafting.ts). */
+ * collector/src/scrapers/crafting.ts. `personalized` says whether
+ * profit_per_hour used this player's own Mastery (from player_settings) or
+ * bdolytics' generic default - check it per row rather than assuming,
+ * since a player_settings change only takes effect on the next collector
+ * run. */
 export async function getDbCraftingRecipes(search?: string, category?: string): Promise<DbCraftingRecipe[]> {
   const pool = getPool()
   const conditions: string[] = []
@@ -115,7 +118,7 @@ export async function getDbCraftingRecipes(search?: string, category?: string): 
   }
   const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : ""
   const { rows } = await pool.query(
-    `SELECT recipe_name, category, profit_per_hour, price, volume_14d_avg, experience, collected_at
+    `SELECT recipe_name, category, profit_per_hour, price, volume_14d_avg, experience, personalized, collected_at
      FROM crafting_recipes ${where}
      ORDER BY profit_per_hour DESC NULLS LAST LIMIT 500`,
     params,
@@ -127,6 +130,54 @@ export async function getDbCraftingRecipes(search?: string, category?: string): 
     price: r.price !== null ? Number(r.price) : null,
     volume14dAvg: r.volume_14d_avg !== null ? Number(r.volume_14d_avg) : null,
     experience: r.experience,
+    personalized: r.personalized,
     collectedAt: r.collected_at,
   }))
+}
+
+export interface PlayerSettings {
+  cookingMastery: number | null
+  alchemyMastery: number | null
+  processingMastery: number | null
+  updatedAt: string | null
+}
+
+/** Singleton row (id=1) - collector/src/scrapers/crafting.ts reads this
+ * directly (via DATABASE_URL, not this function - it's a separate Node
+ * process) to fill bdolytics' Mastery settings before scraping, so
+ * crafting_recipes.profit_per_hour reflects this player's real mastery.
+ * No trainingMastery: bdolytics' "Training Mastery" setting is the
+ * separate Horse Training life skill, unrelated to Cooking/Alchemy/
+ * Processing/Imperial Crates - see the note in crafting.ts. */
+export async function getPlayerSettings(): Promise<PlayerSettings | null> {
+  const pool = getPool()
+  const { rows } = await pool.query(
+    `SELECT cooking_mastery, alchemy_mastery, processing_mastery, updated_at
+     FROM player_settings WHERE id = 1`,
+  )
+  if (rows.length === 0) return null
+  const r = rows[0]
+  return {
+    cookingMastery: r.cooking_mastery,
+    alchemyMastery: r.alchemy_mastery,
+    processingMastery: r.processing_mastery,
+    updatedAt: r.updated_at,
+  }
+}
+
+export async function upsertPlayerSettings(settings: {
+  cookingMastery: number | null
+  alchemyMastery: number | null
+  processingMastery: number | null
+}): Promise<void> {
+  const pool = getPool()
+  await pool.query(
+    `INSERT INTO player_settings (id, cooking_mastery, alchemy_mastery, processing_mastery, updated_at)
+     VALUES (1, $1, $2, $3, now())
+     ON CONFLICT (id) DO UPDATE SET
+       cooking_mastery = EXCLUDED.cooking_mastery, alchemy_mastery = EXCLUDED.alchemy_mastery,
+       processing_mastery = EXCLUDED.processing_mastery,
+       updated_at = now()`,
+    [settings.cookingMastery, settings.alchemyMastery, settings.processingMastery],
+  )
 }

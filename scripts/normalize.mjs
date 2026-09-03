@@ -102,15 +102,22 @@ async function upsertMarketItems(items, region) {
 }
 
 async function upsertCraftingRecipes(recipes, region) {
+  // Each recipe carries its own `personalized` flag (per-category, set by
+  // collector/src/scrapers/crafting.ts) - do NOT apply one global flag to
+  // every row. An earlier version did that and mislabeled every category
+  // as personalized just because ONE of them (e.g. Cooking) had its
+  // Mastery set in player_settings, even though Alchemy/Processing/
+  // Imperial Crates rows in that same run were still bdolytics' defaults.
   let count = 0
   for (const r of recipes) {
     await client.query(
-      `INSERT INTO crafting_recipes (recipe_name, category, region, profit_per_hour, price, volume_14d_avg, experience, source_url, collected_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'https://bdolytics.com/en/crafting', now())
+      `INSERT INTO crafting_recipes (recipe_name, category, region, profit_per_hour, price, volume_14d_avg, experience, personalized, source_url, collected_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'https://bdolytics.com/en/crafting', now())
        ON CONFLICT (recipe_name, category, region) DO UPDATE SET
          profit_per_hour = EXCLUDED.profit_per_hour, price = EXCLUDED.price,
-         volume_14d_avg = EXCLUDED.volume_14d_avg, experience = EXCLUDED.experience, collected_at = now()`,
-      [r.recipeName, r.category, region, r.profitPerHour, r.price, r.volume14dAvg, r.experience],
+         volume_14d_avg = EXCLUDED.volume_14d_avg, experience = EXCLUDED.experience,
+         personalized = EXCLUDED.personalized, collected_at = now()`,
+      [r.recipeName, r.category, region, r.profitPerHour, r.price, r.volume14dAvg, r.experience, Boolean(r.personalized)],
     )
     count++
   }
@@ -161,7 +168,8 @@ async function run() {
   if (craftingFile) {
     const { recipes, region } = JSON.parse(readFileSync(craftingFile, "utf8"))
     const count = await upsertCraftingRecipes(recipes, region)
-    console.log(`Crafting recipes (${craftingFile}): ${count} upserted.`)
+    const personalizedCount = recipes.filter((r) => r.personalized).length
+    console.log(`Crafting recipes (${craftingFile}): ${count} upserted (${personalizedCount} personalized).`)
   } else {
     console.log("No crafting export found in collector/out/ - run `npm run collect:crafting` first.")
   }

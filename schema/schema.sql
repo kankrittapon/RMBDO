@@ -263,6 +263,7 @@ CREATE TABLE crafting_recipes (
     price             BIGINT,                        -- market price of the crafted output
     volume_14d_avg    BIGINT,
     experience        TEXT,                          -- kept as text: some rows show "1610/1610" (life xp/combat xp pair)
+    personalized      BOOLEAN NOT NULL DEFAULT FALSE, -- TRUE if profit_per_hour used this player's own Mastery (player_settings), not bdolytics' default
     source_url        TEXT,
     collected_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE (recipe_name, category, region)
@@ -270,6 +271,31 @@ CREATE TABLE crafting_recipes (
 
 CREATE INDEX idx_crafting_recipes_category ON crafting_recipes(category);
 CREATE INDEX idx_crafting_recipes_profit ON crafting_recipes(profit_per_hour DESC);
+
+-- ---------------------------------------------------------
+-- Player settings (singleton row) - the only per-player input the
+-- collector itself needs. Postgres, not localStorage, because
+-- collector/src/scrapers/crafting.ts (a headless cron job, not the
+-- browser) reads this to fill bdolytics' own Mastery fields before
+-- scraping, so the resulting Silver/Hour reflects this player's actual
+-- mastery instead of bdolytics' generic default. Everything else about
+-- the player (gear, checkpoint progress) stays in localStorage via
+-- useRoadmapStore - only this table needs to be readable server-side.
+-- No training_mastery column: bdolytics' "Training Mastery" setting is
+-- the separate Horse Training life skill, unrelated to the four
+-- Cooking/Alchemy/Processing/Imperial-Crates categories this app tracks -
+-- an earlier version wrongly wired it up as if it applied to Imperial
+-- Crates and was removed once that was caught.
+-- ---------------------------------------------------------
+
+CREATE TABLE player_settings (
+    id                  INT PRIMARY KEY DEFAULT 1,
+    cooking_mastery     INT,
+    alchemy_mastery     INT,
+    processing_mastery  INT,
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CHECK (id = 1)
+);
 
 -- ---------------------------------------------------------
 -- Indexes
