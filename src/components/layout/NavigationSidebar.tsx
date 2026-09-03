@@ -12,7 +12,8 @@ import {
   BookOpen,
   Wheat,
   Swords,
-  Gem
+  Gem,
+  Coins
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -28,6 +29,7 @@ export type NavTabId =
   | 'safety'
   | 'treasures'
   | 'spots'
+  | 'market'
   | 'classes'
   | 'lifeskills'
   | 'war';
@@ -52,6 +54,7 @@ const navItems: Array<{ id: NavTabId; label: string; englishLabel: string; icon:
   { id: 'safety', label: 'ความปลอดภัยไอเทม', englishLabel: 'Item Safety', icon: ShieldAlert, badge: 'กันพลาด' },
   { id: 'treasures', label: 'สมบัติโบราณ', englishLabel: 'Treasures', icon: Sparkles },
   { id: 'spots', label: 'จุดฟาร์ม', englishLabel: 'Grind Spots', icon: MapPin },
+  { id: 'market', label: 'ตลาดกลาง', englishLabel: 'Central Market', icon: Coins, badge: 'ใหม่' },
   { id: 'classes', label: 'อาชีพ', englishLabel: 'Class Guides', icon: BookOpen },
   { id: 'lifeskills', label: 'สายอาชีพ Life', englishLabel: 'Life Skills', icon: Wheat },
   { id: 'war', label: 'ความพร้อม War', englishLabel: 'War Readiness', icon: Swords }

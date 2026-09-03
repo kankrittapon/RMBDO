@@ -225,6 +225,25 @@ CREATE TABLE roadmap_steps (
 );
 
 -- ---------------------------------------------------------
+-- Central Market (for Buy-vs-Farm comparisons)
+-- ---------------------------------------------------------
+
+CREATE TABLE market_items (
+    id              SERIAL PRIMARY KEY,
+    item_name       TEXT NOT NULL,
+    category        TEXT,                          -- e.g. 'Material', 'Alchemy Stone', 'Magic Crystal', 'Lightstone', 'Enhancement'
+    region          TEXT NOT NULL DEFAULT 'Southeast Asia',
+    price           BIGINT,
+    volume_14d_avg  BIGINT,
+    stock           BIGINT,
+    collected_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (item_name, region)
+);
+
+CREATE INDEX idx_market_items_category ON market_items(category);
+CREATE INDEX idx_market_items_name ON market_items(item_name);
+
+-- ---------------------------------------------------------
 -- Indexes
 -- ---------------------------------------------------------
 

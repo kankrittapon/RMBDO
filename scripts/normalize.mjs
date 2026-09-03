@@ -85,6 +85,22 @@ async function upsertGrindSpot(spot) {
   return "inserted"
 }
 
+async function upsertMarketItems(items, region) {
+  let count = 0
+  for (const item of items) {
+    await client.query(
+      `INSERT INTO market_items (item_name, category, region, price, volume_14d_avg, stock, collected_at)
+       VALUES ($1, $2, $3, $4, $5, $6, now())
+       ON CONFLICT (item_name, region) DO UPDATE SET
+         category = EXCLUDED.category, price = EXCLUDED.price,
+         volume_14d_avg = EXCLUDED.volume_14d_avg, stock = EXCLUDED.stock, collected_at = now()`,
+      [item.itemName, item.category, region, item.price, item.volume14dAvg, item.stock],
+    )
+    count++
+  }
+  return count
+}
+
 async function run() {
   await client.connect()
 
@@ -114,6 +130,15 @@ async function run() {
     console.log(`Grind spots (${grindFile}): ${inserted} inserted, ${updated} updated.`)
   } else {
     console.log("No grind spot export found in collector/out/ - run `npm run collect:grindspots` first.")
+  }
+
+  const marketFile = latestFile("market-")
+  if (marketFile) {
+    const { items, region } = JSON.parse(readFileSync(marketFile, "utf8"))
+    const count = await upsertMarketItems(items, region)
+    console.log(`Market items (${marketFile}): ${count} upserted.`)
+  } else {
+    console.log("No market export found in collector/out/ - run `npm run collect:market` first.")
   }
 
   await client.end()

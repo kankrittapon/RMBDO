@@ -52,3 +52,36 @@ export async function getDbFishingSpots(): Promise<DbFishingSpot[]> {
     dataSource: "db-verified" as const,
   }))
 }
+
+export interface DbMarketItem {
+  itemName: string
+  category: string | null
+  price: number | null
+  volume14dAvg: number | null
+  stock: number | null
+  collectedAt: string
+}
+
+/** Central Market prices (Southeast Asia region), scraped from bdolytics'
+ * plain server-rendered market table by collector/src/scrapers/market.ts.
+ * Scoped to farm-vs-buy-relevant categories (material, alchemy stone,
+ * magic crystal, lightstone, enhancement) - see CATEGORIES in that file. */
+export async function getDbMarketItems(search?: string): Promise<DbMarketItem[]> {
+  const pool = getPool()
+  const { rows } = await pool.query(
+    search
+      ? `SELECT item_name, category, price, volume_14d_avg, stock, collected_at FROM market_items
+         WHERE item_name ILIKE $1 ORDER BY item_name LIMIT 200`
+      : `SELECT item_name, category, price, volume_14d_avg, stock, collected_at FROM market_items
+         ORDER BY item_name LIMIT 500`,
+    search ? [`%${search}%`] : undefined,
+  )
+  return rows.map((r) => ({
+    itemName: r.item_name,
+    category: r.category,
+    price: r.price !== null ? Number(r.price) : null,
+    volume14dAvg: r.volume_14d_avg !== null ? Number(r.volume_14d_avg) : null,
+    stock: r.stock !== null ? Number(r.stock) : null,
+    collectedAt: r.collected_at,
+  }))
+}

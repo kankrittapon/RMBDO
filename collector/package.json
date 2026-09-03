@@ -7,7 +7,8 @@
     "install-browser": "playwright install chromium",
     "collect:fishing": "tsx src/scrapers/fishing.ts",
     "collect:grindspots": "tsx src/scrapers/grindSpots.ts",
-    "collect:all": "npm run collect:fishing && npm run collect:grindspots"
+    "collect:market": "tsx src/scrapers/market.ts",
+    "collect:all": "npm run collect:fishing && npm run collect:grindspots && npm run collect:market"
   },
   "dependencies": {
     "playwright": "^1.48.0",
