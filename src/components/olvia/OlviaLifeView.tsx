@@ -56,10 +56,10 @@ export const OlviaLifeView: React.FC<OlviaLifeViewProps> = ({ store }) => {
               <span>Olvia Academy — สายอาชีพ (Life Skill Academy)</span>
             </div>
             <h1 className="text-lg md:text-xl font-heading font-bold text-text-primary">
-              หลักสูตรสายอาชีพ 11 สาขา & การจัดส่งราชสำนัก
+              หลักสูตรสายอาชีพ 9-10 สาขา & รางวัลจบครบคอร์ส
             </h1>
             <p className="text-xs text-text-secondary mt-0.5">
-              ติ๊กเลือกภารกิจสายอาชีพที่คุณทำสำเร็จแล้วเพื่อคำนวณความพร้อมในการสร้าง Passive Income รายวัน
+              ติ๊กเลือกคอร์สที่คุณทำสำเร็จแล้ว - รายละเอียดเควส/จำนวนของแต่ละคอร์สยังไม่มีแหล่งข้อมูลทางการยืนยัน ต้องเช็คในเกมจริง
             </p>
           </div>
 
