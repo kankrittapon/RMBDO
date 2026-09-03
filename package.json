@@ -15,6 +15,7 @@
     "collect:fishing": "npm run collect:fishing -w collector",
     "collect:grindspots": "npm run collect:grindspots -w collector",
     "collect:market": "npm run collect:market -w collector",
+    "collect:crafting": "npm run collect:crafting -w collector",
     "collect:all": "npm run collect:all -w collector",
     "normalize": "node --env-file=.env scripts/normalize.mjs"
   },

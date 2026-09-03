@@ -101,6 +101,22 @@ async function upsertMarketItems(items, region) {
   return count
 }
 
+async function upsertCraftingRecipes(recipes, region) {
+  let count = 0
+  for (const r of recipes) {
+    await client.query(
+      `INSERT INTO crafting_recipes (recipe_name, category, region, profit_per_hour, price, volume_14d_avg, experience, source_url, collected_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'https://bdolytics.com/en/crafting', now())
+       ON CONFLICT (recipe_name, category, region) DO UPDATE SET
+         profit_per_hour = EXCLUDED.profit_per_hour, price = EXCLUDED.price,
+         volume_14d_avg = EXCLUDED.volume_14d_avg, experience = EXCLUDED.experience, collected_at = now()`,
+      [r.recipeName, r.category, region, r.profitPerHour, r.price, r.volume14dAvg, r.experience],
+    )
+    count++
+  }
+  return count
+}
+
 async function run() {
   await client.connect()
 
@@ -139,6 +155,15 @@ async function run() {
     console.log(`Market items (${marketFile}): ${count} upserted.`)
   } else {
     console.log("No market export found in collector/out/ - run `npm run collect:market` first.")
+  }
+
+  const craftingFile = latestFile("crafting-")
+  if (craftingFile) {
+    const { recipes, region } = JSON.parse(readFileSync(craftingFile, "utf8"))
+    const count = await upsertCraftingRecipes(recipes, region)
+    console.log(`Crafting recipes (${craftingFile}): ${count} upserted.`)
+  } else {
+    console.log("No crafting export found in collector/out/ - run `npm run collect:crafting` first.")
   }
 
   await client.end()

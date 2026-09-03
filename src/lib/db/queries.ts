@@ -85,3 +85,48 @@ export async function getDbMarketItems(search?: string): Promise<DbMarketItem[]>
     collectedAt: r.collected_at,
   }))
 }
+
+export interface DbCraftingRecipe {
+  recipeName: string
+  category: string
+  profitPerHour: number | null
+  price: number | null
+  volume14dAvg: number | null
+  experience: string | null
+  collectedAt: string
+}
+
+/** Cooking/Alchemy/Processing/Imperial Crates profit-per-hour ranking,
+ * scraped directly from bdolytics' own Crafting Calculator by
+ * collector/src/scrapers/crafting.ts - the profit/hour number reflects
+ * bdolytics' default mastery/settings, not this player's personal mastery
+ * (see the "Known gaps" note in README.md and the comment in crafting.ts). */
+export async function getDbCraftingRecipes(search?: string, category?: string): Promise<DbCraftingRecipe[]> {
+  const pool = getPool()
+  const conditions: string[] = []
+  const params: string[] = []
+  if (search) {
+    params.push(`%${search}%`)
+    conditions.push(`recipe_name ILIKE $${params.length}`)
+  }
+  if (category) {
+    params.push(category)
+    conditions.push(`category = $${params.length}`)
+  }
+  const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : ""
+  const { rows } = await pool.query(
+    `SELECT recipe_name, category, profit_per_hour, price, volume_14d_avg, experience, collected_at
+     FROM crafting_recipes ${where}
+     ORDER BY profit_per_hour DESC NULLS LAST LIMIT 500`,
+    params,
+  )
+  return rows.map((r) => ({
+    recipeName: r.recipe_name,
+    category: r.category,
+    profitPerHour: r.profit_per_hour !== null ? Number(r.profit_per_hour) : null,
+    price: r.price !== null ? Number(r.price) : null,
+    volume14dAvg: r.volume_14d_avg !== null ? Number(r.volume_14d_avg) : null,
+    experience: r.experience,
+    collectedAt: r.collected_at,
+  }))
+}

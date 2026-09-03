@@ -34,14 +34,15 @@ src/app/                  Next.js pages + API routes
 src/app/api/grind-spots/  GET - real AP/DP/coordinates from Postgres (collector-verified)
 src/app/api/fishing-spots/ GET - real Depth-4 fishing zone coordinates from Postgres
 src/app/api/market-items/ GET - real Central Market prices from Postgres (?q= to search)
-src/components/           All UI views (Dashboard, GrindSpotOptimizer, Roadmap, Treasures, Market, ...)
+src/app/api/crafting-recipes/ GET - Cooking/Alchemy/Processing/Imperial Crates profit/hour ranking (?q=, ?category=)
+src/components/           All UI views (Dashboard, GrindSpotOptimizer, Roadmap, Treasures, Market, Crafting Profit, ...)
 src/data/                 Reference data - mixed trust, see "Data trust" below
 src/hooks/useRoadmapStore.ts  Client-side player state (localStorage)
 src/lib/db/               Postgres client (pool.ts) + typed queries (queries.ts)
 src/lib/intelligence/     Decision-layer engines (Location Engine v1) - not yet wired into any view
-schema/schema.sql         Postgres DDL (reference-data layer, incl. market_items)
+schema/schema.sql         Postgres DDL (reference-data layer, incl. market_items, crafting_recipes)
 data/*.sql                Manually curated seed INSERTs
-collector/                Playwright scraper: fishing, grind spots, Central Market prices
+collector/                Playwright scraper: fishing, grind spots, Central Market prices, crafting profit/hour
 scripts/                  DB migrate/normalize/cron entrypoint
 extension/, and the openclick_private repo it's built from  Manual browser-extension scraper (superseded by collector/ for routine use, still useful for one-off/interactive digging)
 ```
@@ -59,6 +60,13 @@ extension/, and the openclick_private repo it's built from  Manual browser-exten
 - **`MarketPriceView` (the "ตลาดกลาง" tab) reads live from `/api/market-items`**
   — it's not a static-data view at all, just a price browser + shopping
   cart over whatever `market_items` currently holds.
+- **`CraftingProfitView` (the "กำไร Life Skill" tab) reads live from
+  `/api/crafting-recipes`** — a Cooking/Alchemy/Processing/Imperial Crates
+  Silver/Hour ranking. This is the actual "Buy-vs-Farm for Life Skill"
+  feature: the number is scraped directly from bdolytics' own Crafting
+  Calculator output, not recomputed by RMBDO, because it depends on BDO's
+  unpublished mastery-speed/success-rate/market-tax formulas — see
+  **Known gaps** for exactly what that number does and doesn't mean.
 - Every other view (Treasures, Classes, Life Skills, War Readiness, Gear
   Planner, Sovereign Forge) still renders entirely from static
   `src/data/*` files. None of them have been cross-checked against a real
@@ -86,7 +94,33 @@ rather than "forgotten":
   version needs, at minimum: a `player_state.silverPerHour` field (or a
   derived one from logged sessions), and matching material names in
   `market_items` against what a grind spot/quest/craft recipe actually
-  requires and in what quantity - none of which exists yet.
+  requires and in what quantity - none of which exists yet. This gap is
+  about *items/gear* specifically - Life Skill (Cooking/Alchemy/Processing)
+  now has its own ranking, see the next point.
+- **Crafting Profit ranking (`CraftingProfitView`) uses bdolytics' DEFAULT
+  settings, not your personal mastery/buffs.** The Silver/Hour number for
+  each recipe reflects bdolytics' own calculator at its default
+  configuration (~1000-1500 mastery in every skill, no Value Pack/Kama
+  Blessing/personal buffs applied) - useful as a general "which recipe is
+  worth doing" ranking, but not the exact silver/hour you'd personally
+  earn. Getting a personalized number would mean either scraping bdolytics
+  with a per-player settings profile (fragile - one extra collector run
+  per player-stat change) or implementing BDO's mastery-speed/success-rate/
+  tax formulas locally, which is exactly the "invent a formula" risk this
+  project avoids elsewhere. Left as a known limitation, not attempted.
+- **Crafting Profit data has a real name-collision gap for Imperial Crates
+  (and a smaller one for Processing).** `crafting_recipes` is unique on
+  `(recipe_name, category, region)`, but several Imperial Crates entries
+  share an identical display name across different underlying box configs
+  (e.g. many distinct recipes are all labeled "Master's Cooking Box" with
+  different Silver/Hour values) - bdolytics' own page lists 322 Imperial
+  Crates recipes, but only 12 survive the upsert once same-named rows
+  collapse onto each other (last-collected wins). Processing loses 11 of
+  289 the same way. Cooking (152) and Alchemy (91) have no name collisions
+  and are complete. Fixing this needs capturing each recipe's unique
+  bdolytics slug/id (visible in its detail-page URL, not scraped by the
+  current list-page-only collector) as part of the uniqueness key instead
+  of relying on the display name.
 - **Olvia Academy Field Tactics (19 quests): only a count, not quest
   titles.** `olviaSubCourses.ts` tracks `combat_field_tactics: 19` as a
   number; unlike Basic Tactics (12 real quest names, from the user's own
@@ -140,7 +174,8 @@ npm run dev                 # the actual app, http://localhost:3000
 npm run collect:fishing      # writes collector/out/fishing-depth4-*.json
 npm run collect:grindspots   # writes collector/out/grindspots-*.json
 npm run collect:market       # writes collector/out/market-*.json (Southeast Asia region)
-npm run normalize            # upserts all three into Postgres
+npm run collect:crafting     # writes collector/out/crafting-*.json (Cooking/Alchemy/Processing/Imperial Crates profit/hour)
+npm run normalize            # upserts all four into Postgres
 ```
 
 Or all at once (also what cron runs): `./scripts/collect-and-sync.sh`
@@ -174,7 +209,10 @@ still not back-to-back with other collectors in the same run.
 
 - **Verified this session, high confidence:** the 17 real Depth-4 fishing
   zones (in-game bookmark export), 91 real grind spots (collector, live
-  API), 1,486 real Central Market prices (collector), and the Olvia
+  API), 1,486 real Central Market prices (collector), 533 of bdolytics'
+  854 crafting recipes (Cooking 152/152, Alchemy 91/91, Processing 278/289,
+  Imperial Crates 12/322 - see the Imperial Crates name-collision gap
+  above for why the last two are short), and the Olvia
   Academy / Hyperboost data (`olviaCombatTasks.ts`, `olviaLifeTasks.ts`,
   `olviaSubCourses.ts`, `hyperboostTasks.ts`, and their `checkpoints.ts`
   entries) — corrected against official Asia/SEA sources and the user's

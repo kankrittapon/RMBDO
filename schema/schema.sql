@@ -244,6 +244,34 @@ CREATE INDEX idx_market_items_category ON market_items(category);
 CREATE INDEX idx_market_items_name ON market_items(item_name);
 
 -- ---------------------------------------------------------
+-- Crafting recipes (Cooking/Alchemy/Processing/Imperial Crates) —
+-- profit/hour is scraped directly from bdolytics' own Crafting Calculator
+-- output, not recomputed locally. It depends on BDO's mastery-speed,
+-- success-rate and market-tax formulas, which aren't published by Pearl
+-- Abyss and are only known via community reverse-engineering - trusting
+-- bdolytics' already-computed number is safer than re-deriving it here and
+-- risking a wrong-but-precise-looking formula (the same mistake this
+-- project has had to undo elsewhere). The number reflects bdolytics'
+-- default settings (1000-1500 mastery, no personal buffs) unless noted -
+-- NOT this specific player's actual mastery.
+CREATE TABLE crafting_recipes (
+    id                SERIAL PRIMARY KEY,
+    recipe_name       TEXT NOT NULL,
+    category          TEXT NOT NULL,               -- 'Cooking', 'Alchemy', 'Processing', 'Imperial Crates'
+    region            TEXT NOT NULL DEFAULT 'Southeast Asia',
+    profit_per_hour   BIGINT,                       -- bdolytics "Silver/Hour" column, default-settings basis
+    price             BIGINT,                        -- market price of the crafted output
+    volume_14d_avg    BIGINT,
+    experience        TEXT,                          -- kept as text: some rows show "1610/1610" (life xp/combat xp pair)
+    source_url        TEXT,
+    collected_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (recipe_name, category, region)
+);
+
+CREATE INDEX idx_crafting_recipes_category ON crafting_recipes(category);
+CREATE INDEX idx_crafting_recipes_profit ON crafting_recipes(profit_per_hour DESC);
+
+-- ---------------------------------------------------------
 -- Indexes
 -- ---------------------------------------------------------
 

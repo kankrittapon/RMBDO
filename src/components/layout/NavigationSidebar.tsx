@@ -13,7 +13,8 @@ import {
   Wheat,
   Swords,
   Gem,
-  Coins
+  Coins,
+  ChefHat
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -30,6 +31,7 @@ export type NavTabId =
   | 'treasures'
   | 'spots'
   | 'market'
+  | 'crafting'
   | 'classes'
   | 'lifeskills'
   | 'war';
@@ -55,6 +57,7 @@ const navItems: Array<{ id: NavTabId; label: string; englishLabel: string; icon:
   { id: 'treasures', label: 'สมบัติโบราณ', englishLabel: 'Treasures', icon: Sparkles },
   { id: 'spots', label: 'จุดฟาร์ม', englishLabel: 'Grind Spots', icon: MapPin },
   { id: 'market', label: 'ตลาดกลาง', englishLabel: 'Central Market', icon: Coins, badge: 'ใหม่' },
+  { id: 'crafting', label: 'กำไร Life Skill', englishLabel: 'Crafting Profit', icon: ChefHat, badge: 'ใหม่' },
   { id: 'classes', label: 'อาชีพ', englishLabel: 'Class Guides', icon: BookOpen },
   { id: 'lifeskills', label: 'สายอาชีพ Life', englishLabel: 'Life Skills', icon: Wheat },
   { id: 'war', label: 'ความพร้อม War', englishLabel: 'War Readiness', icon: Swords }

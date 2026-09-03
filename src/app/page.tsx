@@ -16,6 +16,7 @@ import { SafetyView } from '@/components/safety/SafetyView';
 import { TreasureView } from '@/components/treasures/TreasureView';
 import { GrindSpotOptimizerView } from '@/components/grind-spots/GrindSpotOptimizerView';
 import { MarketPriceView } from '@/components/market/MarketPriceView';
+import { CraftingProfitView } from '@/components/crafting/CraftingProfitView';
 import { ClassGuidesView } from '@/components/classes/ClassGuidesView';
 import { LifeSkillDashboardView } from '@/components/lifeskills/LifeSkillDashboardView';
 import { WarReadinessView } from '@/components/war-readiness/WarReadinessView';
@@ -98,6 +99,8 @@ export default function Home() {
         return <GrindSpotOptimizerView store={store as any} />;
       case 'market':
         return <MarketPriceView />;
+      case 'crafting':
+        return <CraftingProfitView />;
       case 'classes':
         return <ClassGuidesView store={store as any} />;
       case 'lifeskills':
