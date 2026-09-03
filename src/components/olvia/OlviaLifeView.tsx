@@ -13,6 +13,7 @@ import {
 import { olviaLifeTasksList, OlviaLifeTaskItem } from '@/data/progression/olviaLifeTasks';
 import { useRoadmapStore } from '@/hooks/useRoadmapStore';
 import { CheckpointStatus } from '@/types/profile';
+import { SubCourseProgressPanel } from '@/components/shared/SubCourseProgressPanel';
 import { cn } from '@/lib/utils';
 
 interface OlviaLifeViewProps {
@@ -20,7 +21,7 @@ interface OlviaLifeViewProps {
 }
 
 export const OlviaLifeView: React.FC<OlviaLifeViewProps> = ({ store }) => {
-  const { profile, setOlviaLifeTaskStatus, progressStats, resetCategory } = store;
+  const { profile, setOlviaLifeTaskStatus, setSubCourseProgress, progressStats, resetCategory } = store;
   const [selectedSkill, setSelectedSkill] = useState<string>('ALL');
 
   const { completed, total, pct } = progressStats.olviaLife;
@@ -102,6 +103,8 @@ export const OlviaLifeView: React.FC<OlviaLifeViewProps> = ({ store }) => {
           </button>
         </div>
       </div>
+
+      <SubCourseProgressPanel branch="LIFE_SKILL" progress={profile.subCourseProgress} onSetProgress={setSubCourseProgress} />
 
       {/* Tasks Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">

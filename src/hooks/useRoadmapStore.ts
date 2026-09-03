@@ -14,6 +14,7 @@ import { olviaCombatTasksList } from '@/data/progression/olviaCombatTasks';
 import { olviaLifeTasksList } from '@/data/progression/olviaLifeTasks';
 import { slumberingOriginPiecesList } from '@/data/gear/slumberingOriginArmor';
 import { kharazadPiecesList } from '@/data/gear/kharazadAccessories';
+import { olviaSubCoursesList } from '@/data/progression/olviaSubCourses';
 import { masterCheckpointsList } from '@/data/progression/checkpoints';
 import { treasureList } from '@/data/treasures/treasureList';
 import { permanentJournals } from '@/data/permanent/journals';
@@ -72,6 +73,10 @@ export const initialEmptyProfile: PlayerProfile = {
     acc[t.id] = 'UNKNOWN';
     return acc;
   }, {} as Record<string, CheckpointStatus>),
+  subCourseProgress: olviaSubCoursesList.reduce((acc, c) => {
+    acc[c.id] = 0;
+    return acc;
+  }, {} as Record<string, number>),
   journalChapters: {
     bartali_1: 'UNKNOWN',
     bartali_2: 'UNKNOWN',
@@ -156,6 +161,7 @@ export function useRoadmapStore() {
           // saved profiles don't crash on missing keys.
           if (!parsed.slumberingOriginTasks) parsed.slumberingOriginTasks = initialEmptyProfile.slumberingOriginTasks;
           if (!parsed.kharazadTasks) parsed.kharazadTasks = initialEmptyProfile.kharazadTasks;
+          if (!parsed.subCourseProgress) parsed.subCourseProgress = initialEmptyProfile.subCourseProgress;
           setProfile(parsed);
         }
       }
@@ -284,6 +290,16 @@ export function useRoadmapStore() {
     }));
   }, []);
 
+  const setSubCourseProgress = useCallback((subCourseId: string, completed: number) => {
+    setProfile((prev) => ({
+      ...prev,
+      subCourseProgress: {
+        ...prev.subCourseProgress,
+        [subCourseId]: Math.max(0, completed)
+      }
+    }));
+  }, []);
+
   const setJournalChapterStatus = useCallback((chapterId: string, status: CheckpointStatus) => {
     setProfile((prev) => ({
       ...prev,
@@ -329,7 +345,7 @@ export function useRoadmapStore() {
   }, []);
 
   // Category Resets
-  const resetCategory = useCallback((category: 'SEASON' | 'HYPERBOOST' | 'OLVIA_COMBAT' | 'OLVIA_LIFE' | 'SLUMBERING_ORIGIN' | 'KHARAZAD' | 'GEAR' | 'TREASURES' | 'ALL') => {
+  const resetCategory = useCallback((category: 'SEASON' | 'HYPERBOOST' | 'OLVIA_COMBAT' | 'OLVIA_LIFE' | 'OLVIA_SUBCOURSES' | 'SLUMBERING_ORIGIN' | 'KHARAZAD' | 'GEAR' | 'TREASURES' | 'ALL') => {
     setProfile((prev) => {
       switch (category) {
         case 'SEASON':
@@ -340,6 +356,8 @@ export function useRoadmapStore() {
           return { ...prev, olviaCombatTasks: initialEmptyProfile.olviaCombatTasks };
         case 'OLVIA_LIFE':
           return { ...prev, olviaLifeTasks: initialEmptyProfile.olviaLifeTasks };
+        case 'OLVIA_SUBCOURSES':
+          return { ...prev, subCourseProgress: initialEmptyProfile.subCourseProgress };
         case 'SLUMBERING_ORIGIN':
           return { ...prev, slumberingOriginTasks: initialEmptyProfile.slumberingOriginTasks };
         case 'KHARAZAD':
@@ -585,6 +603,7 @@ export function useRoadmapStore() {
     setOlviaLifeTaskStatus,
     setSlumberingOriginTaskStatus,
     setKharazadTaskStatus,
+    setSubCourseProgress,
     setJournalChapterStatus,
     toggleTreasurePiece,
     toggleWarReadinessCheck,

@@ -47,6 +47,7 @@ export interface PlayerProfile {
   olviaLifeTasks: Record<string, CheckpointStatus>;
   slumberingOriginTasks: Record<string, CheckpointStatus>;
   kharazadTasks: Record<string, CheckpointStatus>;
+  subCourseProgress: Record<string, number>;
   journalChapters: Record<string, CheckpointStatus>;
   treasurePieces: Record<string, boolean>;
   warReadinessChecks: Record<string, boolean>;

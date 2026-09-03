@@ -16,6 +16,7 @@ import {
 import { olviaCombatTasksList, OlviaCombatTaskItem } from '@/data/progression/olviaCombatTasks';
 import { useRoadmapStore } from '@/hooks/useRoadmapStore';
 import { CheckpointStatus } from '@/types/profile';
+import { SubCourseProgressPanel } from '@/components/shared/SubCourseProgressPanel';
 import { cn } from '@/lib/utils';
 
 interface OlviaCombatViewProps {
@@ -23,7 +24,7 @@ interface OlviaCombatViewProps {
 }
 
 export const OlviaCombatView: React.FC<OlviaCombatViewProps> = ({ store }) => {
-  const { profile, setOlviaCombatTaskStatus, progressStats, resetCategory } = store;
+  const { profile, setOlviaCombatTaskStatus, setSubCourseProgress, progressStats, resetCategory } = store;
   const [filter, setFilter] = useState<'ALL' | 'COMPLETED' | 'IN_PROGRESS' | 'UNKNOWN'>('ALL');
 
   const { completed, total, pct } = progressStats.olviaCombat;
@@ -105,6 +106,8 @@ export const OlviaCombatView: React.FC<OlviaCombatViewProps> = ({ store }) => {
           </button>
         </div>
       </div>
+
+      <SubCourseProgressPanel branch="COMBAT" progress={profile.subCourseProgress} onSetProgress={setSubCourseProgress} />
 
       {/* Tasks Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
