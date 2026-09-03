@@ -24,35 +24,27 @@ interface SovereignTrackerViewProps {
 export const SovereignTrackerView: React.FC<SovereignTrackerViewProps> = ({ store }) => {
   const { profile, setHyperboostClaim, resetCategory } = store;
 
-  // Rewritten 2026-09-03 to match the verified material chain (see the
-  // comment block at the top of hyperboostTasks.ts): 2x PEN Mainhand (1
-  // direct from the Olvia Combat Academy capstone + 1 upgraded from TET via
-  // hb_tet_mainhand_to_pen), 2x PEN Awakening (both direct from the
-  // Y-Challenge), 1x PEN Offhand + Gem of Twilight + Flame of Primordial
-  // (tracked as a single "ready" checkpoint since it's 3 different items,
-  // not 2 identical claims like the other two slots).
+  // Rewritten 2026-09-03, third pass: the Y-Challenge window does NOT
+  // pre-assign boxes to Main/Awakening/Sub - every box lets the player
+  // freely choose the slot when opened (confirmed against current official
+  // Asia/SEA data). Tracking a rigid "2 Awakening + 1 Offhand" split was a
+  // guess from an earlier pass and is wrong. Instead: track total PEN
+  // Blackstar boxes owned (need 5 across both slots+sub: 2 for Main, 2 for
+  // Awakening, 1 for Sub) as one pool, since the player assigns slots
+  // themselves when opening each box - see hyperboostTasks.ts's top-of-file
+  // comment for the full source breakdown (3 PEN direct + 2 TET upgradeable
+  // to PEN, split across the Y-Challenge window and Olvia Combat Academy
+  // Family Rewards, which are two genuinely different reward sources).
   const combatAcademyCapstone = profile.olviaCombatTasks['oc_sovereign_preparation'] === 'COMPLETED';
-  const combatAcademyCapstoneClaim = {
-    claimed: combatAcademyCapstone,
-    used: false,
-    status: combatAcademyCapstone ? ('COMPLETED' as const) : ('UNKNOWN' as const)
-  };
 
-  const bsMainClaims = [
-    combatAcademyCapstoneClaim,
-    profile.hyperboostClaims['hb_tet_mainhand_to_pen']
+  const penBoxClaims = [
+    profile.hyperboostClaims['y_pen_blackstar_1'],
+    profile.hyperboostClaims['y_pen_blackstar_2_welcome'],
+    { claimed: combatAcademyCapstone, used: false, status: combatAcademyCapstone ? ('COMPLETED' as const) : ('UNKNOWN' as const) },
+    profile.hyperboostClaims['hb_tet_to_pen_upgrade']
   ];
-  const bsAwakeningClaims = [
-    profile.hyperboostClaims['hb_y_pen_awakening_1'],
-    profile.hyperboostClaims['hb_y_pen_awakening_2']
-  ];
-  const bsSubClaims = [
-    profile.hyperboostClaims['hb_sovereign_sub_ready']
-  ];
-
-  const mainOwnedCount = bsMainClaims.filter((c) => c?.claimed).length;
-  const awakeningOwnedCount = bsAwakeningClaims.filter((c) => c?.claimed).length;
-  const subOwnedCount = bsSubClaims.filter((c) => c?.claimed).length;
+  const totalPenOwned = penBoxClaims.filter((c) => c?.claimed).length;
+  const subReadyClaimed = profile.hyperboostClaims['hb_sovereign_sub_ready']?.claimed ?? false;
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto pb-16 md:pb-6">
@@ -94,68 +86,42 @@ export const SovereignTrackerView: React.FC<SovereignTrackerViewProps> = ({ stor
         </div>
       </div>
 
-      {/* 3 Weapon Audit Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-        
-        {/* Mainhand */}
-        <div className="bg-bg-surface-1 border border-border-subtle rounded-xl p-4 space-y-3 flex flex-col justify-between">
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between border-b border-border-subtle pb-2">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400 font-bold text-xs">
-                  M
-                </div>
-                <span className="text-xs font-bold text-text-primary">อาวุธหลัก (Mainhand)</span>
-              </div>
-              <span className={cn(
-                "px-2 py-0.5 rounded text-[10px] font-mono font-bold",
-                mainOwnedCount >= 2 ? "bg-emerald-500/20 text-emerald-400" : "bg-bg-surface-3 text-text-muted"
-              )}>
-                {mainOwnedCount >= 2 ? "พร้อมหลอมราชัน" : "ยังขาดวัตถุดิบ"}
-              </span>
-            </div>
+      {/* PEN Blackstar pool + Sub-weapon extra materials - the game lets you
+          freely choose Main/Awakening/Sub when opening each box, so this
+          tracks a shared pool (need 5 total: 2 Main + 2 Awakening + 1 Sub)
+          rather than pretending each box is pre-assigned to a slot. */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
 
-            <div className="flex items-center justify-between font-mono text-xs">
-              <span className="text-text-muted">จำนวนที่มี:</span>
-              <span className="text-sm font-bold text-text-primary">{mainOwnedCount} / 2 ชิ้น</span>
-            </div>
-
-            <p className="text-xs text-text-secondary leading-relaxed">
-              ใช้สำหรับหลอมอาวุธราชันหลัก (Sovereign Mainhand) เพิ่มพลังโจมตีมอนสเตอร์พื้นฐาน
-            </p>
-          </div>
-        </div>
-
-        {/* Awakening */}
+        {/* PEN Blackstar Pool */}
         <div className="bg-bg-surface-1 border border-brand-primary/40 rounded-xl p-4 space-y-3 flex flex-col justify-between shadow-sm">
           <div className="space-y-2.5">
             <div className="flex items-center justify-between border-b border-border-subtle pb-2">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded bg-brand-primary/20 border border-brand-primary/30 flex items-center justify-center text-brand-primary font-bold text-xs">
-                  A
+                  P
                 </div>
-                <span className="text-xs font-bold text-text-primary">อาวุธตื่นพลัง (Awakening)</span>
+                <span className="text-xs font-bold text-text-primary">คลัง PEN Blackstar (เลือก slot เองตอนเปิด)</span>
               </div>
               <span className={cn(
                 "px-2 py-0.5 rounded text-[10px] font-mono font-bold",
-                awakeningOwnedCount >= 2 ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"
+                totalPenOwned >= 5 ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"
               )}>
-                {awakeningOwnedCount >= 2 ? "พร้อมหลอมราชัน" : "เป้าหมายอันดับ 1"}
+                {totalPenOwned >= 5 ? "พร้อมหลอมราชันครบ 3 ชิ้น" : "กำลังสะสม"}
               </span>
             </div>
 
             <div className="flex items-center justify-between font-mono text-xs">
               <span className="text-text-muted">จำนวนที่มี:</span>
-              <span className="text-sm font-bold text-brand-gold">{awakeningOwnedCount} / 2 ชิ้น</span>
+              <span className="text-sm font-bold text-brand-gold">{totalPenOwned} / 5 ชิ้น</span>
             </div>
 
             <p className="text-xs text-text-secondary leading-relaxed">
-              เป้าหมายสำคัญที่สุดในการดัน Sheet AP 310+ สำหรับสาย Awakening
+              ต้องการรวม 5 ชิ้น: Mainhand x2 + Awakening x2 + Sub x1 - มาจาก Y-Challenge (กล่อง #1, #2 Welcome Gift), Olvia Combat Academy (กล่อง #3), และ TET→PEN อัปเกรด 1 ชิ้น (จาก Darkstar Black Stone)
             </p>
           </div>
         </div>
 
-        {/* Sub-weapon */}
+        {/* Sub-weapon extra materials */}
         <div className="bg-bg-surface-1 border border-border-subtle rounded-xl p-4 space-y-3 flex flex-col justify-between">
           <div className="space-y-2.5">
             <div className="flex items-center justify-between border-b border-border-subtle pb-2">
@@ -163,20 +129,15 @@ export const SovereignTrackerView: React.FC<SovereignTrackerViewProps> = ({ stor
                 <div className="w-6 h-6 rounded bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold text-xs">
                   S
                 </div>
-                <span className="text-xs font-bold text-text-primary">อาวุธเสริม (Sub-weapon)</span>
+                <span className="text-xs font-bold text-text-primary">วัตถุดิบเสริม Sub-weapon</span>
               </div>
               <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-bg-surface-3 text-text-muted">
-                {subOwnedCount >= 1 ? "มี PEN Blackstar" : "ยังขาด"}
+                {subReadyClaimed ? "ครบแล้ว" : "ยังขาด"}
               </span>
             </div>
 
-            <div className="flex items-center justify-between font-mono text-xs">
-              <span className="text-text-muted">จำนวนที่มี:</span>
-              <span className="text-sm font-bold text-text-primary">{subOwnedCount} / 1 ชิ้น</span>
-            </div>
-
             <p className="text-xs text-text-secondary leading-relaxed">
-              ใช้ PEN Blackstar Sub หรือ PEN Kutum C20 สำหรับเตรียมอัปเกรดในอนาคต
+              Sub-weapon ใช้สูตรต่างจาก Main/Awakening: PEN Blackstar x1 (จากคลังด้านซ้าย) + Gem of Twilight x1 (จาก Combat Academy) + Flame of the Primordial x1 (แลกจาก World Boss seal / Olvia Academy Coin)
             </p>
           </div>
         </div>

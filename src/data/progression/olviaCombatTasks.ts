@@ -50,7 +50,7 @@ export const olviaCombatTasksList: OlviaCombatTaskItem[] = [
     reward: "Choose Your PEN (V) Blackstar Weapon Box + Choose Your TET (IV) Blackstar Weapon Box + Darkstar Black Stone x1 (TET→PEN สำเร็จ 100%) + Choose Your PEN (V) Boss Defense Gear Box + Obsidian Hammer x12 + Gem of Twilight x1 + Inverted Heart of Garmoth x1 + Cron Stone x6,000 + Atanis' Element x100 + Essence of Dawn x60 + Marni's Unstable Fuel x200 + Advice of Valks +150/+180/+200/+250 + Patrigio's Pocket Watch + Old Moon Guild's Support Box x2 + Imp Boss's Knife ฯลฯ",
     isImportantReward: true,
     safetyTag: "DO_NOT_OPEN_YET",
-    importantNote: "แก้ไข 2026-09-03 ตามข้อมูล Class 3 ที่ผู้ใช้ทำ research มาละเอียด (Obsidian Hammer แก้จาก x15 เป็น x12 ตามของจริง Class 3) — รางวัลก้อนนี้แยกจาก PEN/TET Blackstar 3 ชิ้นที่ได้จากภารกิจท้าทาย Lv.61 (ปุ่ม Y) รวมกันแล้วคือวัตถุดิบราชันครบชุด (จุดตรวจ #2 Hyperboost) นอกจากนี้ PEN Boss Defense Gear Box และ Inverted Heart of Garmoth จากที่นี่ยังเชื่อมกับจุดตรวจ #6 Slumbering Origin ด้วย ต้องวางแผนเลือกให้ดี",
+    importantNote: "แก้ไข 2026-09-03 ตามข้อมูล Class 3 ที่ผู้ใช้ทำ research มาละเอียด (Obsidian Hammer แก้จาก x15 เป็น x12 ตามของจริง Class 3) — รางวัลก้อนนี้แยกจาก PEN Blackstar x2 + TET x1 + Inverted Heart of Garmoth อีกดวงที่ได้จากภารกิจท้าทาย Lv.61 (ปุ่ม Y) รวมกันแล้วคือวัตถุดิบราชันครบชุด (จุดตรวจ #2 Hyperboost) — Inverted Heart of Garmoth ที่นี่เป็นคนละดวงกับของ Y (รวมได้ 2 ดวง) และ PEN Boss Defense Gear Box จากที่นี่ยังเชื่อมกับจุดตรวจ #6 Slumbering Origin ด้วย ต้องวางแผนเลือกให้ดี",
     order: 13
   }
 ];
