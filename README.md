@@ -80,9 +80,21 @@ Or all at once (also what cron runs): `./scripts/collect-and-sync.sh`
 
 Add to crontab (`crontab -e`) — see the comment at the top of
 `scripts/collect-and-sync.sh`. BDO's world data doesn't change often, so
-weekly is plenty. The collector adds a 3-8s randomized delay between every
+weekly is plenty. The collector adds a 4-10s randomized delay between every
 action and aborts the run the moment it detects a Cloudflare block instead
 of retrying into a longer ban.
+
+The browser is launched via `playwright-extra` + `puppeteer-extra-plugin-stealth`
+(see `collector/src/lib/browser.ts`) rather than plain Playwright - a plain
+headless run got a full Cloudflare bot-block ("Attention Required", not just
+the earlier rate-limit) during testing, which a real browser session (via
+the openclick_private extension) never triggered. Even with stealth mode,
+**don't run `collect:fishing`/`collect:grindspots` back-to-back or repeatedly
+within the same session** - that specific pattern (two fishing runs plus a
+couple of ad-hoc debug scripts within ~15 minutes) is what caused the block
+in the first place. One `collect:all` run per cron cycle (i.e. per week) is
+the intended usage; if a run does get blocked, wait several hours before
+trying again, not minutes.
 
 ## Data trust
 

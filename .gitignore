@@ -6,4 +6,3 @@ dist/
 collector/out/*.json
 !collector/out/.gitkeep
 *.log
-*.tsbuildinfo

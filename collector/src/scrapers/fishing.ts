@@ -135,6 +135,23 @@ async function main() {
       await politeDelay()
     }
 
+    // A fresh browser profile starts with the "Fishing Zones" layer off, unlike
+    // the openclick_private extension version which relied on the user having
+    // already turned it on by hand. Without this, phase 1's searches return
+    // plain item results with no zone rows at all (confirmed: 0 zones found
+    // on the first automated run before this fix was added).
+    const fishingToggle = page.getByText("Fishing Zones", { exact: true }).first()
+    if (await fishingToggle.isVisible().catch(() => false)) {
+      const alreadyOn = await fishingToggle
+        .locator("xpath=ancestor::*[contains(@class,'orange') or contains(@class,'active')][1]")
+        .count()
+        .catch(() => 0)
+      if (!alreadyOn) {
+        await fishingToggle.click()
+        await politeDelay()
+      }
+    }
+
     console.log("Phase 1: searching Prize Fish list for Depth 4 zones...")
     const zoneToFish = await collectZoneFishMap(page)
     await assertNotBlocked(page, "after phase 1 fish search loop")
