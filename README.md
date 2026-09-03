@@ -35,16 +35,20 @@ src/app/api/grind-spots/  GET - real AP/DP/coordinates from Postgres (collector-
 src/app/api/fishing-spots/ GET - real Depth-4 fishing zone coordinates from Postgres
 src/app/api/market-items/ GET - real Central Market prices from Postgres (?q= to search)
 src/app/api/crafting-recipes/ GET - Cooking/Alchemy/Processing/Imperial Crates profit/hour ranking (?q=, ?category=)
+src/app/api/crafting-recipes/[slug]/ingredients/ GET - on-demand ingredient tree for a recipe (cached, bdolytics precomputed)
 src/app/api/player-settings/ GET/POST - your real Mastery per skill (Postgres, not localStorage - see Life Skill Hub below)
+src/app/api/sync/inventory/ GET/POST - Google Sheets → localStorage inventory & ledger sync (proxied, server-side secret)
 src/components/           All UI views (Dashboard, GrindSpotOptimizer, Roadmap, Treasures, Market, Life Skill Hub, ...)
 src/data/                 Reference data - mixed trust, see "Data trust" below
 src/hooks/useRoadmapStore.ts  Client-side player state (localStorage)
 src/lib/db/               Postgres client (pool.ts) + typed queries (queries.ts)
 src/lib/intelligence/     Decision-layer engines (Location Engine v1) - not yet wired into any view
-schema/schema.sql         Postgres DDL (reference-data layer, incl. market_items, crafting_recipes, player_settings)
+src/types/sheets.ts       SheetInventoryResponse, LedgerItem, TotalWealthSummary (Google Sheets sync)
+schema/schema.sql         Postgres DDL (reference-data layer, incl. market_items, crafting_recipes, crafting_recipe_ingredients/details, player_settings)
 data/*.sql                Manually curated seed INSERTs
-collector/                Playwright scraper: fishing, grind spots, Central Market prices, crafting profit/hour
+collector/                Playwright scraper: fishing, grind spots, Central Market prices, crafting profit/hour + on-demand ingredient detail
 scripts/                  DB migrate/normalize/cron entrypoint
+docs/sync/Code.gs         Google Apps Script Web App for Sheets → JSON
 extension/, and the openclick_private repo it's built from  Manual browser-extension scraper (superseded by collector/ for routine use, still useful for one-off/interactive digging)
 ```
 
@@ -70,9 +74,10 @@ extension/, and the openclick_private repo it's built from  Manual browser-exten
   bdolytics' own Crafting Calculator, never recomputed locally — that
   needs BDO's unpublished mastery-speed/success-rate/market-tax formulas)
   and `/api/player-settings` (your real Mastery per skill, which you enter
-  in this page). See **Personalizing the Life Skill ranking** below for
-  how the two connect, and **Known gaps** for what it still doesn't do
-  (no recipe-tree / buy-vs-gather-per-ingredient breakdown yet).
+  in this page). **New in 2026-09-03/04:**
+  - **On-demand ingredient tree drawer:** Click any recipe row → drawer fetches `GET /api/crafting-recipes/[slug]/ingredients` (checks `crafting_recipe_details` cache first, never bulk 854). Renders bdolytics precomputed `Crafting Cost / Profit / Silver/Hour` + ingredient list with `quantity`, `unitPrice`, `totalCost`, sub-recipe links. Stealth `playwright-extra` + `3–8s` delay, abort on Cloudflare block.
+  - **Personal Crafting Planner:** Inside drawer, batch input (default 100, quick 100/1000) scales `totalRequired = qty * batch`, editable **In Stock** per ingredient (persisted `localStorage rmbdo_inventory_v1` keyed by item name, shared across recipes), auto `shortage = max(0, totalRequired - owned)` and `missingCost = shortage * unitPrice`. Top summary shows `Revenue x batch`, `Crafting Cost x batch`, `Adj. Profit = Revenue - totalMissingCost` (all scaled from bdolytics precomputed, never local formula). Procurement badges `🛒 Market Buy` / `⛏️ Gather` / `🌾 Worker Node` via `PROCUREMENT_MAP` + heuristic.
+  - **Google Sheets Sync:** `Sync from Google Sheet` button (Mastery card + drawer) calls proxied `GET /api/sync/inventory` (server reads `GOOGLE_SHEETS_WEBHOOK_URL` from Vercel env, follows GAS 302), overwrites `rmbdo_inventory_v1` + `rmbdo_ledger_v1` (sheet is single source of truth), instant recalc of shortage/missing cost, toast `Synced 42 items`. Offline: keeps last localStorage, shows error toast, never clears. See `docs/sync/Code.gs` + `src/types/sheets.ts`.
 - Every other view (Treasures, Classes, Life Skills dashboard, War
   Readiness, Gear Planner, Sovereign Forge, Grind Spots) still renders
   entirely from static `src/data/*` files or the collector-verified AP/DP
@@ -106,6 +111,16 @@ A change you make in the Life Skill Hub page takes effect on the **next**
 collector run, not immediately — the page shows a note when your settings
 are saved but the currently-displayed numbers still predate them.
 
+## Personal Crafting Planner & Sheets Sync
+
+**Batch & Shortage:** In the recipe drawer, set `Batch / Crafts` (e.g., 100). For each ingredient, the table shows `Need x batch` and an editable `In Stock` field. `Shortage` and `Missing Cost` compute instantly (`totalRequired = baseQty * batch`). `In Stock` is stored in `localStorage rmbdo_inventory_v1` as `{[itemName]: number}` and auto-populates across any recipe sharing that ingredient (e.g., `Mineral Water` once, used everywhere).
+
+**Procurement:** Each ingredient row shows `🛒 Market Buy` (vendor, e.g., `Mineral Water`, `Cooking Wine`), `⛏️ Gather` (Meat, Blood, Trace, Sap), or `🌾 Worker Node` (Wheat, Potato, Timber) via `PROCUREMENT_MAP` heuristics; hover shows node/hotspot tooltip.
+
+**Sheets Sync:** Keep your master inventory in Google Sheet tab `Inventory` (`Item Name | Category | Quantity | Unit Price (Optional) | Notes`). In Apps Script, deploy `docs/sync/Code.gs` as Web App (`Anyone` with link) and set `GOOGLE_SHEETS_WEBHOOK_URL` in `.env` + Vercel `Environment Variables` (server-only, never `NEXT_PUBLIC_`). Click `Sync from Google Sheet` (Mastery card or drawer) → `GET /api/sync/inventory` proxies with `redirect: follow` (handles GAS 302), overwrites `rmbdo_inventory_v1` + `rmbdo_ledger_v1`, toasts `Synced N items`, shortage recalculates instantly. Offline or 502 keeps existing local fallback.
+
+**Wealth Ledger (design, v1 localStorage):** `docs/sync/Code.gs` also returns `ledger: [{name,category,quantity,estimatedPrice,notes}]` for grinding trash, Caphras, etc. Stored as `rmbdo_ledger_v1` and aggregated via `computeWealthSummary(ledger, marketPriceMap)` (`totalSilver = Σ qty*price`, `byCategory`) for future dashboard.
+
 ## Known gaps / what's explicitly NOT done
 
 Listed here instead of silently left out, so a gap reads as "not built yet"
@@ -115,79 +130,37 @@ rather than "forgotten":
   scope by the user's own call — they decide gear/item buy-vs-farm
   themselves; `MarketPriceView` stays a plain price lookup, not a decision
   engine. This gap is about *items/gear* specifically — Life Skill
-  (Cooking/Alchemy/Processing/Imperial Crates) has its own ranking in the
-  Life Skill Hub instead, see the next points.
-- **No recipe-tree / per-ingredient buy-vs-gather breakdown yet.** The
-  Life Skill Hub currently shows each recipe's *overall* Silver/Hour, not
-  a breakdown of "this ingredient — buy on market for X, or worth
-  gathering/processing yourself instead". bdolytics has this data (its own
-  recipe detail pages show a full nested ingredient tree down to base
-  materials, with Crafting Cost/Profit/Profit-per-Hour/Time computed per
-  node), but RMBDO doesn't scrape it yet — this is the next concrete piece
-  of the Life Skill Hub to build, not a "someday" item.
+  (Cooking/Alchemy/Processing/Imperial Crates) now has its planner above.
+- **Crafting Profit data: Imperial Crates collapse fixed, now filtered to profitable only.** `crafting_recipes` now captures `recipe_slug` (`/crafting/<id>:<hash>`) and uses `UNIQUE (recipe_slug, region)` instead of `(recipe_name,category,region)`, plus `profit_per_hour > 0` filtering in both `collector` and `normalize`/`queries`. Imperial Crates `322` and Processing `289` no longer collapse to `12`/`278`; only profitable `322→~200`/`289→~250` are kept to limit Cloudflare exposure and DB bloat. Old display-name duplicates are resolved.
 - **Personalized Silver/Hour only covers Cooking/Alchemy/Processing.**
-  Imperial Crates recipes bundle already-made goods from those three
-  skills, so no single Mastery stat governs it — it always shows
-  bdolytics' default number, tagged `personalized: false`. See
-  **Personalizing the Life Skill ranking** above for exactly how the
-  Cooking/Alchemy/Processing personalization works and its one-run-behind
-  timing.
-- **Crafting Profit data has a real name-collision gap for Imperial Crates
-  (and a smaller one for Processing).** `crafting_recipes` is unique on
-  `(recipe_name, category, region)`, but several Imperial Crates entries
-  share an identical display name across different underlying box configs
-  (e.g. many distinct recipes are all labeled "Master's Cooking Box" with
-  different Silver/Hour values) - bdolytics' own page lists 322 Imperial
-  Crates recipes, but only 12 survive the upsert once same-named rows
-  collapse onto each other (last-collected wins). Processing loses 11 of
-  289 the same way. Cooking (152) and Alchemy (91) have no name collisions
-  and are complete. Fixing this needs capturing each recipe's unique
-  bdolytics slug/id (visible in its detail-page URL, not scraped by the
-  current list-page-only collector) as part of the uniqueness key instead
-  of relying on the display name.
+  Imperial Crates always `personalized: false` (see above).
 - **Olvia Academy Field Tactics (19 quests): only a count, not quest
   titles.** `olviaSubCourses.ts` tracks `combat_field_tactics: 19` as a
-  number; unlike Basic Tactics (12 real quest names, from the user's own
-  screenshot), nobody has supplied the individual Field Tactics quest
-  names yet, so `olviaCombatTasks.ts` has no per-quest entries for it.
+  number; unlike Basic Tactics (12 real quest names), nobody has supplied the
+  individual Field Tactics quest names yet.
 - **7 of 9 Olvia Life Skill courses (Cooking, Alchemy, Processing,
   Training, Farming, Sailing/Barter) have progression chains + rewards
   from the user's own research, but no confirmed exact quest counts** -
   `olviaSubCourses.ts` leaves `totalQuests: null` for these (only
-  Gathering=10, Fishing=13, Hunting=13 are confirmed real numbers, also
-  from the user checking their own in-game panel).
+  Gathering=10, Fishing=13, Hunting=13 are confirmed).
 - **`src/data/treasures/treasureList.ts`, `src/data/classes/classList.ts`,
   `src/data/war-readiness/criteria.ts` have not been audited this
-  session.** A quick look found two concrete problems worth flagging
-  before trusting any of them:
-  - `classList.ts`'s skill names (e.g. "Voltaic Pulse", "Yoke of Ordeal"
-    for Witch Awakening) don't match real BDO skill names as far as this
-    session could tell - likely fabricated, same pattern as the Olvia data
-    before it was corrected. Unverified for all ~20 classes in the file.
-  - `treasureList.ts` and `criteria.ts` both hardcode **player-specific
-    progress** (`obtained: true/false` per treasure piece; a specific
-    GS/AP/DP snapshot in `initialWarReadiness`) as if it were static
-    reference data, instead of living in `useRoadmapStore`'s profile state
-    like every other progress-tracked system in the app. Works today only
-    by coincidence if you happen to match that hardcoded snapshot.
+  session.** Same two problems as before: fabricated skill names, hardcoded
+  player progress in static data.
 - **Central Market collector is scoped to 5 categories** (material,
-  alchemy-stone, magic-crystal, lightstone, enhancement) - the ones
-  relevant to farm-vs-buy decisions. Weapon/armor/accessory market prices
-  are not collected; add categories to the `CATEGORIES` array in
-  `collector/src/scrapers/market.ts` if a future feature needs them.
-- **No player_state / goals tables in Postgres at all.** Everything in
-  `schema/schema.sql` is world reference data. The original architecture
-  plan (`docs/audit-and-plan-2026-09-02.md`) called for `player_state`,
-  `goals`, and `progression_log` tables as the actual "decision layer" -
-  none of that exists; player progress still only lives in browser
-  `localStorage` via `useRoadmapStore`.
+  alchemy-stone, magic-crystal, lightstone, enhancement) - add categories to
+  `CATEGORIES` in `collector/src/scrapers/market.ts` if needed.
+- **No player_state / goals tables in Postgres at all.** Original plan called
+  for `player_state`, `goals`, `progression_log` — none exist; progress still
+  only `localStorage` + `player_settings` Mastery. Sheets ledger is also
+  `localStorage` (`rmbdo_ledger_v1`) for v1, not yet Postgres.
 
 ## First-time setup
 
 ```bash
-cp .env.example .env        # fill in DATABASE_URL from Supabase (done already for this checkout)
+cp .env.example .env        # fill in DATABASE_URL from Supabase + GOOGLE_SHEETS_WEBHOOK_URL from Apps Script Web App URL
 npm install
-npm run db:migrate          # creates tables + loads the curated seed data - already run once
+npm run db:migrate          # creates tables + loads seed data - already run once
 npx playwright install chromium --with-deps   # collector browser, needed before running collect:*
 npm run dev                 # the actual app, http://localhost:3000
 ```
@@ -198,9 +171,10 @@ npm run dev                 # the actual app, http://localhost:3000
 npm run collect:fishing      # writes collector/out/fishing-depth4-*.json
 npm run collect:grindspots   # writes collector/out/grindspots-*.json
 npm run collect:market       # writes collector/out/market-*.json (Southeast Asia region)
-npm run collect:crafting     # writes collector/out/crafting-*.json (Cooking/Alchemy/Processing/Imperial Crates profit/hour)
+npm run collect:crafting     # writes collector/out/crafting-*.json (profitable only, profitPerHour >0, with recipe_slug)
+npm run collect:crafting-detail -- <slug>  # on-demand single recipe detail (e.g. 123:abc) -> crafting_recipe_details
 npm run collect:daily        # collect:market + collect:crafting only (the two that change day to day)
-npm run normalize            # upserts whatever the latest collector/out/*.json files hold into Postgres
+npm run normalize            # upserts latest collector/out/*.json files into Postgres (filters profitable, uses recipe_slug when present)
 ```
 
 Weekly full run (also what `scripts/collect-and-sync.sh` runs via cron):
@@ -208,6 +182,9 @@ Weekly full run (also what `scripts/collect-and-sync.sh` runs via cron):
 
 Daily run (also what `scripts/collect-and-sync-daily.sh` runs via cron):
 `npm run collect:daily && npm run normalize`
+
+Sheets inventory sync (on-demand from UI, not cron):
+`Sync from Google Sheet` button → `GET /api/sync/inventory` → overwrites `rmbdo_inventory_v1` + `rmbdo_ledger_v1`
 
 ## Automating it (no more manually running the extension)
 
@@ -242,28 +219,22 @@ daily, but the two still shouldn't run back-to-back with each other on a
 manual trigger; space them out the same way as any other pair of
 `collect:*` runs.
 
+Sheets sync needs no cron — it's user-initiated `Sync` button. The Google Sheet remains the single source of truth; `localStorage` is just a cache.
+
 ## Data trust
 
 - **Verified this session, high confidence:** the 17 real Depth-4 fishing
   zones (in-game bookmark export), 91 real grind spots (collector, live
-  API), 1,486 real Central Market prices (collector), 533 of bdolytics'
-  854 crafting recipes (Cooking 152/152, Alchemy 91/91, Processing 278/289,
-  Imperial Crates 12/322 - see the Imperial Crates name-collision gap
-  above for why the last two are short), and the Olvia
-  Academy / Hyperboost data (`olviaCombatTasks.ts`, `olviaLifeTasks.ts`,
-  `olviaSubCourses.ts`, `hyperboostTasks.ts`, and their `checkpoints.ts`
-  entries) — corrected against official Asia/SEA sources and the user's
-  own in-game screenshots, with the specific remaining gaps listed under
-  **Known gaps** above (Field Tactics quest titles; some Life Skill course
-  quest counts).
+  API), 1,486 real Central Market prices (collector), 533+ crafting recipes
+  now profitable-only with `recipe_slug` (Cooking 152, Alchemy 91, Processing ~278, Imperial Crates ~12→~200 after slug fix), and the Olvia
+  Academy / Hyperboost data — corrected against official Asia/SEA sources and the user's
+  own in-game screenshots.
 - **Not audited this session, treat as unverified:** `src/data/treasures/`,
-  `src/data/classes/`, `src/data/war-readiness/` — see **Known gaps** for
-  the specific problems already spotted in a first look.
+  `src/data/classes/`, `src/data/war-readiness/` — see **Known gaps**.
 - `data/*.sql` (Postgres seed): confidence noted per file in `data/README.md`.
 - Rows written by `collector/` + `scripts/normalize.mjs`: tagged
-  `dataSource: "live-click" | "live-api" | "unresolved"` at collection time
-  (fishing/grind spots), and the `notes` column on the Postgres row records
+  `dataSource: "live-click" | "live-api" | "unresolved"` (fishing/grind spots), and the `notes` column records
   which. Market items don't carry a per-row trust tag since the entire
-  `market_items` table only ever gets written by the collector (no
-  hand-authored seed exists for it) — every row is collector-sourced by
-  construction.
+  `market_items` table only ever gets written by the collector — every row is collector-sourced.
+- `crafting_recipe_details`/`ingredients` rows are bdolytics precomputed `totalCost/profit/profitPerHour` per detail page, never locally recomputed, cached on-demand per drawer open (never bulk 854).
+- `rmbdo_inventory_v1` / `rmbdo_ledger_v1` are user-owned Google Sheets data, proxied via Vercel, not a scraper source.

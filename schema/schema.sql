@@ -265,12 +265,46 @@ CREATE TABLE crafting_recipes (
     experience        TEXT,                          -- kept as text: some rows show "1610/1610" (life xp/combat xp pair)
     personalized      BOOLEAN NOT NULL DEFAULT FALSE, -- TRUE if profit_per_hour used this player's own Mastery (player_settings), not bdolytics' default
     source_url        TEXT,
+    recipe_slug       TEXT,                          -- bdolytics detail slug e.g. "/en/crafting/123:abc" or "123:abc" — fixes Imperial Crates 322→12 collapse (unique display names)
     collected_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE (recipe_name, category, region)
 );
 
 CREATE INDEX idx_crafting_recipes_category ON crafting_recipes(category);
 CREATE INDEX idx_crafting_recipes_profit ON crafting_recipes(profit_per_hour DESC);
+CREATE UNIQUE INDEX idx_crafting_recipes_slug_region ON crafting_recipes(recipe_slug, region) WHERE recipe_slug IS NOT NULL;
+CREATE INDEX idx_crafting_recipes_slug ON crafting_recipes(recipe_slug);
+
+-- Per-recipe ingredient breakdown — on-demand cache for bdolytics Crafting Calculator detail pages.
+-- Scraped only when user opens drawer (never bulk 854), via collector/src/scrapers/craftingDetail.ts
+-- Stores bdolytics precomputed per-ingredient quantity, unit cost, and total cost/profit (never recomputed locally).
+-- Note: FK to crafting_recipes(recipe_slug) omitted for now — recipe_slug has a partial unique index
+-- (idx_crafting_recipes_slug_unique) but not a formal UNIQUE constraint, so FK would require an extra
+-- unique index. Application-level integrity is sufficient; FK can be added later if needed.
+CREATE TABLE crafting_recipe_ingredients (
+    id                SERIAL PRIMARY KEY,
+    recipe_slug       TEXT NOT NULL,
+    ingredient_name   TEXT NOT NULL,
+    quantity          NUMERIC NOT NULL,
+    unit_price        BIGINT,                        -- bdolytics per-unit Central Market cost (precomputed)
+    total_cost        BIGINT,                        -- quantity * unit_price (precomputed by bdolytics)
+    is_sub_recipe     BOOLEAN NOT NULL DEFAULT FALSE,
+    sub_recipe_slug   TEXT,
+    collected_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (recipe_slug, ingredient_name)
+);
+
+-- Top-level detail cache (total cost/profit as bdolytics shows them) — one row per recipe_slug
+CREATE TABLE crafting_recipe_details (
+    recipe_slug       TEXT PRIMARY KEY,
+    recipe_name       TEXT NOT NULL,
+    category          TEXT NOT NULL,
+    total_cost        BIGINT,                        -- bdolytics "Crafting Cost"
+    profit            BIGINT,                        -- bdolytics "Profit" (price - cost)
+    profit_per_hour   BIGINT,                        -- bdolytics "Silver/Hour" (profit * crafts/hour)
+    ingredients_json  JSONB NOT NULL,                -- raw ingredient tree as scraped (for flexible UI)
+    collected_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
 -- ---------------------------------------------------------
 -- Player settings (singleton row) - the only per-player input the

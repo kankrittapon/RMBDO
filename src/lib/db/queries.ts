@@ -95,6 +95,7 @@ export interface DbCraftingRecipe {
   experience: string | null
   personalized: boolean
   collectedAt: string
+  recipeSlug: string | null
 }
 
 /** Cooking/Alchemy/Processing/Imperial Crates profit-per-hour ranking,
@@ -106,7 +107,7 @@ export interface DbCraftingRecipe {
  * run. */
 export async function getDbCraftingRecipes(search?: string, category?: string): Promise<DbCraftingRecipe[]> {
   const pool = getPool()
-  const conditions: string[] = []
+  const conditions: string[] = ["profit_per_hour > 0"]
   const params: string[] = []
   if (search) {
     params.push(`%${search}%`)
@@ -116,9 +117,9 @@ export async function getDbCraftingRecipes(search?: string, category?: string): 
     params.push(category)
     conditions.push(`category = $${params.length}`)
   }
-  const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : ""
+  const where = `WHERE ${conditions.join(" AND ")}`
   const { rows } = await pool.query(
-    `SELECT recipe_name, category, profit_per_hour, price, volume_14d_avg, experience, personalized, collected_at
+    `SELECT recipe_name, category, profit_per_hour, price, volume_14d_avg, experience, personalized, collected_at, recipe_slug
      FROM crafting_recipes ${where}
      ORDER BY profit_per_hour DESC NULLS LAST LIMIT 500`,
     params,
@@ -132,6 +133,7 @@ export async function getDbCraftingRecipes(search?: string, category?: string): 
     experience: r.experience,
     personalized: r.personalized,
     collectedAt: r.collected_at,
+    recipeSlug: r.recipe_slug ?? null,
   }))
 }
 

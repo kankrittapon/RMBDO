@@ -9,6 +9,7 @@
     "collect:grindspots": "tsx src/scrapers/grindSpots.ts",
     "collect:market": "tsx src/scrapers/market.ts",
     "collect:crafting": "tsx src/scrapers/crafting.ts",
+    "collect:crafting-detail": "tsx src/scrapers/craftingDetail.ts",
     "collect:daily": "npm run collect:market && npm run collect:crafting",
     "collect:all": "npm run collect:fishing && npm run collect:grindspots && npm run collect:market && npm run collect:crafting"
   },

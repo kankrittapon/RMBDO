@@ -71,6 +71,7 @@ export interface CraftingRecipeRecord {
   volume14dAvg: number | null
   experience: string | null
   personalized: boolean
+  recipeSlug: string | null
 }
 
 async function selectSoutheastAsia(page: Page) {
@@ -159,7 +160,12 @@ function parseSuffixed(s: string | undefined): number | null {
   return Math.round(num)
 }
 
-function parseCraftingPageText(text: string, category: string, personalized: boolean): CraftingRecipeRecord[] {
+function parseCraftingPageText(
+  text: string,
+  category: string,
+  personalized: boolean,
+  slugs: (string | null)[],
+): CraftingRecipeRecord[] {
   const lines = text.split("\n").map((l) => l.trim()).filter(Boolean)
   const headerIdx = lines.findIndex((l) => l === "Experience")
   if (headerIdx === -1) return []
@@ -170,6 +176,7 @@ function parseCraftingPageText(text: string, category: string, personalized: boo
 
   const rows: CraftingRecipeRecord[] = []
   let i = headerIdx + 1
+  let slugIdx = 0
   while (i < lines.length) {
     if (isPagerBlockFrom(i)) break
 
@@ -189,9 +196,42 @@ function parseCraftingPageText(text: string, category: string, personalized: boo
     const experience = lines[i] ?? null
     i++
 
-    rows.push({ recipeName, category, profitPerHour, price, volume14dAvg: volume, experience, personalized })
+    const recipeSlug = slugs[slugIdx] ?? null
+    slugIdx++
+    rows.push({ recipeName, category, profitPerHour, price, volume14dAvg: volume, experience, personalized, recipeSlug })
   }
   return rows
+}
+
+async function extractRecipeSlugs(page: Page): Promise<(string | null)[]> {
+  // Try to capture detail hrefs for each row. List page renders each recipe name as <a href="/en/crafting/<id>:<hash>">
+  // We correlate by DOM order — first link corresponds to first parsed row. If not found, return nulls.
+  try {
+    const hrefs = await page.evaluate(() => {
+      const main = document.querySelector("main")
+      if (!main) return [] as string[]
+      const anchors = Array.from(main.querySelectorAll('a[href*="/crafting/"]')) as HTMLAnchorElement[]
+      // Filter to detail links (contain colon hash) and deduplicate by order
+      const seen = new Set<string>()
+      const out: string[] = []
+      for (const a of anchors) {
+        const href = a.getAttribute("href") || ""
+        // e.g. "/en/crafting/123:abc" or "/crafting/123:abc"
+        const m = href.match(/\/crafting\/([^/?#]+)/)
+        if (m) {
+          const slug = m[1] // e.g. "123:abc"
+          if (!seen.has(slug)) {
+            seen.add(slug)
+            out.push(slug)
+          }
+        }
+      }
+      return out
+    })
+    return hrefs
+  } catch {
+    return []
+  }
 }
 
 /** The pager ("1 2 3 »") isn't URL-driven - navigating to ?page=N just
@@ -245,12 +285,14 @@ async function scrapeCategory(
       .catch(() => {})
     await sleep(400)
 
+    let slugs = await extractRecipeSlugs(page)
     let text = await page.locator("main").innerText().catch(() => "")
-    let rows = parseCraftingPageText(text, category.label, personalized)
+    let rows = parseCraftingPageText(text, category.label, personalized, slugs)
     if (rows.length === 0 && pageNum === 1) {
       await sleep(2000)
+      slugs = await extractRecipeSlugs(page)
       text = await page.locator("main").innerText().catch(() => "")
-      rows = parseCraftingPageText(text, category.label, personalized)
+      rows = parseCraftingPageText(text, category.label, personalized, slugs)
     }
     if (rows.length === 0) break
 
@@ -301,6 +343,15 @@ async function main() {
       await politeDelay()
     }
 
+    // Safe scraping policy: only sync profitable recipes (profitPerHour > 0)
+    // Unprofitable rows are still scraped for debugging but filtered before writing,
+    // to avoid Cloudflare exposure and DB bloat from 854 → 533 collapse handling.
+    const profitable = results.filter((r) => r.profitPerHour !== null && r.profitPerHour > 0)
+    const filtered = results.length - profitable.length
+    if (filtered > 0) {
+      console.log(`Filtered ${filtered} unprofitable recipes (profitPerHour <=0 or null) — keeping ${profitable.length} profitable`)
+    }
+
     mkdirSync("out", { recursive: true })
     const outPath = `out/crafting-${new Date().toISOString().replace(/[:.]/g, "-")}.json`
     writeFileSync(
@@ -313,13 +364,13 @@ async function main() {
           note: hasAnyMastery
             ? "Each recipe's `personalized` field says whether ITS category's own Mastery was set in player_settings - a category with no mastery configured still used bdolytics' default even in this run. Imperial Crates is always personalized:false (no single Mastery stat governs it)."
             : "No player_settings mastery configured - every row used bdolytics' default calculator settings.",
-          recipes: results,
+          recipes: profitable,
         },
         null,
         2,
       ),
     )
-    console.log(`Wrote ${results.length} crafting recipes to ${outPath}`)
+    console.log(`Wrote ${profitable.length} crafting recipes to ${outPath} (filtered ${filtered})`)
   } finally {
     await browser.close()
   }

@@ -108,17 +108,32 @@ async function upsertCraftingRecipes(recipes, region) {
   // as personalized just because ONE of them (e.g. Cooking) had its
   // Mastery set in player_settings, even though Alchemy/Processing/
   // Imperial Crates rows in that same run were still bdolytics' defaults.
+  // Now also handles recipe_slug to fix Imperial Crates 322->12 collapse:
+  // when slug is present, use ON CONFLICT (recipe_slug, region) WHERE slug IS NOT NULL
   let count = 0
   for (const r of recipes) {
-    await client.query(
-      `INSERT INTO crafting_recipes (recipe_name, category, region, profit_per_hour, price, volume_14d_avg, experience, personalized, source_url, collected_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'https://bdolytics.com/en/crafting', now())
-       ON CONFLICT (recipe_name, category, region) DO UPDATE SET
-         profit_per_hour = EXCLUDED.profit_per_hour, price = EXCLUDED.price,
-         volume_14d_avg = EXCLUDED.volume_14d_avg, experience = EXCLUDED.experience,
-         personalized = EXCLUDED.personalized, collected_at = now()`,
-      [r.recipeName, r.category, region, r.profitPerHour, r.price, r.volume14dAvg, r.experience, Boolean(r.personalized)],
-    )
+    if (r.recipeSlug) {
+      await client.query(
+        `INSERT INTO crafting_recipes (recipe_name, category, region, profit_per_hour, price, volume_14d_avg, experience, personalized, source_url, recipe_slug, collected_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'https://bdolytics.com/en/crafting', $9, now())
+         ON CONFLICT (recipe_slug, region) WHERE recipe_slug IS NOT NULL DO UPDATE SET
+           recipe_name = EXCLUDED.recipe_name, category = EXCLUDED.category,
+           profit_per_hour = EXCLUDED.profit_per_hour, price = EXCLUDED.price,
+           volume_14d_avg = EXCLUDED.volume_14d_avg, experience = EXCLUDED.experience,
+           personalized = EXCLUDED.personalized, collected_at = now()`,
+        [r.recipeName, r.category, region, r.profitPerHour, r.price, r.volume14dAvg, r.experience, Boolean(r.personalized), r.recipeSlug],
+      )
+    } else {
+      await client.query(
+        `INSERT INTO crafting_recipes (recipe_name, category, region, profit_per_hour, price, volume_14d_avg, experience, personalized, source_url, collected_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'https://bdolytics.com/en/crafting', now())
+         ON CONFLICT (recipe_name, category, region) DO UPDATE SET
+           profit_per_hour = EXCLUDED.profit_per_hour, price = EXCLUDED.price,
+           volume_14d_avg = EXCLUDED.volume_14d_avg, experience = EXCLUDED.experience,
+           personalized = EXCLUDED.personalized, collected_at = now()`,
+        [r.recipeName, r.category, region, r.profitPerHour, r.price, r.volume14dAvg, r.experience, Boolean(r.personalized)],
+      )
+    }
     count++
   }
   return count
@@ -166,10 +181,15 @@ async function run() {
 
   const craftingFile = latestFile("crafting-")
   if (craftingFile) {
-    const { recipes, region } = JSON.parse(readFileSync(craftingFile, "utf8"))
+    const { recipes: rawRecipes, region } = JSON.parse(readFileSync(craftingFile, "utf8"))
+    // Safe scraping policy: only sync profitable recipes (profitPerHour > 0)
+    // Keeps DB lean and avoids Cloudflare exposure from dead recipes
+    const recipes = rawRecipes.filter((r) => r.profitPerHour !== null && r.profitPerHour > 0)
+    const filtered = rawRecipes.length - recipes.length
+    if (filtered > 0) console.log(`Crafting filter: ${filtered} unprofitable recipes skipped (profitPerHour <=0), ${recipes.length} profitable kept`)
     const count = await upsertCraftingRecipes(recipes, region)
     const personalizedCount = recipes.filter((r) => r.personalized).length
-    console.log(`Crafting recipes (${craftingFile}): ${count} upserted (${personalizedCount} personalized).`)
+    console.log(`Crafting recipes (${craftingFile}): ${count} upserted (${personalizedCount} personalized, filtered ${filtered}).`)
   } else {
     console.log("No crafting export found in collector/out/ - run `npm run collect:crafting` first.")
   }
