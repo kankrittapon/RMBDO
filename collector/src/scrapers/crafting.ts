@@ -204,27 +204,33 @@ function parseCraftingPageText(
 }
 
 async function extractRecipeSlugs(page: Page): Promise<(string | null)[]> {
-  // Try to capture detail hrefs for each row. List page renders each recipe name as <a href="/en/crafting/<id>:<hash>">
-  // We correlate by DOM order — first link corresponds to first parsed row. If not found, return nulls.
+  // Each row has ONE anchor to its own detail page (text = the recipe
+  // name, e.g. "Crystal of Mysterious Darkness") plus zero or more OTHER
+  // <a href="/crafting/..."> anchors for any of its ingredients that are
+  // themselves craftable (text = a plain input quantity number, e.g.
+  // "50"). A first version of this function deduplicated ALL crafting
+  // links page-wide by slug without distinguishing the two, which
+  // silently mis-assigned an ingredient's link to the row that happened
+  // to consume that dedup slot next - confirmed by a real run: "Hard-
+  // Boiled Shellfish" and "Skilled Cook's Cooking Box" (unrelated
+  // recipes) both ended up with the exact same slug. Fixed by keeping
+  // only the name-link per row: its text is the recipe name, never a
+  // bare number, so filtering out purely-numeric-text anchors reliably
+  // isolates exactly one link per row (confirmed via live DOM inspection
+  // on both a Processing page with nested sub-recipe ingredients and an
+  // Imperial Crates page with none).
   try {
     const hrefs = await page.evaluate(() => {
       const main = document.querySelector("main")
       if (!main) return [] as string[]
       const anchors = Array.from(main.querySelectorAll('a[href*="/crafting/"]')) as HTMLAnchorElement[]
-      // Filter to detail links (contain colon hash) and deduplicate by order
-      const seen = new Set<string>()
       const out: string[] = []
       for (const a of anchors) {
+        const text = (a.textContent || "").trim()
+        if (!text || /^\d+$/.test(text)) continue // ingredient icon link (blank or a bare quantity), not this row's own link
         const href = a.getAttribute("href") || ""
-        // e.g. "/en/crafting/123:abc" or "/crafting/123:abc"
         const m = href.match(/\/crafting\/([^/?#]+)/)
-        if (m) {
-          const slug = m[1] // e.g. "123:abc"
-          if (!seen.has(slug)) {
-            seen.add(slug)
-            out.push(slug)
-          }
-        }
+        if (m) out.push(m[1]) // e.g. "123:abc"
       }
       return out
     })

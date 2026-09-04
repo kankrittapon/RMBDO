@@ -131,7 +131,7 @@ rather than "forgotten":
   themselves; `MarketPriceView` stays a plain price lookup, not a decision
   engine. This gap is about *items/gear* specifically — Life Skill
   (Cooking/Alchemy/Processing/Imperial Crates) now has its planner above.
-- **Crafting Profit data: Imperial Crates collapse fixed, now filtered to profitable only.** `crafting_recipes` now captures `recipe_slug` (`/crafting/<id>:<hash>`) and uses `UNIQUE (recipe_slug, region)` instead of `(recipe_name,category,region)`, plus `profit_per_hour > 0` filtering in both `collector` and `normalize`/`queries`. Imperial Crates `322` and Processing `289` no longer collapse to `12`/`278`; only profitable `322→~200`/`289→~250` are kept to limit Cloudflare exposure and DB bloat. Old display-name duplicates are resolved.
+- **Crafting Profit data: Imperial Crates collapse fixed, now filtered to profitable only.** `crafting_recipes` captures `recipe_slug` (`/crafting/<id>:<hash>`), the row's own detail-page link — its first implementation deduplicated ALL crafting links page-wide without distinguishing a row's own link from a craftable ingredient's link, which silently mis-assigned slugs (confirmed: two unrelated recipes ended up sharing one slug); fixed by filtering to links whose text is the recipe name, never a bare quantity number. There is no longer a `UNIQUE (recipe_name, category, region)` constraint — `recipe_slug` is the real per-recipe identity now. Combined with `profit_per_hour > 0` filtering (collector + normalize + the read query) to limit Cloudflare exposure and DB bloat, a real run now gives **487 profitable recipes total** (Cooking 50, Alchemy 75, Processing 215, Imperial Crates 147) with **zero duplicate slugs** — verified against the live DB, not estimated.
 - **Personalized Silver/Hour only covers Cooking/Alchemy/Processing.**
   Imperial Crates always `personalized: false` (see above).
 - **Olvia Academy Field Tactics (19 quests): only a count, not quest
@@ -225,8 +225,10 @@ Sheets sync needs no cron — it's user-initiated `Sync` button. The Google Shee
 
 - **Verified this session, high confidence:** the 17 real Depth-4 fishing
   zones (in-game bookmark export), 91 real grind spots (collector, live
-  API), 1,486 real Central Market prices (collector), 533+ crafting recipes
-  now profitable-only with `recipe_slug` (Cooking 152, Alchemy 91, Processing ~278, Imperial Crates ~12→~200 after slug fix), and the Olvia
+  API), 1,486 real Central Market prices (collector), 487 profitable
+  crafting recipes with `recipe_slug` and zero duplicate slugs (Cooking 50,
+  Alchemy 75, Processing 215, Imperial Crates 147 — an exact count from a
+  real collector run + live DB query, not an estimate), and the Olvia
   Academy / Hyperboost data — corrected against official Asia/SEA sources and the user's
   own in-game screenshots.
 - **Not audited this session, treat as unverified:** `src/data/treasures/`,

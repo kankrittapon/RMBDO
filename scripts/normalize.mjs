@@ -124,13 +124,16 @@ async function upsertCraftingRecipes(recipes, region) {
         [r.recipeName, r.category, region, r.profitPerHour, r.price, r.volume14dAvg, r.experience, Boolean(r.personalized), r.recipeSlug],
       )
     } else {
+      // No recipe_slug for this row (scrape fallback failed to capture a
+      // detail-page link) - there's no unique constraint to upsert against
+      // any more (see schema.sql), so this is a plain insert. Rare in
+      // practice since the collector attaches a slug to virtually every
+      // row; worst case a slug-less recipe accumulates a duplicate row
+      // across runs, which is a much smaller problem than the crash this
+      // replaced.
       await client.query(
         `INSERT INTO crafting_recipes (recipe_name, category, region, profit_per_hour, price, volume_14d_avg, experience, personalized, source_url, collected_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'https://bdolytics.com/en/crafting', now())
-         ON CONFLICT (recipe_name, category, region) DO UPDATE SET
-           profit_per_hour = EXCLUDED.profit_per_hour, price = EXCLUDED.price,
-           volume_14d_avg = EXCLUDED.volume_14d_avg, experience = EXCLUDED.experience,
-           personalized = EXCLUDED.personalized, collected_at = now()`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'https://bdolytics.com/en/crafting', now())`,
         [r.recipeName, r.category, region, r.profitPerHour, r.price, r.volume14dAvg, r.experience, Boolean(r.personalized)],
       )
     }

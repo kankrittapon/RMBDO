@@ -266,8 +266,16 @@ CREATE TABLE crafting_recipes (
     personalized      BOOLEAN NOT NULL DEFAULT FALSE, -- TRUE if profit_per_hour used this player's own Mastery (player_settings), not bdolytics' default
     source_url        TEXT,
     recipe_slug       TEXT,                          -- bdolytics detail slug e.g. "/en/crafting/123:abc" or "123:abc" — fixes Imperial Crates 322→12 collapse (unique display names)
-    collected_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-    UNIQUE (recipe_name, category, region)
+    collected_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+    -- No UNIQUE (recipe_name, category, region) here anymore: recipe_slug
+    -- (see idx_crafting_recipes_slug_region below) is the real identity now
+    -- that duplicate display names are known to exist (Imperial Crates).
+    -- Keeping the old name-based constraint alongside the new slug-based
+    -- partial unique index meant an upsert targeting ON CONFLICT
+    -- (recipe_slug, region) would raise a raw duplicate-key error the
+    -- moment a slugged row's name/category matched an existing unslugged
+    -- row - confirmed to crash the next real collect:crafting run before
+    -- this was caught and removed.
 );
 
 CREATE INDEX idx_crafting_recipes_category ON crafting_recipes(category);
