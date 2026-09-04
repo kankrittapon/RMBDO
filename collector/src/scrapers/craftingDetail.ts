@@ -5,6 +5,7 @@
 
 import { readFileSync } from "node:fs"
 import type { Page } from "playwright"
+import pg from "pg"
 import { launch, politeDelay, assertNotBlocked } from "../lib/browser.js"
 
 if (!process.env.DATABASE_URL) {
@@ -81,27 +82,29 @@ export async function scrapeCraftingDetail(slug: string): Promise<CraftingDetail
     const title = await page.locator("h1").first().innerText().catch(() => slug)
     const bodyText = await page.locator("main").innerText().catch(() => "")
 
-    // Try to find ingredients via DOM: look for links to /crafting/ inside main
+    // Try to find ingredients via DOM: look for links to /crafting/ inside main.
+    // The detail page shows each ingredient TWICE: once in the main
+    // breakdown list (anchor text is "<Name> ×<qty>", e.g. "Hot Pepper ×2"
+    // — the multiplication sign U+00D7, not ASCII "x", confirmed by
+    // running this against a live page) and once in a sidebar dependency
+    // tree (anchor text is "<Name> (<rate>/h)", no quantity at all). A
+    // first version of this function looked for an ASCII "x5"/"5x" pattern
+    // in the anchor's *parent* text, which never matched either real
+    // format, so quantity always came back 1 and both occurrences were
+    // kept as separate (duplicate) ingredient rows - confirmed by running
+    // it against a real recipe. Fixed by reading the quantity straight out
+    // of the anchor's own text (×N form) and skipping the (rate/h) variant
+    // entirely when the ×N variant for the same sub-recipe is present.
     const ingredients = await page.evaluate(() => {
       const main = document.querySelector("main")
-      if (!main) return [] as Array<{ name: string; href: string | null; quantity: string | null }>
-      const rows: Array<{ name: string; href: string | null; quantity: string | null }> = []
-      // Heuristic: ingredient rows often have an <a> + a quantity nearby (e.g. "5" or "x5")
+      if (!main) return [] as Array<{ name: string; href: string | null; rawText: string }>
+      const rows: Array<{ name: string; href: string | null; rawText: string }> = []
       const anchors = Array.from(main.querySelectorAll('a[href*="/crafting/"]')) as HTMLAnchorElement[]
       for (const a of anchors) {
-        const name = a.innerText?.trim()
-        if (!name || name.length < 2) continue
-        // Skip the title itself (first large heading)
-        if (a.closest("h1")) continue
-        // Find quantity near this anchor — look at next sibling or parent's text
-        let quantity: string | null = null
-        const parent = a.closest("tr") || a.closest("div") || a.parentElement
-        if (parent) {
-          const txt = parent.innerText || ""
-          const m = txt.match(/x\s*(\d+(?:\.\d+)?)|\b(\d+)\s*x\b/i)
-          if (m) quantity = m[1] || m[2]
-        }
-        rows.push({ name, href: a.getAttribute("href"), quantity })
+        const rawText = (a.innerText || a.textContent || "").trim()
+        if (!rawText || rawText.length < 2) continue
+        if (a.closest("h1")) continue // skip the title itself
+        rows.push({ name: rawText, href: a.getAttribute("href"), rawText })
       }
       return rows
     })
@@ -109,19 +112,39 @@ export async function scrapeCraftingDetail(slug: string): Promise<CraftingDetail
     // If we got nothing via DOM, try to parse bodyText for ingredient-like lines
     let parsedIngredients: CraftingIngredient[] = []
     if (ingredients.length > 0) {
-      parsedIngredients = ingredients.map((ing) => {
-        const qty = ing.quantity ? parseFloat(ing.quantity) : 1
+      const bySlug = new Map<string, CraftingIngredient>()
+      for (const ing of ingredients) {
         const subSlugMatch = ing.href?.match(/\/crafting\/([^/?#]+)/)
         const subSlug = subSlugMatch ? subSlugMatch[1] : null
-        return {
-          name: ing.name,
+        const key = subSlug ?? ing.rawText // ingredients with no sub-recipe link (raw market materials) have no slug to dedupe on
+
+        const qtyMatch = ing.rawText.match(/[×x]\s*(\d+(?:\.\d+)?)/i)
+        const isRateVariant = /\(\s*-?[\d,.]+[KMB]?\s*\/\s*h\s*\)/i.test(ing.rawText) // "(0/h)" sidebar-tree form, no quantity
+
+        if (bySlug.has(key)) {
+          // Already have an entry for this ingredient - only replace it if
+          // this occurrence actually carries a real quantity and the
+          // existing one doesn't (prefer the ×N form over the (rate/h) form).
+          if (qtyMatch && bySlug.get(key)!.quantity === 1 && !isRateVariant) {
+            // fall through to overwrite below
+          } else {
+            continue
+          }
+        }
+        if (isRateVariant && !qtyMatch) continue // pure sidebar-tree duplicate, no new info
+
+        const name = ing.rawText.replace(/[×x]\s*\d+(?:\.\d+)?\s*$/i, "").replace(/\(\s*-?[\d,.]+[KMB]?\s*\/\s*h\s*\)\s*$/i, "").trim()
+        const qty = qtyMatch ? parseFloat(qtyMatch[1]) : 1
+        bySlug.set(key, {
+          name: name || ing.rawText,
           quantity: isNaN(qty) ? 1 : qty,
           unitPrice: null, // will be filled from market or detail page price column if available
           totalCost: null,
           isSubRecipe: !!subSlug,
           subRecipeSlug: subSlug,
-        }
-      })
+        })
+      }
+      parsedIngredients = Array.from(bySlug.values())
     } else {
       // Fallback: try to parse bodyText for "Cost" lines
       // Look for lines that contain ingredient names (heuristic)
@@ -180,16 +203,61 @@ export async function scrapeCraftingDetail(slug: string): Promise<CraftingDetail
   }
 }
 
-// CLI: npm run collect:crafting-detail -- <slug>
+/** Persists a scraped detail into Postgres so `GET
+ * /api/crafting-recipes/[slug]/ingredients` (cache-read-only, never
+ * scrapes itself) can actually serve it. This didn't exist at all before -
+ * the CLI only ever printed JSON to stdout, so the ingredient drawer had
+ * no way to ever show real data in the deployed app, confirmed by
+ * checking: nothing else in the codebase references these two tables as a
+ * write target. */
+async function saveCraftingDetail(detail: CraftingDetail, category: string | null): Promise<void> {
+  if (!process.env.DATABASE_URL) {
+    console.warn("DATABASE_URL not set - scraped detail was NOT saved to Postgres, only printed below.")
+    return
+  }
+  const client = new pg.Client({ connectionString: process.env.DATABASE_URL })
+  try {
+    await client.connect()
+    await client.query(
+      `INSERT INTO crafting_recipe_details (recipe_slug, recipe_name, category, total_cost, profit, profit_per_hour, ingredients_json, collected_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, now())
+       ON CONFLICT (recipe_slug) DO UPDATE SET
+         recipe_name = EXCLUDED.recipe_name, category = EXCLUDED.category,
+         total_cost = EXCLUDED.total_cost, profit = EXCLUDED.profit, profit_per_hour = EXCLUDED.profit_per_hour,
+         ingredients_json = EXCLUDED.ingredients_json, collected_at = now()`,
+      [detail.recipeSlug, detail.recipeName, category, detail.totalCost, detail.profit, detail.profitPerHour, JSON.stringify(detail.ingredients)],
+    )
+    // Replace this recipe's ingredient rows wholesale rather than trying to
+    // diff - simplest correct option for a small per-recipe row count.
+    await client.query(`DELETE FROM crafting_recipe_ingredients WHERE recipe_slug = $1`, [detail.recipeSlug])
+    for (const ing of detail.ingredients) {
+      await client.query(
+        `INSERT INTO crafting_recipe_ingredients (recipe_slug, ingredient_name, quantity, unit_price, total_cost, is_sub_recipe, sub_recipe_slug, collected_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, now())
+         ON CONFLICT (recipe_slug, ingredient_name) DO UPDATE SET
+           quantity = EXCLUDED.quantity, unit_price = EXCLUDED.unit_price, total_cost = EXCLUDED.total_cost,
+           is_sub_recipe = EXCLUDED.is_sub_recipe, sub_recipe_slug = EXCLUDED.sub_recipe_slug, collected_at = now()`,
+        [detail.recipeSlug, ing.name, ing.quantity, ing.unitPrice, ing.totalCost, ing.isSubRecipe, ing.subRecipeSlug],
+      )
+    }
+    console.log(`Saved to Postgres: crafting_recipe_details + ${detail.ingredients.length} ingredient row(s) for ${detail.recipeSlug}`)
+  } finally {
+    await client.end().catch(() => {})
+  }
+}
+
+// CLI: npm run collect:crafting-detail -- <slug> [category]
 if (import.meta.url === `file://${process.argv[1]}`) {
   const slug = process.argv[2]
+  const category = process.argv[3] ?? null
   if (!slug) {
-    console.error("Usage: npm run collect:crafting-detail -- <slug>   e.g. 123:abc")
+    console.error("Usage: npm run collect:crafting-detail -- <slug> [category]   e.g. 123:abc Cooking")
     process.exit(1)
   }
   scrapeCraftingDetail(slug)
-    .then((d) => {
+    .then(async (d) => {
       console.log(JSON.stringify(d, null, 2))
+      await saveCraftingDetail(d, category)
     })
     .catch((e) => {
       console.error("Scrape failed:", e.message)
