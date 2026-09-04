@@ -75,7 +75,7 @@ extension/, and the openclick_private repo it's built from  Manual browser-exten
   needs BDO's unpublished mastery-speed/success-rate/market-tax formulas)
   and `/api/player-settings` (your real Mastery per skill, which you enter
   in this page). **New in 2026-09-03/04:**
-  - **On-demand ingredient tree drawer:** Click any recipe row → drawer fetches `GET /api/crafting-recipes/[slug]/ingredients` (checks `crafting_recipe_details` cache first, never bulk 854). Renders bdolytics precomputed `Crafting Cost / Profit / Silver/Hour` + ingredient list with `quantity`, `unitPrice`, `totalCost`, sub-recipe links. Stealth `playwright-extra` + `3–8s` delay, abort on Cloudflare block.
+  - **On-demand ingredient tree drawer:** Click any recipe row → drawer fetches `GET /api/crafting-recipes/[slug]/ingredients` (checks `crafting_recipe_details` cache first, never bulk 854). Renders bdolytics precomputed `Crafting Cost / Profit / Silver/Hour` + ingredient list with `quantity`, `unitPrice`, `totalCost`, sub-recipe links. Stealth `playwright-extra` + `3–8s` delay, abort on Cloudflare block. **As deployed, this cache is always empty** — nothing writes a scrape's output into Postgres yet, so the drawer currently shows "not cached" for every recipe; see **Known gaps**.
   - **Personal Crafting Planner:** Inside drawer, batch input (default 100, quick 100/1000) scales `totalRequired = qty * batch`, editable **In Stock** per ingredient (persisted `localStorage rmbdo_inventory_v1` keyed by item name, shared across recipes), auto `shortage = max(0, totalRequired - owned)` and `missingCost = shortage * unitPrice`. Top summary shows `Revenue x batch`, `Crafting Cost x batch`, `Adj. Profit = Revenue - totalMissingCost` (all scaled from bdolytics precomputed, never local formula). Procurement badges `🛒 Market Buy` / `⛏️ Gather` / `🌾 Worker Node` via `PROCUREMENT_MAP` + heuristic.
   - **Google Sheets Sync:** `Sync from Google Sheet` button (Mastery card + drawer) calls proxied `GET /api/sync/inventory` (server reads `GOOGLE_SHEETS_WEBHOOK_URL` from Vercel env, follows GAS 302), overwrites `rmbdo_inventory_v1` + `rmbdo_ledger_v1` (sheet is single source of truth), instant recalc of shortage/missing cost, toast `Synced 42 items`. Offline: keeps last localStorage, shows error toast, never clears. See `docs/sync/Code.gs` + `src/types/sheets.ts`.
 - Every other view (Treasures, Classes, Life Skills dashboard, War
@@ -134,6 +134,28 @@ rather than "forgotten":
 - **Crafting Profit data: Imperial Crates collapse fixed, now filtered to profitable only.** `crafting_recipes` captures `recipe_slug` (`/crafting/<id>:<hash>`), the row's own detail-page link — its first implementation deduplicated ALL crafting links page-wide without distinguishing a row's own link from a craftable ingredient's link, which silently mis-assigned slugs (confirmed: two unrelated recipes ended up sharing one slug); fixed by filtering to links whose text is the recipe name, never a bare quantity number. There is no longer a `UNIQUE (recipe_name, category, region)` constraint — `recipe_slug` is the real per-recipe identity now. Combined with `profit_per_hour > 0` filtering (collector + normalize + the read query) to limit Cloudflare exposure and DB bloat, a real run now gives **487 profitable recipes total** (Cooking 50, Alchemy 75, Processing 215, Imperial Crates 147) with **zero duplicate slugs** — verified against the live DB, not estimated.
 - **Personalized Silver/Hour only covers Cooking/Alchemy/Processing.**
   Imperial Crates always `personalized: false` (see above).
+- **The ingredient-tree drawer's detail scraper has two real bugs, found
+  by actually running it against a live recipe page (not just reading the
+  code).** `collector/src/scrapers/craftingDetail.ts`: (1) every
+  ingredient's quantity comes back as `1` regardless of the real amount -
+  bdolytics shows quantity inline in the ingredient name text like "Hot
+  Pepper ×2", using a multiplication sign (×), but the extraction regex
+  only matches an ASCII "x"/"5x" pattern nearby, so it never fires; (2)
+  each ingredient can appear twice in the scraped list (once from the main
+  breakdown, once from a sidebar dependency-tree section that also links
+  to it) - not deduplicated. `unitPrice`/`totalCost` per ingredient are
+  also always `null` (a known gap from when this was first built, not new).
+- **Nothing writes `craftingDetail.ts`'s scraped output into
+  `crafting_recipe_details`/`crafting_recipe_ingredients` anywhere in the
+  codebase.** `npm run collect:crafting-detail -- <slug>` only prints JSON
+  to stdout; there's no script that inserts it into Postgres. Since
+  `GET /api/crafting-recipes/[slug]/ingredients` only ever reads that
+  cache and never scrapes itself (correct, deliberate - Vercel has no
+  Playwright), the drawer cannot show real data for **any** recipe in the
+  deployed app today, not just ones that haven't been visited yet. This
+  was verified by hand-inserting one real scraped result directly into
+  the DB and confirming the API then serves it correctly - the read side
+  works, but the write/persistence side doesn't exist yet.
 - **Olvia Academy Field Tactics (19 quests): only a count, not quest
   titles.** `olviaSubCourses.ts` tracks `combat_field_tactics: 19` as a
   number; unlike Basic Tactics (12 real quest names), nobody has supplied the
@@ -172,7 +194,7 @@ npm run collect:fishing      # writes collector/out/fishing-depth4-*.json
 npm run collect:grindspots   # writes collector/out/grindspots-*.json
 npm run collect:market       # writes collector/out/market-*.json (Southeast Asia region)
 npm run collect:crafting     # writes collector/out/crafting-*.json (profitable only, profitPerHour >0, with recipe_slug)
-npm run collect:crafting-detail -- <slug>  # on-demand single recipe detail (e.g. 123:abc) -> crafting_recipe_details
+npm run collect:crafting-detail -- <slug>  # prints one recipe's scraped detail as JSON - does NOT write to Postgres yet, see Known gaps
 npm run collect:daily        # collect:market + collect:crafting only (the two that change day to day)
 npm run normalize            # upserts latest collector/out/*.json files into Postgres (filters profitable, uses recipe_slug when present)
 ```
