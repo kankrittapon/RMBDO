@@ -10,6 +10,7 @@ interface MarketItem {
   price: number | null;
   volume14dAvg: number | null;
   stock: number | null;
+  iconUrl: string | null;
   collectedAt: string;
 }
 
@@ -105,7 +106,15 @@ export const MarketPriceView: React.FC = () => {
                 )}
                 {items.map((item) => (
                   <tr key={item.itemName} className="border-t border-border-subtle/60 hover:bg-bg-surface-2/60">
-                    <td className="p-2.5 text-text-primary font-bold">{item.itemName}</td>
+                    <td className="p-2.5 text-text-primary font-bold">
+                      <div className="flex items-center gap-2">
+                        {item.iconUrl && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={item.iconUrl} alt="" className="w-6 h-6 rounded shrink-0 bg-bg-surface-3" loading="lazy" />
+                        )}
+                        <span>{item.itemName}</span>
+                      </div>
+                    </td>
                     <td className="p-2.5 text-text-muted">{item.category ? CATEGORY_LABELS[item.category] ?? item.category : '-'}</td>
                     <td className="p-2.5 text-right text-amber-300">{fmtSilver(item.price)}</td>
                     <td className="p-2.5 text-right text-text-secondary">{fmtSilver(item.volume14dAvg)}</td>

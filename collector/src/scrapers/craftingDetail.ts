@@ -25,6 +25,7 @@ export interface CraftingIngredient {
   totalCost: number | null
   isSubRecipe: boolean
   subRecipeSlug: string | null
+  iconUrl: string | null
 }
 
 export interface CraftingDetail {
@@ -97,14 +98,15 @@ export async function scrapeCraftingDetail(slug: string): Promise<CraftingDetail
     // entirely when the ×N variant for the same sub-recipe is present.
     const ingredients = await page.evaluate(() => {
       const main = document.querySelector("main")
-      if (!main) return [] as Array<{ name: string; href: string | null; rawText: string }>
-      const rows: Array<{ name: string; href: string | null; rawText: string }> = []
+      if (!main) return [] as Array<{ name: string; href: string | null; rawText: string; iconUrl: string | null }>
+      const rows: Array<{ name: string; href: string | null; rawText: string; iconUrl: string | null }> = []
       const anchors = Array.from(main.querySelectorAll('a[href*="/crafting/"]')) as HTMLAnchorElement[]
       for (const a of anchors) {
         const rawText = (a.innerText || a.textContent || "").trim()
         if (!rawText || rawText.length < 2) continue
         if (a.closest("h1")) continue // skip the title itself
-        rows.push({ name: rawText, href: a.getAttribute("href"), rawText })
+        const img = a.querySelector("img") as HTMLImageElement | null
+        rows.push({ name: rawText, href: a.getAttribute("href"), rawText, iconUrl: img?.src || null })
       }
       return rows
     })
@@ -142,6 +144,7 @@ export async function scrapeCraftingDetail(slug: string): Promise<CraftingDetail
           totalCost: null,
           isSubRecipe: !!subSlug,
           subRecipeSlug: subSlug,
+          iconUrl: ing.iconUrl,
         })
       }
       parsedIngredients = Array.from(bySlug.values())
@@ -180,6 +183,7 @@ export async function scrapeCraftingDetail(slug: string): Promise<CraftingDetail
             totalCost: ing.totalCost ?? null,
             isSubRecipe: !!ing.subRecipeSlug || !!ing.recipeSlug,
             subRecipeSlug: ing.subRecipeSlug || ing.recipeSlug || null,
+            iconUrl: ing.iconUrl ?? ing.icon ?? null,
           }))
         }
       }
@@ -232,12 +236,13 @@ export async function saveCraftingDetail(detail: CraftingDetail, category: strin
     await client.query(`DELETE FROM crafting_recipe_ingredients WHERE recipe_slug = $1`, [detail.recipeSlug])
     for (const ing of detail.ingredients) {
       await client.query(
-        `INSERT INTO crafting_recipe_ingredients (recipe_slug, ingredient_name, quantity, unit_price, total_cost, is_sub_recipe, sub_recipe_slug, collected_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, now())
+        `INSERT INTO crafting_recipe_ingredients (recipe_slug, ingredient_name, quantity, unit_price, total_cost, is_sub_recipe, sub_recipe_slug, icon_url, collected_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now())
          ON CONFLICT (recipe_slug, ingredient_name) DO UPDATE SET
            quantity = EXCLUDED.quantity, unit_price = EXCLUDED.unit_price, total_cost = EXCLUDED.total_cost,
-           is_sub_recipe = EXCLUDED.is_sub_recipe, sub_recipe_slug = EXCLUDED.sub_recipe_slug, collected_at = now()`,
-        [detail.recipeSlug, ing.name, ing.quantity, ing.unitPrice, ing.totalCost, ing.isSubRecipe, ing.subRecipeSlug],
+           is_sub_recipe = EXCLUDED.is_sub_recipe, sub_recipe_slug = EXCLUDED.sub_recipe_slug,
+           icon_url = EXCLUDED.icon_url, collected_at = now()`,
+        [detail.recipeSlug, ing.name, ing.quantity, ing.unitPrice, ing.totalCost, ing.isSubRecipe, ing.subRecipeSlug, ing.iconUrl],
       )
     }
     console.log(`Saved to Postgres: crafting_recipe_details + ${detail.ingredients.length} ingredient row(s) for ${detail.recipeSlug}`)

@@ -89,12 +89,13 @@ async function upsertMarketItems(items, region) {
   let count = 0
   for (const item of items) {
     await client.query(
-      `INSERT INTO market_items (item_name, category, region, price, volume_14d_avg, stock, collected_at)
-       VALUES ($1, $2, $3, $4, $5, $6, now())
+      `INSERT INTO market_items (item_name, category, region, price, volume_14d_avg, stock, icon_url, collected_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, now())
        ON CONFLICT (item_name, region) DO UPDATE SET
          category = EXCLUDED.category, price = EXCLUDED.price,
-         volume_14d_avg = EXCLUDED.volume_14d_avg, stock = EXCLUDED.stock, collected_at = now()`,
-      [item.itemName, item.category, region, item.price, item.volume14dAvg, item.stock],
+         volume_14d_avg = EXCLUDED.volume_14d_avg, stock = EXCLUDED.stock,
+         icon_url = COALESCE(EXCLUDED.icon_url, market_items.icon_url), collected_at = now()`,
+      [item.itemName, item.category, region, item.price, item.volume14dAvg, item.stock, item.iconUrl ?? null],
     )
     count++
   }
@@ -114,14 +115,15 @@ async function upsertCraftingRecipes(recipes, region) {
   for (const r of recipes) {
     if (r.recipeSlug) {
       await client.query(
-        `INSERT INTO crafting_recipes (recipe_name, category, region, profit_per_hour, price, volume_14d_avg, experience, personalized, source_url, recipe_slug, collected_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'https://bdolytics.com/en/crafting', $9, now())
+        `INSERT INTO crafting_recipes (recipe_name, category, region, profit_per_hour, price, volume_14d_avg, experience, personalized, source_url, recipe_slug, icon_url, collected_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'https://bdolytics.com/en/crafting', $9, $10, now())
          ON CONFLICT (recipe_slug, region) WHERE recipe_slug IS NOT NULL DO UPDATE SET
            recipe_name = EXCLUDED.recipe_name, category = EXCLUDED.category,
            profit_per_hour = EXCLUDED.profit_per_hour, price = EXCLUDED.price,
            volume_14d_avg = EXCLUDED.volume_14d_avg, experience = EXCLUDED.experience,
-           personalized = EXCLUDED.personalized, collected_at = now()`,
-        [r.recipeName, r.category, region, r.profitPerHour, r.price, r.volume14dAvg, r.experience, Boolean(r.personalized), r.recipeSlug],
+           personalized = EXCLUDED.personalized,
+           icon_url = COALESCE(EXCLUDED.icon_url, crafting_recipes.icon_url), collected_at = now()`,
+        [r.recipeName, r.category, region, r.profitPerHour, r.price, r.volume14dAvg, r.experience, Boolean(r.personalized), r.recipeSlug, r.iconUrl ?? null],
       )
     } else {
       // No recipe_slug for this row (scrape fallback failed to capture a
@@ -132,9 +134,9 @@ async function upsertCraftingRecipes(recipes, region) {
       // across runs, which is a much smaller problem than the crash this
       // replaced.
       await client.query(
-        `INSERT INTO crafting_recipes (recipe_name, category, region, profit_per_hour, price, volume_14d_avg, experience, personalized, source_url, collected_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'https://bdolytics.com/en/crafting', now())`,
-        [r.recipeName, r.category, region, r.profitPerHour, r.price, r.volume14dAvg, r.experience, Boolean(r.personalized)],
+        `INSERT INTO crafting_recipes (recipe_name, category, region, profit_per_hour, price, volume_14d_avg, experience, personalized, source_url, icon_url, collected_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'https://bdolytics.com/en/crafting', $9, now())`,
+        [r.recipeName, r.category, region, r.profitPerHour, r.price, r.volume14dAvg, r.experience, Boolean(r.personalized), r.iconUrl ?? null],
       )
     }
     count++

@@ -72,6 +72,7 @@ export interface CraftingRecipeRecord {
   experience: string | null
   personalized: boolean
   recipeSlug: string | null
+  iconUrl: string | null
 }
 
 async function selectSoutheastAsia(page: Page) {
@@ -164,7 +165,7 @@ function parseCraftingPageText(
   text: string,
   category: string,
   personalized: boolean,
-  slugs: (string | null)[],
+  slugs: RecipeLinkInfo[],
 ): CraftingRecipeRecord[] {
   const lines = text.split("\n").map((l) => l.trim()).filter(Boolean)
   const headerIdx = lines.findIndex((l) => l === "Experience")
@@ -196,14 +197,29 @@ function parseCraftingPageText(
     const experience = lines[i] ?? null
     i++
 
-    const recipeSlug = slugs[slugIdx] ?? null
+    const linkInfo = slugs[slugIdx] ?? null
     slugIdx++
-    rows.push({ recipeName, category, profitPerHour, price, volume14dAvg: volume, experience, personalized, recipeSlug })
+    rows.push({
+      recipeName,
+      category,
+      profitPerHour,
+      price,
+      volume14dAvg: volume,
+      experience,
+      personalized,
+      recipeSlug: linkInfo?.slug ?? null,
+      iconUrl: linkInfo?.iconUrl ?? null,
+    })
   }
   return rows
 }
 
-async function extractRecipeSlugs(page: Page): Promise<(string | null)[]> {
+interface RecipeLinkInfo {
+  slug: string
+  iconUrl: string | null
+}
+
+async function extractRecipeSlugs(page: Page): Promise<RecipeLinkInfo[]> {
   // Each row has ONE anchor to its own detail page (text = the recipe
   // name, e.g. "Crystal of Mysterious Darkness") plus zero or more OTHER
   // <a href="/crafting/..."> anchors for any of its ingredients that are
@@ -220,21 +236,24 @@ async function extractRecipeSlugs(page: Page): Promise<(string | null)[]> {
   // on both a Processing page with nested sub-recipe ingredients and an
   // Imperial Crates page with none).
   try {
-    const hrefs = await page.evaluate(() => {
+    const results = await page.evaluate(() => {
       const main = document.querySelector("main")
-      if (!main) return [] as string[]
+      if (!main) return [] as Array<{ slug: string; iconUrl: string | null }>
       const anchors = Array.from(main.querySelectorAll('a[href*="/crafting/"]')) as HTMLAnchorElement[]
-      const out: string[] = []
+      const out: Array<{ slug: string; iconUrl: string | null }> = []
       for (const a of anchors) {
         const text = (a.textContent || "").trim()
         if (!text || /^\d+$/.test(text)) continue // ingredient icon link (blank or a bare quantity), not this row's own link
         const href = a.getAttribute("href") || ""
         const m = href.match(/\/crafting\/([^/?#]+)/)
-        if (m) out.push(m[1]) // e.g. "123:abc"
+        if (m) {
+          const img = a.querySelector("img") as HTMLImageElement | null
+          out.push({ slug: m[1], iconUrl: img?.src || null }) // e.g. "123:abc" - icon hotlinked from cdn.questlog.gg, stored as-is
+        }
       }
       return out
     })
-    return hrefs
+    return results
   } catch {
     return []
   }

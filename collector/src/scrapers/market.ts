@@ -25,6 +25,7 @@ export interface MarketItemRecord {
   price: number | null
   volume14dAvg: number | null
   stock: number | null
+  iconUrl: string | null
 }
 
 async function selectSoutheastAsia(page: Page) {
@@ -42,11 +43,40 @@ async function selectSoutheastAsia(page: Page) {
   await sleep(600)
 }
 
+/** Each item row's name is wrapped in <a href="/en/market/item/<id>">
+ * containing both the name text and the item's icon <img> - matched back
+ * to the text-parsed rows below by exact name (not DOM-order index,
+ * having learned from crafting.ts's slug-extraction bug that index
+ * alignment silently breaks the moment element counts don't match 1:1;
+ * name-matching has no such failure mode here since every row has exactly
+ * one name link, unlike crafting's ingredient-icon duplicates). Icon URLs
+ * are hotlinked from cdn.questlog.gg (a dedicated game-asset CDN bdolytics
+ * itself hotlinks from) and stored as-is, never downloaded. */
+async function extractItemIcons(page: Page): Promise<Map<string, string>> {
+  try {
+    const pairs = await page.evaluate(() => {
+      const main = document.querySelector("main")
+      if (!main) return [] as Array<[string, string]>
+      const anchors = Array.from(main.querySelectorAll('a[href*="/market/item/"]')) as HTMLAnchorElement[]
+      const out: Array<[string, string]> = []
+      for (const a of anchors) {
+        const name = (a.textContent || "").trim()
+        const img = a.querySelector("img") as HTMLImageElement | null
+        if (name && img?.src) out.push([name, img.src])
+      }
+      return out
+    })
+    return new Map(pairs)
+  } catch {
+    return new Map()
+  }
+}
+
 /** Parses the plain-text table dump (name, price, %change, volume, %change,
  * stock rows in sequence, "-" for blanks) into structured rows. bdolytics
  * renders this as a real table (get_page_text-equivalent innerText), not a
  * canvas, so this is just line-based parsing, not DOM querying. */
-function parseMarketPageText(text: string, category: string): MarketItemRecord[] {
+function parseMarketPageText(text: string, category: string, icons: Map<string, string>): MarketItemRecord[] {
   const lines = text.split("\n").map((l) => l.trim()).filter(Boolean)
   const startIdx = lines.findIndex((l) => l === "Stock")
   if (startIdx === -1) return []
@@ -81,6 +111,7 @@ function parseMarketPageText(text: string, category: string): MarketItemRecord[]
       price: parseNum(price),
       volume14dAvg: parseNum(volume),
       stock: parseNum(stock),
+      iconUrl: icons.get(itemName) ?? null,
     })
     i += 6
   }
@@ -106,8 +137,9 @@ async function scrapeCategory(page: Page, category: string): Promise<MarketItemR
       .catch(() => {})
     await sleep(300)
 
+    const icons = await extractItemIcons(page)
     let text = await page.locator("main").innerText().catch(() => "")
-    let rows = parseMarketPageText(text, category)
+    let rows = parseMarketPageText(text, category, icons)
     // One retry on a still-empty page 1 (seen intermittently even after the
     // waitFor above - a slow hydration case, not a wrong-slug case, since
     // the exact same category succeeded on other runs) before concluding
@@ -115,7 +147,7 @@ async function scrapeCategory(page: Page, category: string): Promise<MarketItemR
     if (rows.length === 0 && pageNum === 1) {
       await sleep(2000)
       text = await page.locator("main").innerText().catch(() => "")
-      rows = parseMarketPageText(text, category)
+      rows = parseMarketPageText(text, category, icons)
     }
     if (rows.length === 0) break
     all.push(...rows)

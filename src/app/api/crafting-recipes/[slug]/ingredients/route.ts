@@ -16,7 +16,7 @@ async function fetchCached(slug: string) {
 
   const row = detailRes.rows[0]
   const ingRes = await pool.query(
-    `SELECT ingredient_name, quantity, unit_price, total_cost, is_sub_recipe, sub_recipe_slug
+    `SELECT ingredient_name, quantity, unit_price, total_cost, is_sub_recipe, sub_recipe_slug, icon_url
      FROM crafting_recipe_ingredients WHERE recipe_slug = $1 ORDER BY id`,
     [slug],
   )
@@ -34,6 +34,7 @@ async function fetchCached(slug: string) {
       totalCost: r.total_cost !== null ? Number(r.total_cost) : null,
       isSubRecipe: r.is_sub_recipe,
       subRecipeSlug: r.sub_recipe_slug,
+      iconUrl: r.icon_url ?? null,
     })),
     ingredientsJson: row.ingredients_json,
     collectedAt: row.collected_at,

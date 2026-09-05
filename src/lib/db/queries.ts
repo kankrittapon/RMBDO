@@ -59,20 +59,24 @@ export interface DbMarketItem {
   price: number | null
   volume14dAvg: number | null
   stock: number | null
+  iconUrl: string | null
   collectedAt: string
 }
 
 /** Central Market prices (Southeast Asia region), scraped from bdolytics'
  * plain server-rendered market table by collector/src/scrapers/market.ts.
  * Scoped to farm-vs-buy-relevant categories (material, alchemy stone,
- * magic crystal, lightstone, enhancement) - see CATEGORIES in that file. */
+ * magic crystal, lightstone, enhancement) - see CATEGORIES in that file.
+ * `iconUrl` is hotlinked from cdn.questlog.gg (a dedicated game-asset CDN
+ * bdolytics itself hotlinks from, not bdolytics' own server) - can be null
+ * for items where name-matching the icon during scraping didn't find a hit. */
 export async function getDbMarketItems(search?: string): Promise<DbMarketItem[]> {
   const pool = getPool()
   const { rows } = await pool.query(
     search
-      ? `SELECT item_name, category, price, volume_14d_avg, stock, collected_at FROM market_items
+      ? `SELECT item_name, category, price, volume_14d_avg, stock, icon_url, collected_at FROM market_items
          WHERE item_name ILIKE $1 ORDER BY item_name LIMIT 200`
-      : `SELECT item_name, category, price, volume_14d_avg, stock, collected_at FROM market_items
+      : `SELECT item_name, category, price, volume_14d_avg, stock, icon_url, collected_at FROM market_items
          ORDER BY item_name LIMIT 500`,
     search ? [`%${search}%`] : undefined,
   )
@@ -82,6 +86,7 @@ export async function getDbMarketItems(search?: string): Promise<DbMarketItem[]>
     price: r.price !== null ? Number(r.price) : null,
     volume14dAvg: r.volume_14d_avg !== null ? Number(r.volume_14d_avg) : null,
     stock: r.stock !== null ? Number(r.stock) : null,
+    iconUrl: r.icon_url ?? null,
     collectedAt: r.collected_at,
   }))
 }
@@ -96,6 +101,7 @@ export interface DbCraftingRecipe {
   personalized: boolean
   collectedAt: string
   recipeSlug: string | null
+  iconUrl: string | null
 }
 
 /** Cooking/Alchemy/Processing/Imperial Crates profit-per-hour ranking,
@@ -119,7 +125,7 @@ export async function getDbCraftingRecipes(search?: string, category?: string): 
   }
   const where = `WHERE ${conditions.join(" AND ")}`
   const { rows } = await pool.query(
-    `SELECT recipe_name, category, profit_per_hour, price, volume_14d_avg, experience, personalized, collected_at, recipe_slug
+    `SELECT recipe_name, category, profit_per_hour, price, volume_14d_avg, experience, personalized, collected_at, recipe_slug, icon_url
      FROM crafting_recipes ${where}
      ORDER BY profit_per_hour DESC NULLS LAST LIMIT 500`,
     params,
@@ -134,6 +140,7 @@ export async function getDbCraftingRecipes(search?: string, category?: string): 
     personalized: r.personalized,
     collectedAt: r.collected_at,
     recipeSlug: r.recipe_slug ?? null,
+    iconUrl: r.icon_url ?? null,
   }))
 }
 

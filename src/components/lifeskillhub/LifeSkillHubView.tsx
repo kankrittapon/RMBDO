@@ -54,6 +54,7 @@ interface CraftingRecipe {
   personalized: boolean;
   collectedAt: string;
   recipeSlug: string | null;
+  iconUrl: string | null;
 }
 
 interface RecipeDetail {
@@ -70,6 +71,7 @@ interface RecipeDetail {
     totalCost: number | null;
     isSubRecipe: boolean;
     subRecipeSlug: string | null;
+    iconUrl: string | null;
   }>;
   collectedAt: string;
   source: string;
@@ -478,8 +480,14 @@ export const LifeSkillHubView: React.FC = () => {
                   title={r.recipeSlug ? "Click to view ingredient tree" : "No detail slug — re-collect to enable"}
                 >
                   <td className="p-2.5 text-text-primary font-bold">
-                    {r.recipeName}
-                    {r.recipeSlug && <span className="ml-1 text-[10px] text-brand-primary/60">↗</span>}
+                    <div className="flex items-center gap-2">
+                      {r.iconUrl && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={r.iconUrl} alt="" className="w-6 h-6 rounded shrink-0 bg-bg-surface-3" loading="lazy" />
+                      )}
+                      <span>{r.recipeName}</span>
+                      {r.recipeSlug && <span className="text-[10px] text-brand-primary/60">↗</span>}
+                    </div>
                   </td>
                   <td className="p-2.5 text-text-muted">{r.category}</td>
                   <td className="p-2.5 text-right text-emerald-400 font-bold">{fmtSilver(r.profitPerHour)}</td>
@@ -661,6 +669,10 @@ export const LifeSkillHubView: React.FC = () => {
                               <div className="flex items-center justify-between">
                                 <div className="space-y-0.5">
                                   <div className="text-xs font-bold text-text-primary flex items-center gap-1.5">
+                                    {ing.iconUrl && (
+                                      // eslint-disable-next-line @next/next/no-img-element
+                                      <img src={ing.iconUrl} alt="" className="w-5 h-5 rounded shrink-0 bg-bg-surface-3" loading="lazy" />
+                                    )}
                                     {ing.name}
                                     {ing.isSubRecipe && <span className="text-[10px] px-1 py-0.5 rounded bg-brand-primary/15 border border-brand-primary/30 text-brand-primary">sub-recipe</span>}
                                   </div>

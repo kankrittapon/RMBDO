@@ -236,6 +236,7 @@ CREATE TABLE market_items (
     price           BIGINT,
     volume_14d_avg  BIGINT,
     stock           BIGINT,
+    icon_url        TEXT, -- hotlinked from cdn.questlog.gg (a dedicated game-asset CDN bdolytics itself hotlinks from, not bdolytics' own server) - stored as-is, never downloaded/re-hosted
     collected_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE (item_name, region)
 );
@@ -266,6 +267,7 @@ CREATE TABLE crafting_recipes (
     personalized      BOOLEAN NOT NULL DEFAULT FALSE, -- TRUE if profit_per_hour used this player's own Mastery (player_settings), not bdolytics' default
     source_url        TEXT,
     recipe_slug       TEXT,                          -- bdolytics detail slug e.g. "/en/crafting/123:abc" or "123:abc" — fixes Imperial Crates 322→12 collapse (unique display names)
+    icon_url          TEXT, -- hotlinked from cdn.questlog.gg, see market_items.icon_url comment
     collected_at      TIMESTAMPTZ NOT NULL DEFAULT now()
     -- No UNIQUE (recipe_name, category, region) here anymore: recipe_slug
     -- (see idx_crafting_recipes_slug_region below) is the real identity now
@@ -298,6 +300,7 @@ CREATE TABLE crafting_recipe_ingredients (
     total_cost        BIGINT,                        -- quantity * unit_price (precomputed by bdolytics)
     is_sub_recipe     BOOLEAN NOT NULL DEFAULT FALSE,
     sub_recipe_slug   TEXT,
+    icon_url          TEXT, -- hotlinked from cdn.questlog.gg, see market_items.icon_url comment
     collected_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE (recipe_slug, ingredient_name)
 );
