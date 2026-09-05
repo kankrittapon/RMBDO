@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { Network, Plus, Trash2, Loader2, AlertTriangle, Info } from 'lucide-react';
+import { Network, Plus, Trash2, Loader2, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // This view solves BDO's real worker-empire node-connection problem: given
@@ -27,14 +27,47 @@ interface GraphNode {
   position: { x: number; y: number; z: number };
   link_list: number[];
   worker_types: number[];
+  // Real English names, merged in from bdo-noderouter's own explore.csv
+  // (same repo, same Unlicense) - confirmed by cross-checking every
+  // base-town id against known BDO cities (1=Velia, 61=Olvia, 301=Heidel,
+  // 601=Calpheon, etc.) before shipping. null for the rare node explore.csv
+  // doesn't cover.
+  name: string | null;
 }
 
 type NodeGraph = Record<string, GraphNode>;
 
+// "Name (#id)" is what the datalist shows and what typing resolves back to
+// an id from - avoids needing a custom autocomplete component for 1025
+// options, and keeps numeric-id entry working too (typed input that parses
+// as a bare number and matches a real node is accepted as a fallback).
+function parseNodeInput(raw: string, graph: NodeGraph): number | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const withHash = trimmed.match(/#(\d+)\)?\s*$/);
+  if (withHash) {
+    const id = Number(withHash[1]);
+    return graph[String(id)] ? id : null;
+  }
+  if (/^\d+$/.test(trimmed)) {
+    const id = Number(trimmed);
+    return graph[String(id)] ? id : null;
+  }
+  // Exact name match (case-insensitive) as a last resort, for anyone who
+  // types the name without picking from the datalist.
+  const lower = trimmed.toLowerCase();
+  const match = Object.values(graph).find((n) => n.name?.toLowerCase() === lower);
+  return match ? match.waypoint_key : null;
+}
+
+function nodeLabel(node: GraphNode): string {
+  return node.name ? `${node.name} (#${node.waypoint_key})` : `#${node.waypoint_key}`;
+}
+
 interface TerminalRootPair {
   id: string;
-  terminal: number | '';
-  root: number | '';
+  terminalText: string;
+  rootText: string;
 }
 
 interface SolveResult {
@@ -113,39 +146,54 @@ export const WorkerEmpireView: React.FC = () => {
   }, []);
 
   const addPair = () => {
-    setPairs((prev) => [...prev, { id: crypto.randomUUID(), terminal: '', root: '' }]);
+    setPairs((prev) => [...prev, { id: crypto.randomUUID(), terminalText: '', rootText: '' }]);
   };
 
   const removePair = (id: string) => {
     setPairs((prev) => prev.filter((p) => p.id !== id));
   };
 
-  const updatePair = (id: string, field: 'terminal' | 'root', value: string) => {
-    const num = value === '' ? '' : Number(value);
-    setPairs((prev) => prev.map((p) => (p.id === id ? { ...p, [field]: num } : p)));
+  const updatePair = (id: string, field: 'terminalText' | 'rootText', value: string) => {
+    setPairs((prev) => prev.map((p) => (p.id === id ? { ...p, [field]: value } : p)));
   };
+
+  const nodeOptions = useMemo(() => {
+    if (!graph) return [];
+    return Object.values(graph)
+      .filter((n) => n.name)
+      .sort((a, b) => (a.name && b.name ? a.name.localeCompare(b.name) : 0));
+  }, [graph]);
 
   const solve = () => {
     if (!router || !graph) return;
     setSolveError(null);
     setResult(null);
 
-    const validPairs = pairs.filter((p) => p.terminal !== '' && p.root !== '');
-    if (validPairs.length === 0) {
+    const resolved = pairs
+      .filter((p) => p.terminalText.trim() && p.rootText.trim())
+      .map((p) => ({
+        raw: p,
+        terminal: parseNodeInput(p.terminalText, graph),
+        root: parseNodeInput(p.rootText, graph),
+      }));
+
+    if (resolved.length === 0) {
       setSolveError('เพิ่มอย่างน้อย 1 คู่ terminal/root ก่อนกดคำนวณ');
       return;
     }
-    const unknownIds = validPairs
-      .flatMap((p) => [p.terminal, p.root])
-      .filter((id) => !graph[String(id)]);
-    if (unknownIds.length > 0) {
-      setSolveError(`ไม่พบ Node ID: ${Array.from(new Set(unknownIds)).join(', ')} ในกราฟ`);
+    const badEntries = resolved.filter((r) => r.terminal === null || r.root === null);
+    if (badEntries.length > 0) {
+      setSolveError(
+        `หา Node ไม่เจอ: ${badEntries
+          .map((r) => (r.terminal === null ? r.raw.terminalText : r.raw.rootText))
+          .join(', ')} - เลือกจากรายการ autocomplete หรือใส่ Node ID ที่ถูกต้อง`,
+      );
       return;
     }
 
     setSolving(true);
     try {
-      const pairArrays = validPairs.map((p) => [p.terminal, p.root]);
+      const pairArrays = resolved.map((r) => [r.terminal, r.root]);
       const [nodeIds, totalCp] = router.solveForTerminalPairs(pairArrays);
       setResult({ nodeIds, totalCp });
     } catch (err) {
@@ -188,23 +236,13 @@ export const WorkerEmpireView: React.FC = () => {
         </p>
       </div>
 
-      <div className="bg-amber-950/30 border border-amber-500/40 rounded-lg p-3.5 flex items-start gap-2">
-        <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-        <p className="text-xs text-amber-200/90 leading-relaxed">
-          ตอนนี้ยังไม่มีชื่อเมือง/Node ที่แปลเป็นภาษาให้เลือกจากรายการ (ยังไม่มีข้อมูล mapping
-          ID → ชื่อที่ยืนยันได้) ต้องใส่เป็น Node ID ตัวเลขตรงๆ ก่อน - ดู ID ได้จาก Node Manager
-          ในเกม หรือจากเว็บ{' '}
-          <a
-            href="https://shrddr.github.io/workerman/"
-            target="_blank"
-            rel="noreferrer"
-            className="underline"
-          >
-            Workerman
-          </a>{' '}
-          (เว็บอ้างอิงเดิมที่แนะนำมา) แล้วนำเลขมาใส่ที่นี่
-        </p>
-      </div>
+      {status === 'ready' && graph && (
+        <datalist id="worker-empire-node-options">
+          {nodeOptions.map((n) => (
+            <option key={n.waypoint_key} value={nodeLabel(n)} />
+          ))}
+        </datalist>
+      )}
 
       {status === 'loading' && (
         <div className="flex items-center gap-2 text-text-secondary text-sm p-6 justify-center">
@@ -243,19 +281,21 @@ export const WorkerEmpireView: React.FC = () => {
               {pairs.map((pair) => (
                 <div key={pair.id} className="flex items-center gap-2">
                   <input
-                    type="number"
-                    placeholder="Terminal ID"
-                    value={pair.terminal}
-                    onChange={(e) => updatePair(pair.id, 'terminal', e.target.value)}
-                    className="flex-1 bg-bg-surface-2 border border-border-subtle rounded-lg px-3 py-1.5 text-sm text-text-primary font-mono"
+                    type="text"
+                    list="worker-empire-node-options"
+                    placeholder="พิมพ์ชื่อ Node เช่น Velia"
+                    value={pair.terminalText}
+                    onChange={(e) => updatePair(pair.id, 'terminalText', e.target.value)}
+                    className="flex-1 bg-bg-surface-2 border border-border-subtle rounded-lg px-3 py-1.5 text-sm text-text-primary"
                   />
                   <span className="text-text-muted text-xs">→</span>
                   <input
-                    type="number"
-                    placeholder="Root (Base Town ID)"
-                    value={pair.root}
-                    onChange={(e) => updatePair(pair.id, 'root', e.target.value)}
-                    className="flex-1 bg-bg-surface-2 border border-border-subtle rounded-lg px-3 py-1.5 text-sm text-text-primary font-mono"
+                    type="text"
+                    list="worker-empire-node-options"
+                    placeholder="Root เช่น Heidel"
+                    value={pair.rootText}
+                    onChange={(e) => updatePair(pair.id, 'rootText', e.target.value)}
+                    className="flex-1 bg-bg-surface-2 border border-border-subtle rounded-lg px-3 py-1.5 text-sm text-text-primary"
                   />
                   <button
                     onClick={() => removePair(pair.id)}
@@ -300,7 +340,9 @@ export const WorkerEmpireView: React.FC = () => {
                     className="p-2.5 rounded-lg bg-bg-surface-2 border border-border-subtle text-xs flex items-center justify-between"
                   >
                     <div>
-                      <span className="font-mono font-bold text-text-primary">#{id}</span>
+                      <span className="font-bold text-text-primary">
+                        {node.name ?? `#${id}`}
+                      </span>
                       {node.is_base_town && (
                         <span className="ml-2 px-1.5 py-0.5 rounded text-[9px] font-mono bg-brand-gold/20 text-brand-gold">
                           Base Town
@@ -322,8 +364,9 @@ export const WorkerEmpireView: React.FC = () => {
           <div className="flex items-start gap-2 text-[11px] text-text-muted p-2">
             <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
             <p>
-              Node graph: {Object.keys(graph).length} node จาก bdo-noderouter (public domain,
-              ไม่ใช่ scrape สด - อาจไม่ตรงกับแพตช์ล่าสุด 100% ถ้าเกมมีการเพิ่ม node ใหม่)
+              Node graph: {Object.keys(graph).length} node ({nodeOptions.length} มีชื่อ) จาก
+              bdo-noderouter (public domain, ไม่ใช่ scrape สด - อาจไม่ตรงกับแพตช์ล่าสุด 100%
+              ถ้าเกมมีการเพิ่ม node ใหม่)
             </p>
           </div>
         </>

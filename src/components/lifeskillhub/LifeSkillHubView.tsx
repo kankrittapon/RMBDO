@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { ChefHat, Search, TrendingUp, Info, Sparkles, Settings2, Save, CheckCircle2, X, Loader2, AlertCircle, ShoppingCart, Pickaxe, Wheat, Package, CloudDownload, RefreshCw } from 'lucide-react';
+import { ChefHat, Search, TrendingUp, Info, Sparkles, Settings2, Save, CheckCircle2, X, Loader2, AlertCircle, CloudDownload, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { IngredientTreeNode } from './IngredientTreeNode';
 
 const INVENTORY_KEY = "rmbdo_inventory_v1";
 const LEDGER_KEY = "rmbdo_ledger_v1";
@@ -653,101 +654,26 @@ export const LifeSkillHubView: React.FC = () => {
                   })()}
 
                   <div className="space-y-2">
-                    <h3 className="text-xs font-bold text-text-primary">Ingredients — Shortage Calculator</h3>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-bold text-text-primary">Ingredients — Shortage Calculator</h3>
+                      <span className="text-[10px] text-text-muted font-mono">คลิกชื่อ sub-recipe เพื่อขยายดูวัตถุดิบต่อได้เรื่อยๆ ไม่ต้องเปิดหน้าต่างใหม่</span>
+                    </div>
                     {detail.ingredients.length === 0 ? (
                       <p className="text-xs text-text-muted">No ingredient data — detail page may have changed. Try re-running the on-demand scraper.</p>
                     ) : (
                       <div className="space-y-1.5">
-                        {detail.ingredients.map((ing, idx) => {
-                          const owned = inventory[ing.name] ?? 0;
-                          const totalReq = ing.quantity * Math.max(1, batchCount || 1);
-                          const shortage = Math.max(0, totalReq - owned);
-                          const missingCost = ing.unitPrice !== null ? shortage * ing.unitPrice : null;
-                          const advice = getProcurementAdvice(ing.name);
-                          return (
-                            <div key={`${ing.name}-${idx}`} className="p-2.5 rounded-lg bg-bg-surface-2 border border-border-subtle space-y-1.5">
-                              <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                  <div className="text-xs font-bold text-text-primary flex items-center gap-1.5">
-                                    {ing.iconUrl && (
-                                      // eslint-disable-next-line @next/next/no-img-element
-                                      <img src={ing.iconUrl} alt="" className="w-5 h-5 rounded shrink-0 bg-bg-surface-3" loading="lazy" />
-                                    )}
-                                    {ing.name}
-                                    {ing.isSubRecipe && <span className="text-[10px] px-1 py-0.5 rounded bg-brand-primary/15 border border-brand-primary/30 text-brand-primary">sub-recipe</span>}
-                                  </div>
-                                  <div className="text-[11px] font-mono text-text-muted">
-                                    x{ing.quantity} per craft • {fmtSilver(ing.unitPrice)} each • total {fmtSilver(ing.totalCost)}
-                                  </div>
-                                </div>
-                                <div className="text-right">
-                                  <div className="text-xs font-mono font-bold text-amber-300">
-                                    {ing.totalCost !== null ? fmtSilver(ing.totalCost) : "-"}
-                                  </div>
-                                  {ing.subRecipeSlug && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        const sub = recipes.find((r) => r.recipeSlug === ing.subRecipeSlug);
-                                        if (sub) setSelected(sub);
-                                      }}
-                                      className="text-[10px] font-mono text-brand-primary hover:underline"
-                                    >
-                                      view sub-recipe
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-
-                              <div className="grid grid-cols-4 gap-1.5 text-[11px] font-mono">
-                                <div className="bg-bg-surface-3 border border-border-subtle rounded p-1.5 text-center">
-                                  <div className="text-[9px] text-text-muted uppercase">Need x{Math.max(1, batchCount || 1)}</div>
-                                  <div className="font-bold text-text-primary">{totalReq.toLocaleString()}</div>
-                                </div>
-                                <div className="bg-bg-surface-3 border border-border-subtle rounded p-1.5 text-center">
-                                  <div className="text-[9px] text-text-muted uppercase">In Stock</div>
-                                  <input
-                                    type="number"
-                                    min={0}
-                                    value={owned === 0 ? "" : owned}
-                                    placeholder="0"
-                                    onChange={(e) => {
-                                      const v = e.target.value === "" ? 0 : Math.max(0, Number(e.target.value) || 0);
-                                      setInventory((prev) => ({ ...prev, [ing.name]: v }));
-                                    }}
-                                    className="w-full mt-1 px-1 py-0.5 bg-bg-surface-1 border border-border-subtle rounded text-center text-xs font-mono"
-                                  />
-                                </div>
-                                <div className={`border rounded p-1.5 text-center ${shortage > 0 ? "bg-amber-500/10 border-amber-500/30" : "bg-emerald-500/10 border-emerald-500/30"}`}>
-                                  <div className="text-[9px] text-text-muted uppercase">Shortage</div>
-                                  <div className={`font-bold ${shortage > 0 ? "text-amber-300" : "text-emerald-400"}`}>{shortage.toLocaleString()}</div>
-                                </div>
-                                <div className="bg-bg-surface-3 border border-border-subtle rounded p-1.5 text-center">
-                                  <div className="text-[9px] text-text-muted uppercase">Missing Cost</div>
-                                  <div className="font-bold text-text-primary">{missingCost !== null ? fmtSilver(missingCost) : "-"}</div>
-                                </div>
-                              </div>
-
-                              <div className="flex items-center gap-1.5">
-                                <span
-                                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono border ${
-                                    advice.icon === "market"
-                                      ? "bg-blue-500/10 border-blue-500/30 text-blue-300"
-                                      : advice.icon === "gather"
-                                      ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
-                                      : "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-                                  }`}
-                                  title={advice.tooltip}
-                                >
-                                  {advice.icon === "market" ? <ShoppingCart className="w-3 h-3" /> : advice.icon === "gather" ? <Pickaxe className="w-3 h-3" /> : <Wheat className="w-3 h-3" />}
-                                  {advice.label === "Market Buy" ? "🛒 Market Buy" : advice.label === "Gather" ? "⛏️ Gather" : "🌾 Worker Node"}
-                                </span>
-                                {advice.tooltip && <span className="text-[10px] text-text-muted">{advice.tooltip}</span>}
-                                {ing.isSubRecipe && <span className="ml-auto text-[10px] text-text-muted"><Package className="w-3 h-3 inline" /> sub-recipe</span>}
-                              </div>
-                            </div>
-                          );
-                        })}
+                        {detail.ingredients.map((ing, idx) => (
+                          <IngredientTreeNode
+                            key={`${ing.name}-${idx}`}
+                            ingredient={ing}
+                            parentBatch={Math.max(1, batchCount || 1)}
+                            inventory={inventory}
+                            setInventory={setInventory}
+                            getProcurementAdvice={getProcurementAdvice}
+                            fmtSilver={fmtSilver}
+                            categoryHint={selected.category}
+                          />
+                        ))}
                       </div>
                     )}
                   </div>
