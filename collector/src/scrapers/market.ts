@@ -16,6 +16,20 @@ import { launch, politeDelay, sleep, assertNotBlocked } from "../lib/browser.js"
 // listings aren't "do I farm this or buy it" material comparisons).
 const PLAYWRIGHT_CATEGORIES = ["lightstone"] as const
 
+// bdolytics groups "material"/"alchemy-stone"/"magic-crystal" more broadly
+// than Arsha's matching mainCategory IDs (25/45/50) actually cover - a
+// live check found 277 items (mostly under "material") that exist in this
+// project's DB from earlier full scrapes but never appear in Arsha's
+// response for any subCategory (confirmed by searching all of mainCategory
+// 25's subcategories by name - genuinely absent, not a missed subCategory).
+// Rather than hardcode that specific 277-item list (which would itself go
+// stale as the market's item set shifts), run a full Playwright re-scrape
+// of just these 3 categories periodically as a supplemental pass - gated
+// behind an env flag so it only runs on the weekly script, not daily,
+// keeping the fast Arsha path as the default and this as a safety net.
+const PLAYWRIGHT_FALLBACK_CATEGORIES = ["material", "alchemy-stone", "magic-crystal"] as const
+const RUN_PLAYWRIGHT_FALLBACK = process.env.MARKET_PLAYWRIGHT_FALLBACK === "true"
+
 const ARSHA_REGION = "sea"
 const ARSHA_BASE = `https://api.arsha.io/v2/${ARSHA_REGION}/GetWorldMarketList`
 
@@ -284,7 +298,13 @@ async function main() {
     await selectSoutheastAsia(page)
     await assertNotBlocked(page, "after selecting region")
 
-    for (const category of PLAYWRIGHT_CATEGORIES) {
+    const categoriesToScrape: string[] = [...PLAYWRIGHT_CATEGORIES]
+    if (RUN_PLAYWRIGHT_FALLBACK) {
+      console.log("MARKET_PLAYWRIGHT_FALLBACK=true - also re-scraping material/alchemy-stone/magic-crystal via Playwright to catch items Arsha's category IDs don't cover.")
+      categoriesToScrape.push(...PLAYWRIGHT_FALLBACK_CATEGORIES)
+    }
+
+    for (const category of categoriesToScrape) {
       console.log(`Scraping category: ${category}`)
       const rows = await scrapeCategory(page, category)
       results.push(...rows)
