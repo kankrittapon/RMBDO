@@ -1,9 +1,12 @@
-// Central Market price collector. Unlike the map (canvas), bdolytics'
-// Central Market pages (bdolytics.com/en/market/<category>) are a plain
-// server-rendered table - no canvas, no synthetic-click limitation, no
-// tRPC-cache sniffing needed. Region defaults to whatever was last selected
-// via a cookie, so we select "Southeast Asia" once per run (matches the
-// user's server) before reading any category page.
+// Central Market price collector. Four of five categories are fetched
+// directly from Arsha.io's public, Cloudflare-free API (no browser at all -
+// see fetchArshaCategory below) - their real numeric BDO category IDs were
+// confirmed by cross-checking sample item names against this project's own
+// previously-scraped market_items rows. "lightstone" is the one holdout:
+// its category ID could not be found anywhere (checked bdo-categories.json,
+// items_all.json, and a live scan of all ~80 Arsha mainCategory IDs - zero
+// matches), so it still goes through the original Playwright scrape of
+// bdolytics.com's server-rendered table below.
 import { mkdirSync, writeFileSync } from "node:fs"
 import type { Page } from "playwright"
 import { launch, politeDelay, sleep, assertNotBlocked } from "../lib/browser.js"
@@ -11,13 +14,102 @@ import { launch, politeDelay, sleep, assertNotBlocked } from "../lib/browser.js"
 // Scoped to categories relevant to farm-vs-buy decisions (raw/processed
 // crafting materials), not the entire market (weapon/armor/accessory
 // listings aren't "do I farm this or buy it" material comparisons).
-const CATEGORIES = [
-  "material",
-  "alchemy-stone",
-  "magic-crystal",
-  "lightstone",
-  "enhancement",
-] as const
+const PLAYWRIGHT_CATEGORIES = ["lightstone"] as const
+
+const ARSHA_REGION = "sea"
+const ARSHA_BASE = `https://api.arsha.io/v2/${ARSHA_REGION}/GetWorldMarketList`
+
+interface ArshaCategoryConfig {
+  category: string
+  mainCategory: number
+  // null = query mainCategory alone (Arsha returns everything under it).
+  subCategories: number[] | null
+}
+
+// mainCategory/subCategory IDs confirmed 2026-09-05 by a live scan against
+// Arsha.io + spot-checking item names against this project's own
+// already-scraped market_items rows (e.g. mainCategory=25 subCategory=1
+// returns "Iron Ore" etc., matching the existing "material" category).
+const ARSHA_CATEGORIES: ArshaCategoryConfig[] = [
+  { category: "material", mainCategory: 25, subCategories: [1, 2, 3, 4, 5, 6, 7, 8] },
+  { category: "alchemy-stone", mainCategory: 45, subCategories: null },
+  { category: "magic-crystal", mainCategory: 50, subCategories: null },
+  { category: "enhancement", mainCategory: 30, subCategories: [1, 2, 3] },
+]
+
+interface ArshaItem {
+  name: string
+  id: number
+  currentStock: number
+  totalTrades: number
+  basePrice: number
+  mainCategory: number
+  subCategory: number
+}
+
+/** Arsha has no "14-day volume" field like bdolytics does - only cumulative
+ * totalTrades (all-time), which is a different unit and would be misleading
+ * if written into the volume14dAvg column. Left null for Arsha-sourced rows
+ * rather than fabricating a number; confirmed with the user this field is
+ * display-only (no calculation reads it), so it just renders "-" in the UI. */
+async function fetchArshaList(mainCategory: number, subCategory?: number): Promise<ArshaItem[]> {
+  const url = subCategory
+    ? `${ARSHA_BASE}?mainCategory=${mainCategory}&subCategory=${subCategory}`
+    : `${ARSHA_BASE}?mainCategory=${mainCategory}`
+  const res = await fetch(url)
+  if (!res.ok) return []
+  const data = await res.json().catch(() => null)
+  return Array.isArray(data) ? (data as ArshaItem[]) : []
+}
+
+/** Retries on Arsha's frequent transient "connection timeout" errors and
+ * occasional empty-array responses (observed repeatedly during manual
+ * testing - not a real absence of data, confirmed by immediately retrying
+ * the exact same URL and getting a normal response - one retry wasn't
+ * always enough, e.g. magic-crystal came back empty twice in a row once). */
+async function fetchArshaListWithRetry(mainCategory: number, subCategory?: number): Promise<ArshaItem[]> {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const items = await fetchArshaList(mainCategory, subCategory)
+    if (items.length > 0) return items
+    if (attempt < 3) await sleep(1000 * attempt)
+  }
+  return []
+}
+
+async function fetchArshaCategories(): Promise<MarketItemRecord[]> {
+  const results: MarketItemRecord[] = []
+  for (const config of ARSHA_CATEGORIES) {
+    const subCategories = config.subCategories ?? [undefined]
+    let categoryTotal = 0
+    for (const sub of subCategories) {
+      const items = await fetchArshaListWithRetry(config.mainCategory, sub)
+      for (const item of items) {
+        results.push({
+          itemName: item.name,
+          category: config.category,
+          price: item.basePrice ?? null,
+          volume14dAvg: null,
+          stock: item.currentStock ?? null,
+          iconUrl: null,
+        })
+      }
+      categoryTotal += items.length
+      await sleep(300)
+    }
+    console.log(`  [arsha:${config.category}] mainCategory=${config.mainCategory}: ${categoryTotal} items`)
+    // A real category (unlike "no items at all") should never legitimately
+    // come back empty after 3 retries - that means Arsha itself is down or
+    // its API shape changed, not that BDO stopped having Iron Ore for sale.
+    // Fail loudly instead of silently writing 0 rows, which normalize.mjs
+    // would otherwise upsert as if this category genuinely emptied out.
+    if (categoryTotal === 0) {
+      throw new Error(
+        `Arsha.io returned 0 items for category "${config.category}" (mainCategory=${config.mainCategory}) after retries - aborting rather than writing an empty category.`,
+      )
+    }
+  }
+  return results
+}
 
 export interface MarketItemRecord {
   itemName: string
@@ -176,9 +268,13 @@ async function scrapeCategory(page: Page, category: string): Promise<MarketItemR
 }
 
 async function main() {
-  console.log("Launching browser...")
+  console.log("Fetching from Arsha.io (no browser needed)...")
+  const arshaResults = await fetchArshaCategories()
+
+  console.log("Launching browser for remaining Playwright-only categories...")
   const { browser, page } = await launch()
 
+  const results: MarketItemRecord[] = [...arshaResults]
   try {
     await page.goto("https://bdolytics.com/en/market", { waitUntil: "domcontentloaded" })
     await assertNotBlocked(page, "initial navigation")
@@ -188,33 +284,32 @@ async function main() {
     await selectSoutheastAsia(page)
     await assertNotBlocked(page, "after selecting region")
 
-    const results: MarketItemRecord[] = []
-    for (const category of CATEGORIES) {
+    for (const category of PLAYWRIGHT_CATEGORIES) {
       console.log(`Scraping category: ${category}`)
       const rows = await scrapeCategory(page, category)
       results.push(...rows)
       await politeDelay()
     }
-
-    mkdirSync("out", { recursive: true })
-    const outPath = `out/market-${new Date().toISOString().replace(/[:.]/g, "-")}.json`
-    writeFileSync(
-      outPath,
-      JSON.stringify(
-        {
-          format: "rmbdo-collector-market/v1",
-          exportedAt: new Date().toISOString(),
-          region: "Southeast Asia",
-          items: results,
-        },
-        null,
-        2,
-      ),
-    )
-    console.log(`Wrote ${results.length} market items to ${outPath}`)
   } finally {
     await browser.close()
   }
+
+  mkdirSync("out", { recursive: true })
+  const outPath = `out/market-${new Date().toISOString().replace(/[:.]/g, "-")}.json`
+  writeFileSync(
+    outPath,
+    JSON.stringify(
+      {
+        format: "rmbdo-collector-market/v1",
+        exportedAt: new Date().toISOString(),
+        region: "Southeast Asia",
+        items: results,
+      },
+      null,
+      2,
+    ),
+  )
+  console.log(`Wrote ${results.length} market items to ${outPath}`)
 }
 
 main().catch((err) => {
