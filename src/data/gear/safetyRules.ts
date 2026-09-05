@@ -42,7 +42,7 @@ export const itemSafetyRules: SafetyRuleItem[] = [
     badgeColor: "bg-amber-500/20 text-amber-400 border-amber-500/40",
     purpose: "Free Selection Box for PEN Mainhand, Awakening, or Sub-weapon",
     needed: "1 / 1 in storage",
-    useWhen: "ONLY after auditing your existing PEN Blackstar counts (Awakening is 1/2 ! Select Awakening!)",
+    useWhen: "ONLY after auditing your existing PEN Blackstar counts per slot (Main needs 2, Awakening needs 1, Sub needs 2)",
     dangerRisk: "Picking the wrong weapon results in wasted 80B+ Silver for Sovereign synth.",
     category: "SELECTION_BOX",
     lockedByDefault: true
@@ -53,7 +53,7 @@ export const itemSafetyRules: SafetyRuleItem[] = [
     action: "DO_NOT_SELL",
     icon: "Flame",
     badgeColor: "bg-red-500/20 text-red-400 border-red-500/40",
-    purpose: "Alternative catalyst to forge Sovereign Weapon with 1x PEN Blackstar",
+    purpose: "Mandatory catalyst for Sovereign Awakening Weapon craft only (not Sub, not Main)",
     needed: "1 / 1 per Sovereign forge attempt",
     useWhen: "At the Blacksmith during Primordial Forge interaction",
     dangerRisk: "Central Market tax cuts 15% and will force you to pay higher buy order later.",

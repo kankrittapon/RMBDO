@@ -44,9 +44,9 @@ export const initialGearSlots: GearSlotItem[] = [
     targetAAP: 0,
     targetDP: 0,
     accuracyGain: 12,
-    estimatedCost: "65B Silver / Flame of Primordial",
+    estimatedCost: "65B Silver",
     priority: "CRITICAL",
-    source: "Synthesize 2x PEN Blackstar Mainhand + Flame of Primordial",
+    source: "Synthesize 2x PEN Blackstar Mainhand (no Flame/Gem needed for Main)",
     status: "ENHANCED",
     safetyNote: "Ready to forge! 2x PEN Blackstar Mainhand verified in inventory."
   },
@@ -56,7 +56,7 @@ export const initialGearSlots: GearSlotItem[] = [
     category: "WEAPON",
     icon: "Sparkles",
     currentName: "PEN (V) Blackstar Awakening Weapon",
-    currentEnhancement: "PEN (1 of 2 owned)",
+    currentEnhancement: "PEN (1 of 1 needed)",
     targetName: "Sovereign Awakening Weapon",
     targetEnhancement: "PRI / DUO",
     endTargetName: "Sovereign Awakening Weapon",
@@ -68,11 +68,11 @@ export const initialGearSlots: GearSlotItem[] = [
     targetAAP: 144,
     targetDP: 0,
     accuracyGain: 10,
-    estimatedCost: "85B Silver (Needs 2nd PEN BS Awakening)",
+    estimatedCost: "85B Silver + Flame of the Primordial x1",
     priority: "CRITICAL",
-    source: "Marketplace / Free Selectable Blackstar Box / Enhancing",
+    source: "Synthesize 1x PEN Blackstar Awakening + Flame of the Primordial",
     status: "MISSING",
-    safetyNote: "CRITICAL BLOCKER: Missing 2nd PEN Blackstar Awakening Weapon! Do NOT open selectable box randomly."
+    safetyNote: "Needs Flame of the Primordial (Awakening-only, do NOT use it on Sub)."
   },
   {
     id: "subweapon",
@@ -92,9 +92,9 @@ export const initialGearSlots: GearSlotItem[] = [
     targetAAP: 43,
     targetDP: 26,
     accuracyGain: 8,
-    estimatedCost: "70B Silver + Gem of Twilight",
+    estimatedCost: "70B Silver + Gem of Twilight x1",
     priority: "HIGH",
-    source: "Sovereign Sub Catalyst + Gem of Twilight",
+    source: "Synthesize 2x PEN Blackstar Offhand + Gem of Twilight",
     status: "CRAFTED",
     safetyNote: "Preserve Gem of Twilight! Do NOT sell or use until sub-weapon release."
   },

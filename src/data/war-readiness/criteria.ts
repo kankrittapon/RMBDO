@@ -23,7 +23,7 @@ export const initialWarReadiness: WarReadinessState = {
   totalScorePct: 68,
   criticalBlockers: [
     "Permanent Sheet AP +1 missing (Complete Land of the Morning Light Boss Blitz Calamity 5-7)",
-    "Missing 2nd PEN Blackstar Awakening Weapon for Sovereign Awakening Forge",
+    "Missing PEN Blackstar Awakening Weapon + Flame of the Primordial for Sovereign Awakening Forge",
     "PvP Crystal Preset with 100% Stun/Knockdown Resistance not yet configured",
     "Upgraded Telescope not finished (Needed for instant commander calls in Tier 3/4 Node Wars)"
   ],
@@ -35,7 +35,7 @@ export const initialWarReadiness: WarReadinessState = {
       tier: "MANDATORY",
       score: "692 GS (309 AP / 383 DP)",
       weightPercent: 30,
-      blockerList: ["Awakening Sovereign missing (Needs 2nd PEN BS Awakening)", "Shoes need Ator's conversion (+8 DP gain)"],
+      blockerList: ["Awakening Sovereign missing (Needs PEN BS Awakening x1 + Flame of the Primordial)", "Shoes need Ator's conversion (+8 DP gain)"],
       summary: "309 AP bracket reached. Needs 395+ DP to withstand Tier 4 Node War burst damage."
     },
     {
