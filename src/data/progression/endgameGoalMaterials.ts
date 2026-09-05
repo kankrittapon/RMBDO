@@ -42,12 +42,26 @@ export const endgameGoalStages: GoalStage[] = [
     title: 'อาวุธราชันครบ 3 ชิ้น (Main / Awakening / Sub)',
     englishTitle: 'Full Sovereign Weapon Set',
     gatingRequirement: 'เลเวล 61+ จบ Main Quest 1 ใน 4 ทาง + สมัคร Olvia Academy',
+    // Sovereign actually has 3 valid synthesis recipes per piece (in-game,
+    // confirmed by the user directly from the Bonghwang Statue window,
+    // 2026-09-05 - corrects an earlier guess based on an external guide
+    // that assumed a single rigid 2/2/1 split with Flame going to Sub).
+    // This list follows the HYPERBOOST-recommended route specifically
+    // (uses exactly the 5 PEN Blackstar + 1 Flame + 1 Gem that Hyperboost
+    // itself grants, no extra Boss C20 gear or a second Gem needed):
+    //   Main:      PEN Blackstar Main x2
+    //   Awakening: PEN Blackstar Awakening x1 + Flame of the Primordial x1
+    //   Sub:       PEN Blackstar Sub x2 + Gem of Twilight x1
+    // Other valid recipes exist (e.g. Blackstar x1 + PEN Boss gear C20 +
+    // Gem of Twilight per piece, or a Sub route using Kutum/Nouver C20)
+    // but aren't modeled here since they need gear this checklist doesn't
+    // otherwise track.
     materials: [
-      { id: 'sov_main_pen', name: 'PEN (V) Blackstar Mainhand', quantity: 2, note: 'จาก Y-Challenge + Combat Academy รวมกัน', linkedTaskId: 'hb_sovereign_main_ready' },
-      { id: 'sov_awakening_pen', name: 'PEN (V) Blackstar Awakening', quantity: 2, note: 'เป้าหมายหลักอันดับ 1 สำหรับดัน AP 310+', linkedTaskId: 'hb_sovereign_awakening_ready' },
-      { id: 'sov_sub_pen', name: 'PEN (V) Blackstar Offhand', quantity: 1, linkedTaskId: 'hb_sovereign_sub_ready' },
+      { id: 'sov_main_pen', name: 'PEN (V) Blackstar Mainhand', quantity: 2, note: 'สูตร: Blackstar x2 → Sovereign Main', linkedTaskId: 'hb_sovereign_main_ready' },
+      { id: 'sov_awakening_pen', name: 'PEN (V) Blackstar Awakening', quantity: 1, note: 'สูตร: Blackstar x1 + Flame of the Primordial x1 → Sovereign Awakening', linkedTaskId: 'hb_sovereign_awakening_ready' },
+      { id: 'sov_flame_primordial', name: 'Flame of the Primordial', quantity: 1, note: 'ใช้กับ Awakening (ไม่ใช่ Sub) — แลกจาก World Boss Seal / Olvia Academy Coin x100', linkedTaskId: 'hb_sovereign_awakening_ready' },
+      { id: 'sov_sub_pen', name: 'PEN (V) Blackstar Offhand', quantity: 2, note: 'สูตร: Blackstar x2 + Gem of Twilight x1 → Sovereign Sub', linkedTaskId: 'hb_sovereign_sub_ready' },
       { id: 'sov_gem_twilight', name: 'Gem of Twilight', quantity: 1, note: 'ใช้กับ Sub-weapon เท่านั้น ห้ามใช้กับ Main/Awakening', linkedTaskId: 'hb_sovereign_sub_ready' },
-      { id: 'sov_flame_primordial', name: 'Flame of the Primordial', quantity: 1, note: 'แลกจาก World Boss Seal / Olvia Academy Coin x100', linkedTaskId: 'hb_flame_primordial' },
     ],
     viewTab: 'sovereign',
   },

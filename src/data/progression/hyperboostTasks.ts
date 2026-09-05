@@ -110,10 +110,10 @@ export const hyperboostTasksList: HyperboostTaskItem[] = [
     category: "FORGE_PREP",
     description: "ปราบ World Boss ใน Land of the Morning Light เพื่อรับตราประทับ แลกเป็น Ember of the Primordial x50 ที่ Manage Currency UI, หรือแลก Olvia Academy Coin เป็น Ember อีก x50 - รวมให้ครบ 100 แล้วใช้ (L) Heating แปลงเป็น Flame of the Primordial x1",
     sourceType: "World Boss Seal / Olvia Academy Coin Exchange",
-    targetSlot: "SUB",
+    targetSlot: "AWAKENING",
     rewardItem: "Flame of the Primordial x1",
     safetyTag: "SAFE_TO_USE",
-    importantNote: "ใช้เฉพาะสำหรับหลอมอาวุธราชันเสริม (Sub-weapon) เท่านั้น ไม่ต้องใช้กับ Main/Awakening",
+    importantNote: "ใช้กับ Sovereign Awakening (สูตร: PEN Blackstar Awakening x1 + Flame x1) ตาม HYPERBOOST-recommended route - แก้จากที่เข้าใจผิดว่าใช้กับ Sub ก่อนหน้านี้ (ผู้ใช้ยืนยันจากหน้าต่างหลอมจริงในเกม 2026-09-05); ไม่ต้องใช้กับ Main",
     order: 7
   },
   {
@@ -125,31 +125,31 @@ export const hyperboostTasksList: HyperboostTaskItem[] = [
     targetSlot: "MAIN",
     rewardItem: "Sovereign Mainhand Forge Readiness",
     safetyTag: "SAFE_TO_USE",
-    importantNote: "นำไปหลอมที่แท่นหลอมบงฮวาง (Bonghwang Statue) บนภูเขาอาชิ (Mount Ahshi), ประเทศแห่งรุ่งอรุณ",
+    importantNote: "สูตร: PEN Blackstar Mainhand x2 → Sovereign Main. นำไปหลอมที่แท่นหลอมบงฮวาง (Bonghwang Statue) บนภูเขาอาชิ (Mount Ahshi), ประเทศแห่งรุ่งอรุณ",
     order: 8
   },
   {
     id: "hb_sovereign_awakening_ready",
     title: "9. วัตถุดิบอาวุธราชันตื่นพลังพร้อม (Sovereign Awakening)",
     category: "FORGE_PREP",
-    description: "ตรวจสอบว่ามี PEN Blackstar Awakening x2 ครบแล้ว",
+    description: "ตรวจสอบว่ามี PEN Blackstar Awakening x1 + Flame of the Primordial x1 ครบแล้ว (HYPERBOOST-recommended route - ประหยัด Blackstar กว่าใช้ x2 เฉยๆ)",
     sourceType: "Inventory Check",
     targetSlot: "AWAKENING",
     rewardItem: "Sovereign Awakening Forge Readiness",
     safetyTag: "SAFE_TO_USE",
-    importantNote: "เป้าหมายหลักอันดับ 1 สำหรับดัน AP ทะลุ 310+",
+    importantNote: "เป้าหมายหลักอันดับ 1 สำหรับดัน AP ทะลุ 310+ - สูตรนี้ยืนยันจากหน้าต่างหลอมจริงในเกมโดยผู้ใช้ (2026-09-05) แก้จากที่เคยเข้าใจผิดว่าต้องใช้ Blackstar x2 ไม่มี Flame",
     order: 9
   },
   {
     id: "hb_sovereign_sub_ready",
     title: "10. วัตถุดิบอาวุธราชันเสริมพร้อม (Sovereign Sub-weapon)",
     category: "FORGE_PREP",
-    description: "ตรวจสอบว่ามี PEN Blackstar Offhand x1 + Gem of Twilight x1 (จาก Combat Academy) + Flame of the Primordial x1 ครบแล้ว",
+    description: "ตรวจสอบว่ามี PEN Blackstar Offhand x2 + Gem of Twilight x1 ครบแล้ว (HYPERBOOST-recommended route)",
     sourceType: "Inventory Check",
     targetSlot: "SUB",
     rewardItem: "Sovereign Sub-weapon Forge Readiness",
     safetyTag: "SAFE_TO_USE",
-    importantNote: "สูตรนี้ต่างจาก Main/Awakening (ที่ใช้ PEN Blackstar x2) - Sub-weapon ใช้ PEN Blackstar x1 + Gem of Twilight + Flame of Primordial แทน",
+    importantNote: "สูตรนี้ยืนยันจากหน้าต่างหลอมจริงในเกมโดยผู้ใช้ (2026-09-05): Sub ใช้ PEN Blackstar x2 + Gem of Twilight x1 (ไม่ใช้ Flame ในสูตรนี้ - Flame ไปอยู่ที่ Awakening แทน) มีสูตรอื่นที่ใช้ Blackstar x1 + Gem + Flame ได้เหมือนกัน แต่ route นี้ประหยัด Flame ไว้ใช้กับ Awakening",
     order: 10
   }
 ];

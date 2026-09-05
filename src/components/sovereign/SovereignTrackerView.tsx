@@ -116,20 +116,24 @@ export const SovereignTrackerView: React.FC<SovereignTrackerViewProps> = ({ stor
             </div>
 
             <p className="text-xs text-text-secondary leading-relaxed">
-              ต้องการรวม 5 ชิ้น: Mainhand x2 + Awakening x2 + Sub x1 - มาจาก Y-Challenge (กล่อง #1, #2 Welcome Gift), Olvia Combat Academy (กล่อง #3), และ TET→PEN อัปเกรด 1 ชิ้น (จาก Darkstar Black Stone)
+              ต้องการรวม 5 ชิ้น (HYPERBOOST-recommended route): Mainhand x2 + Awakening x1 + Sub x2 - มาจาก Y-Challenge (กล่อง #1, #2 Welcome Gift), Olvia Combat Academy (กล่อง #3), และ TET→PEN อัปเกรด 1 ชิ้น (จาก Darkstar Black Stone)
             </p>
           </div>
         </div>
 
-        {/* Sub-weapon extra materials */}
+        {/* Extra materials per piece - Flame goes to Awakening, Gem goes to
+            Sub, confirmed by the user directly from the in-game Bonghwang
+            Statue synthesis window (2026-09-05). An earlier version of this
+            had it backwards (Flame assigned to Sub) based on an external
+            guide that assumed a different, rigid recipe. */}
         <div className="bg-bg-surface-1 border border-border-subtle rounded-xl p-4 space-y-3 flex flex-col justify-between">
           <div className="space-y-2.5">
             <div className="flex items-center justify-between border-b border-border-subtle pb-2">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold text-xs">
-                  S
+                  +
                 </div>
-                <span className="text-xs font-bold text-text-primary">วัตถุดิบเสริม Sub-weapon</span>
+                <span className="text-xs font-bold text-text-primary">วัตถุดิบเสริมต่อชิ้น</span>
               </div>
               <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-bg-surface-3 text-text-muted">
                 {subReadyClaimed ? "ครบแล้ว" : "ยังขาด"}
@@ -137,7 +141,8 @@ export const SovereignTrackerView: React.FC<SovereignTrackerViewProps> = ({ stor
             </div>
 
             <p className="text-xs text-text-secondary leading-relaxed">
-              Sub-weapon ใช้สูตรต่างจาก Main/Awakening: PEN Blackstar x1 (จากคลังด้านซ้าย) + Gem of Twilight x1 (จาก Combat Academy) + Flame of the Primordial x1 (แลกจาก World Boss seal / Olvia Academy Coin)
+              <b>Awakening</b>: Blackstar x1 + <b>Flame of the Primordial x1</b> (แลกจาก World Boss seal / Olvia Academy Coin)<br />
+              <b>Sub</b>: Blackstar x2 + <b>Gem of Twilight x1</b> (จาก Combat Academy)
             </p>
           </div>
         </div>

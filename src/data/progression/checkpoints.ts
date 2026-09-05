@@ -157,17 +157,18 @@ export const masterCheckpointsList: CheckpointNode[] = [
     shortDesc: "หลอม PEN Blackstar ที่ได้จากจุดตรวจ #2-3 เป็นอาวุธราชัน 3 ชิ้น ที่แท่นหลอมบงฮวาง (Bonghwang Statue)",
     requiredAction: "นำวัตถุดิบที่ครบตามจุดตรวจ #2 (Hyperboost) ไปหลอมที่แท่นบงฮวาง บนภูเขาอาชิ ประเทศแห่งรุ่งอรุณ",
     requirements: [
-      "Mainhand: PEN Blackstar Mainhand x2",
-      "Awakening: PEN Blackstar Awakening x2",
-      "Sub: PEN Blackstar Offhand x1 + Gem of Twilight x1 + Flame of the Primordial x1"
+      "Mainhand: PEN Blackstar Mainhand x2 → Sovereign Main",
+      "Awakening: PEN Blackstar Awakening x1 + Flame of the Primordial x1 → Sovereign Awakening",
+      "Sub: PEN Blackstar Offhand x2 + Gem of Twilight x1 → Sovereign Sub",
+      "(สูตรนี้คือ HYPERBOOST-recommended route ที่ใช้พอดี 5 Blackstar + 1 Flame + 1 Gem ที่ได้จาก Hyperboost - แต่ละชิ้นมีสูตรทางเลือกอื่นอีก เช่น Blackstar x1 + PEN Boss Gear C20 + Gem of Twilight ต่อชิ้น หรือ Sub ใช้ Kutum/Nouver C20 แทนได้เช่นกัน)"
     ],
     rewards: ["อาวุธราชัน (Sovereign Weapon) ครบ 3 ชิ้น Main/Awakening/Sub - Base AP สูงกว่า PEN Blackstar"],
     whyImportant: "เป็นอาวุธขั้นสูงสุดในเกม มีระบบตีบวก 10 ขั้น (PRI ถึง DEC) และสามารถสลักอัญมณีเฉพาะทางได้",
     unlocksWhat: "สถิติพลังโจมตี AP 310+ สำหรับเข้าสู่ดินแดนเอดาเนีย (Edania)",
     nextRecommendedStep: "เริ่มสะสมหินดำแห่งอรุณเพื่อดันระดับราชันขึ้นขั้น PRI / DUO / TRI",
-    dataSource: "Hyperboost Beginner/Returning Player Guide - blackdesertfoundry.com/new-player-guide",
-    lastVerified: "2026-09-03",
-    safetyNote: "ห้ามใช้ Gem of Twilight กับ Main/Awakening เด็ดขาด - สูตรนั้นใช้แค่ PEN Blackstar x2 ไม่ต้องใช้ Gem เลย เก็บ Gem of Twilight ไว้สำหรับ Sub-weapon เท่านั้น",
+    dataSource: "ผู้ใช้ตรวจสอบสูตรจริงจากหน้าต่างหลอมที่แท่นบงฮวางในเกม (2026-09-05) - แก้ไขจากรอบก่อนที่อ้างอิง blackdesertfoundry.com ซึ่งสมมติสูตรตายตัวผิด (สันนิษฐานว่า Awakening ใช้ Blackstar x2 ไม่มี Flame, Sub ใช้ x1+Gem+Flame)",
+    lastVerified: "2026-09-05",
+    safetyNote: "เก็บ Gem of Twilight ไว้สำหรับ Sub-weapon เท่านั้น และ Flame of the Primordial ไว้สำหรับ Awakening เท่านั้น (ไม่ใช่ Sub อย่างที่เคยเข้าใจผิด) - เช็คหน้าต่างหลอมจริงในเกมทุกครั้งก่อนใช้ของ เพราะมีสูตรทางเลือกอื่นที่ใช้วัตถุดิบต่างกัน",
     childTaskIds: [
       "hb_y_pen_awakening_1",
       "hb_y_pen_awakening_2",
