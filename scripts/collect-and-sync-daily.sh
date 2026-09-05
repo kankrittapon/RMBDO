@@ -17,4 +17,12 @@ echo "=== $(date -u +%FT%TZ) collect-and-sync-daily start ==="
 npm run collect:daily
 npm run normalize
 
+# Incrementally backfill ingredient trees, most-profitable-first, a small
+# batch at a time (never all 487+ at once - same Cloudflare-exposure
+# reasoning as every other collector here). After a few weeks this fills
+# in every profitable recipe's cache with zero manual clicking, so the
+# deployed app (no Playwright there) can serve it straight from Postgres
+# instead of depending on ENABLE_ON_DEMAND_SCRAPE on a local dev server.
+npm run collect:crafting-detail-batch
+
 echo "=== $(date -u +%FT%TZ) collect-and-sync-daily done ==="

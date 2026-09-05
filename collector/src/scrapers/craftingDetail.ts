@@ -210,7 +210,7 @@ export async function scrapeCraftingDetail(slug: string): Promise<CraftingDetail
  * no way to ever show real data in the deployed app, confirmed by
  * checking: nothing else in the codebase references these two tables as a
  * write target. */
-async function saveCraftingDetail(detail: CraftingDetail, category: string | null): Promise<void> {
+export async function saveCraftingDetail(detail: CraftingDetail, category: string | null): Promise<void> {
   if (!process.env.DATABASE_URL) {
     console.warn("DATABASE_URL not set - scraped detail was NOT saved to Postgres, only printed below.")
     return

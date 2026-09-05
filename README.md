@@ -159,8 +159,18 @@ rather than "forgotten":
   Playwright there) and is off by default - without it, a cache miss still
   just 404s with instructions to run `collect:crafting-detail` manually.
   Still never bulk-scrapes all 854 recipes at once, by design, to avoid
-  Cloudflare exposure - each recipe is only fetched the first time someone
-  actually opens its drawer. `unitPrice`/`totalCost` per ingredient are
+  Cloudflare exposure. **`npm run collect:crafting-detail-batch` now runs
+  automatically as part of the daily cron** (`scripts/collect-and-sync-daily.sh`,
+  after `normalize`) - it backfills a small batch (25/day by default, set
+  `CRAFTING_DETAIL_BATCH_SIZE` to change) of whichever recipes don't have a
+  `crafting_recipe_details` row yet, most-profitable-first, and stops early
+  if it detects a Cloudflare block rather than continuing to hammer the
+  site. This means every profitable recipe accumulates a real ingredient-
+  tree cache within a few weeks with **zero manual clicking or
+  `ENABLE_ON_DEMAND_SCRAPE`** - the deployed app (Vercel, no Playwright)
+  can then serve all of it straight from Postgres. The on-demand
+  scrape-on-click path above stays as a fallback for a recipe the daily
+  batch hasn't reached yet. `unitPrice`/`totalCost` per ingredient are
   still always `null` (a known gap from when this was first built, unchanged).
 - **Olvia Academy Field Tactics (19 quests): only a count, not quest
   titles.** `olviaSubCourses.ts` tracks `combat_field_tactics: 19` as a
@@ -200,7 +210,8 @@ npm run collect:fishing      # writes collector/out/fishing-depth4-*.json
 npm run collect:grindspots   # writes collector/out/grindspots-*.json
 npm run collect:market       # writes collector/out/market-*.json (Southeast Asia region)
 npm run collect:crafting     # writes collector/out/crafting-*.json (profitable only, profitPerHour >0, with recipe_slug)
-npm run collect:crafting-detail -- <slug>  # prints one recipe's scraped detail as JSON - does NOT write to Postgres yet, see Known gaps
+npm run collect:crafting-detail -- <slug> [category]  # scrapes + saves ONE recipe's ingredient tree to Postgres
+npm run collect:crafting-detail-batch  # backfills a batch (25 default, CRAFTING_DETAIL_BATCH_SIZE) of uncached recipes, most-profitable-first - runs automatically in the daily cron
 npm run collect:daily        # collect:market + collect:crafting only (the two that change day to day)
 npm run normalize            # upserts latest collector/out/*.json files into Postgres (filters profitable, uses recipe_slug when present)
 ```
