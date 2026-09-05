@@ -1,9 +1,55 @@
-# Handoff — Worker Empire Node Optimizer (planning only, no code yet)
+# Handoff — Worker Empire Node Optimizer
 
-Read this before starting any implementation. This document is a plan, not
-a build log — nothing described here has been coded. It exists so the next
-session (or the next you) can pick this up without re-deriving the research
-already done.
+## Update 2026-09-06 — implemented
+
+User approved proceeding with the WASM-reuse approach (option (a) from the
+original plan below). Built and shipped:
+
+- `src/lib/noderouter/noderouter.mjs` + `.d.ts` — vendored unmodified from
+  `Thell/bdo-noderouter` v0.4.0's prebuilt release (`pkg.zip`), public
+  domain (Unlicense, `LICENSE-noderouter-unlicense.txt` alongside). One
+  line was patched (the default-fallback `new URL(...)` for the wasm path)
+  because webpack statically resolves that call at build time and fails
+  since the `.wasm` is served from `/public/wasm` instead of bundled
+  alongside the JS - noted inline in the file. No other changes.
+- `public/wasm/noderouter_bg.wasm` — the compiled solver, fetched
+  client-side and passed to the module as raw bytes.
+- `public/data/bdo-node-graph.json` — `clean_exploration.json` from the
+  same repo, copied unmodified (~1035 nodes, real waypoint/region/CP/link
+  data, also Unlicense).
+- `src/components/workerempire/WorkerEmpireView.tsx` — new page, nav id
+  `worker_empire`, added to `NavigationSidebar.tsx`'s "reference" section
+  and wired in `src/app/page.tsx`. Lets the user add (terminal, root)
+  waypoint-ID pairs, calls `WasmNodeRouter.solveForTerminalPairs()`
+  entirely client-side, shows the resulting node set + total CP.
+
+**Verified**: a standalone Node script (outside the app) constructed the
+router with the real graph JSON and called `solveForTerminalPairs([[3, 1]])`
+- got back a real node set (`[1, 3, 41, 42, 43]`) and CP total (`5`), so
+the vendored WASM + data actually work together, not just "compiles."
+`npm run typecheck` and `npm run build` both pass. The dev server was
+confirmed serving both new static assets with `200 OK`.
+
+**Not verified**: I could not drive the actual page in a real browser this
+session (the available browser-automation tool refused to navigate to
+`localhost`) - so the in-browser fetch → WASM-init → solve → render chain
+has not been click-tested end to end, only reasoned through and unit
+-verified piece by piece (Node-level solve call, curl against the dev
+server's static routes, and a clean production build). If something is
+subtly wrong in the browser-only glue (e.g. a CORS/MIME issue serving
+`.wasm` in production on Vercel), it would only surface there - check this
+first if the page doesn't work after deploying.
+
+**Known gap, unchanged from the original plan**: node IDs have no
+human-readable name mapping yet (see "Explicitly not decided yet" below -
+this was flagged before building and intentionally left unresolved rather
+than guessing city names). The UI currently requires raw numeric waypoint
+IDs, with a visible in-app disclaimer pointing users to shrddr's Workerman
+site to look up IDs manually in the meantime.
+
+## Original plan (below, superseded where it says "no code yet")
+
+This document was originally planning-only. Read the update above first -
 
 ## Correction to an earlier verdict
 
