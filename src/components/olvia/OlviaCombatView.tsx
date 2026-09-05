@@ -23,6 +23,20 @@ interface OlviaCombatViewProps {
   store: ReturnType<typeof useRoadmapStore>;
 }
 
+// Grouping the previously-flat card list by category, with a one-line
+// "why this group matters" - the flat list gave no sense of sequence or
+// purpose beyond each individual quest's own objective text.
+const CATEGORY_LABELS: Record<string, { label: string; why: string }> = {
+  BASIC_TACTICS: { label: 'Basic Tactics (12 เควส)', why: 'ทำก่อนเสมอ - ปลดล็อกสิทธิ์ทำ Field Tactics ต่อ' },
+  FIELD_TACTICS: { label: 'Field Tactics (19 เควส)', why: 'ทำต่อจาก Basic Tactics - ยังไม่มีชื่อเควสละเอียด มีแค่ตัวนับที่แผงด้านบน' },
+  CAPSTONE: { label: 'Family Rewards - Combat', why: 'กล่องราชัน (PEN/TET Blackstar) ที่ใช้ตีอาวุธ Sovereign ในเป้าหมาย Hyperboost' },
+  FOUNDATION: { label: 'พื้นฐาน', why: '' },
+  MONSTER_ZONE: { label: 'พื้นที่มอนสเตอร์', why: '' },
+  BOSS_CONQUEST: { label: 'ปราบบอส', why: '' },
+  GEAR_SYNTHESIS: { label: 'สังเคราะห์อุปกรณ์', why: '' },
+};
+const CATEGORY_ORDER = ['BASIC_TACTICS', 'FIELD_TACTICS', 'CAPSTONE', 'FOUNDATION', 'MONSTER_ZONE', 'BOSS_CONQUEST', 'GEAR_SYNTHESIS'];
+
 export const OlviaCombatView: React.FC<OlviaCombatViewProps> = ({ store }) => {
   const { profile, setOlviaCombatTaskStatus, setSubCourseProgress, progressStats, resetCategory } = store;
   const [filter, setFilter] = useState<'ALL' | 'COMPLETED' | 'IN_PROGRESS' | 'UNKNOWN'>('ALL');
@@ -34,6 +48,11 @@ export const OlviaCombatView: React.FC<OlviaCombatViewProps> = ({ store }) => {
     if (filter === 'ALL') return true;
     return status === filter;
   });
+
+  const groupedTasks = CATEGORY_ORDER.map((cat) => ({
+    category: cat,
+    tasks: filteredTasks.filter((t) => t.category === cat),
+  })).filter((g) => g.tasks.length > 0);
 
   const getStatusBadge = (status: CheckpointStatus) => {
     switch (status) {
@@ -109,9 +128,19 @@ export const OlviaCombatView: React.FC<OlviaCombatViewProps> = ({ store }) => {
 
       <SubCourseProgressPanel branch="COMBAT" progress={profile.subCourseProgress} onSetProgress={setSubCourseProgress} />
 
-      {/* Tasks Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-        {filteredTasks.map((task) => {
+      {/* Tasks grouped by category, in the order you should actually do them */}
+      {groupedTasks.map((group) => {
+        const groupDone = group.tasks.filter((t) => (profile.olviaCombatTasks[t.id] || 'UNKNOWN') === 'COMPLETED').length;
+        const meta = CATEGORY_LABELS[group.category] || { label: group.category, why: '' };
+        return (
+          <div key={group.category} className="space-y-2.5">
+            <div className="flex items-baseline justify-between px-1">
+              <h2 className="text-sm font-bold text-text-primary">{meta.label}</h2>
+              <span className="text-[11px] font-mono text-text-muted">{groupDone}/{group.tasks.length} เสร็จแล้ว</span>
+            </div>
+            {meta.why && <p className="text-[11px] text-text-muted px-1 -mt-1.5">{meta.why}</p>}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              {group.tasks.map((task) => {
           const currentStatus = profile.olviaCombatTasks[task.id] || 'UNKNOWN';
           const isDone = currentStatus === 'COMPLETED';
 
@@ -200,8 +229,11 @@ export const OlviaCombatView: React.FC<OlviaCombatViewProps> = ({ store }) => {
 
             </div>
           );
-        })}
-      </div>
+              })}
+            </div>
+          </div>
+        );
+      })}
 
     </div>
   );

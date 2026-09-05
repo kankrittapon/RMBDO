@@ -45,6 +45,16 @@ export const OlviaLifeView: React.FC<OlviaLifeViewProps> = ({ store }) => {
     return task.skillId === selectedSkill;
   });
 
+  // When showing everything, group by skill (in the same order as the
+  // filter tabs above) instead of one long flat list - it was previously
+  // impossible to tell where one skill's steps ended and the next began.
+  const groupedTasks = selectedSkill === 'ALL'
+    ? skillsList
+        .filter((sk) => sk.id !== 'ALL')
+        .map((sk) => ({ skill: sk, tasks: filteredTasks.filter((t) => t.skillId === sk.id) }))
+        .filter((g) => g.tasks.length > 0)
+    : [{ skill: skillsList.find((sk) => sk.id === selectedSkill)!, tasks: filteredTasks }];
+
   return (
     <div className="space-y-4 max-w-7xl mx-auto pb-16 md:pb-6">
       
@@ -106,9 +116,19 @@ export const OlviaLifeView: React.FC<OlviaLifeViewProps> = ({ store }) => {
 
       <SubCourseProgressPanel branch="LIFE_SKILL" progress={profile.subCourseProgress} onSetProgress={setSubCourseProgress} />
 
-      {/* Tasks Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-        {filteredTasks.map((task) => {
+      {/* Tasks grouped by skill (when viewing all) */}
+      {groupedTasks.map((group) => {
+        const groupDone = group.tasks.filter((t) => (profile.olviaLifeTasks[t.id] || 'UNKNOWN') === 'COMPLETED').length;
+        return (
+          <div key={group.skill.id} className="space-y-2.5">
+            {selectedSkill === 'ALL' && (
+              <div className="flex items-baseline justify-between px-1">
+                <h2 className="text-sm font-bold text-text-primary">{group.skill.name}</h2>
+                <span className="text-[11px] font-mono text-text-muted">{groupDone}/{group.tasks.length} เสร็จแล้ว</span>
+              </div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              {group.tasks.map((task) => {
           const currentStatus = profile.olviaLifeTasks[task.id] || 'UNKNOWN';
           const isDone = currentStatus === 'COMPLETED';
 
@@ -197,8 +217,11 @@ export const OlviaLifeView: React.FC<OlviaLifeViewProps> = ({ store }) => {
 
             </div>
           );
-        })}
-      </div>
+              })}
+            </div>
+          </div>
+        );
+      })}
 
     </div>
   );

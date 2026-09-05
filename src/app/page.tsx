@@ -12,6 +12,7 @@ import { SlumberingOriginView } from '@/components/gear/SlumberingOriginView';
 import { KharazadAccessoriesView } from '@/components/gear/KharazadAccessoriesView';
 import { GearPlannerView } from '@/components/gear/GearPlannerView';
 import { SovereignTrackerView } from '@/components/sovereign/SovereignTrackerView';
+import { EndgameGoalView } from '@/components/goals/EndgameGoalView';
 import { SafetyView } from '@/components/safety/SafetyView';
 import { TreasureView } from '@/components/treasures/TreasureView';
 import { GrindSpotOptimizerView } from '@/components/grind-spots/GrindSpotOptimizerView';
@@ -79,6 +80,8 @@ export default function Home() {
         return <GearPlannerView store={store as any} />;
       case 'sovereign':
         return <SovereignTrackerView store={store as any} />;
+      case 'goals':
+        return <EndgameGoalView store={store} onNavigate={(tab) => setActiveTab(tab)} />;
       case 'safety':
         return <SafetyView />;
       case 'treasures':
