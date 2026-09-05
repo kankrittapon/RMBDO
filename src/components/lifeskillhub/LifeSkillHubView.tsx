@@ -191,7 +191,8 @@ export const LifeSkillHubView: React.FC = () => {
     setDetail(null);
     setDetailError(null);
     setDetailLoading(true);
-    fetch(`/api/crafting-recipes/${encodeURIComponent(slug)}/ingredients`)
+    const categoryParam = selected.category ? `?category=${encodeURIComponent(selected.category)}` : '';
+    fetch(`/api/crafting-recipes/${encodeURIComponent(slug)}/ingredients${categoryParam}`)
       .then(async (res) => {
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
@@ -545,7 +546,8 @@ export const LifeSkillHubView: React.FC = () => {
                       setDetailLoading(true);
                       const slug = selected.recipeSlug;
                       if (!slug) return;
-                      fetch(`/api/crafting-recipes/${encodeURIComponent(slug)}/ingredients`)
+                      const categoryParam = selected.category ? `?category=${encodeURIComponent(selected.category)}` : '';
+                      fetch(`/api/crafting-recipes/${encodeURIComponent(slug)}/ingredients${categoryParam}`)
                         .then(async (res) => {
                           if (!res.ok) throw new Error((await res.json().catch(() => ({}))).hint || `HTTP ${res.status}`);
                           return res.json();

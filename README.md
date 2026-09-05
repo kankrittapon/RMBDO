@@ -75,7 +75,7 @@ extension/, and the openclick_private repo it's built from  Manual browser-exten
   needs BDO's unpublished mastery-speed/success-rate/market-tax formulas)
   and `/api/player-settings` (your real Mastery per skill, which you enter
   in this page). **New in 2026-09-03/04:**
-  - **On-demand ingredient tree drawer:** Click any recipe row → drawer fetches `GET /api/crafting-recipes/[slug]/ingredients` (checks `crafting_recipe_details` cache first, never bulk 854). Renders bdolytics precomputed `Crafting Cost / Profit / Silver/Hour` + ingredient list with `quantity`, `unitPrice`, `totalCost`, sub-recipe links. Stealth `playwright-extra` + `3–8s` delay, abort on Cloudflare block. `npm run collect:crafting-detail -- <slug> [category]` now actually saves its result to Postgres (it only printed JSON before) — verified against two real recipes across different categories, including correct ingredient quantities and no duplicate rows; see **Known gaps** for what's still manual about this (no auto-scrape-on-cache-miss, no bulk pre-population).
+  - **On-demand ingredient tree drawer:** Click any recipe row → drawer fetches `GET /api/crafting-recipes/[slug]/ingredients` (checks `crafting_recipe_details` cache first, never bulk 854). Renders bdolytics precomputed `Crafting Cost / Profit / Silver/Hour` + ingredient list with `quantity`, `unitPrice`, `totalCost`, sub-recipe links. Stealth `playwright-extra` + `3–8s` delay, abort on Cloudflare block. `npm run collect:crafting-detail -- <slug> [category]` now actually saves its result to Postgres (it only printed JSON before), and the drawer's own fetch can trigger this live on a cache miss (`ENABLE_ON_DEMAND_SCRAPE=true`, local/self-hosted only — see **Known gaps**) — verified end to end: an uncached recipe scrapes live in ~21s and returns `source: "scraped-now"`, a second request for the same recipe returns `source: "cache"` in <1s.
   - **Personal Crafting Planner:** Inside drawer, batch input (default 100, quick 100/1000) scales `totalRequired = qty * batch`, editable **In Stock** per ingredient (persisted `localStorage rmbdo_inventory_v1` keyed by item name, shared across recipes), auto `shortage = max(0, totalRequired - owned)` and `missingCost = shortage * unitPrice`. Top summary shows `Revenue x batch`, `Crafting Cost x batch`, `Adj. Profit = Revenue - totalMissingCost` (all scaled from bdolytics precomputed, never local formula). Procurement badges `🛒 Market Buy` / `⛏️ Gather` / `🌾 Worker Node` via `PROCUREMENT_MAP` + heuristic.
   - **Google Sheets Sync:** `Sync from Google Sheet` button (Mastery card + drawer) calls proxied `GET /api/sync/inventory` (server reads `GOOGLE_SHEETS_WEBHOOK_URL` from Vercel env, follows GAS 302), overwrites `rmbdo_inventory_v1` + `rmbdo_ledger_v1` (sheet is single source of truth), instant recalc of shortage/missing cost, toast `Synced 42 items`. Offline: keeps last localStorage, shows error toast, never clears. See `docs/sync/Code.gs` + `src/types/sheets.ts`.
 - Every other view (Treasures, Classes, Life Skills dashboard, War
@@ -149,12 +149,19 @@ rather than "forgotten":
   its result into `crafting_recipe_details`/`crafting_recipe_ingredients`
   (it only printed JSON before — nothing in the codebase wrote to Postgres
   at all, so the drawer could never show real data for any recipe,
-  confirmed before this fix). Still manual/on-demand only, per recipe, by
-  design (never bulk 854, to avoid Cloudflare exposure) - there's no
-  auto-scrape-on-cache-miss trigger from the API route or the UI yet, so a
-  recipe's ingredient tree only appears once someone has run this command
-  for that specific slug. `unitPrice`/`totalCost` per ingredient are still
-  always `null` (a known gap from when this was first built, unchanged).
+  confirmed before this fix). `GET /api/crafting-recipes/[slug]/ingredients`
+  now scrapes live on a cache miss when `ENABLE_ON_DEMAND_SCRAPE=true` (spawns
+  the collector script as a child process, ~15-25s including the stealth
+  browser launch + politeDelay, then re-reads the fresh cache) - verified
+  end to end against a real uncached recipe (first request: `source:
+  "scraped-now"`, ~21s; second request for the same recipe: `source:
+  "cache"`, <1s). This flag **must stay unset on Vercel** (no
+  Playwright there) and is off by default - without it, a cache miss still
+  just 404s with instructions to run `collect:crafting-detail` manually.
+  Still never bulk-scrapes all 854 recipes at once, by design, to avoid
+  Cloudflare exposure - each recipe is only fetched the first time someone
+  actually opens its drawer. `unitPrice`/`totalCost` per ingredient are
+  still always `null` (a known gap from when this was first built, unchanged).
 - **Olvia Academy Field Tactics (19 quests): only a count, not quest
   titles.** `olviaSubCourses.ts` tracks `combat_field_tactics: 19` as a
   number; unlike Basic Tactics (12 real quest names), nobody has supplied the
