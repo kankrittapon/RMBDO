@@ -25,4 +25,9 @@ npm run normalize
 # instead of depending on ENABLE_ON_DEMAND_SCRAPE on a local dev server.
 npm run collect:crafting-detail-batch
 
+# Fills icon_url for any new market/recipe/ingredient rows the runs above
+# just added. Pure DB work (name/ID lookup against a public data dump +
+# Pearl Abyss's own icon CDN) - no scraping, safe to run every day.
+npm run backfill:icons
+
 echo "=== $(date -u +%FT%TZ) collect-and-sync-daily done ==="

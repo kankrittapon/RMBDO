@@ -19,7 +19,8 @@
     "collect:daily": "npm run collect:daily -w collector",
     "collect:crafting-detail-batch": "npm run collect:crafting-detail-batch -w collector",
     "collect:all": "npm run collect:all -w collector",
-    "normalize": "node --env-file=.env scripts/normalize.mjs"
+    "normalize": "node --env-file=.env scripts/normalize.mjs",
+    "backfill:icons": "node --env-file=.env scripts/backfill-icons.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

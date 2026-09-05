@@ -6,3 +6,4 @@ dist/
 collector/out/*.json
 !collector/out/.gitkeep
 *.log
+.cache/
