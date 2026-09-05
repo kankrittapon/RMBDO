@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { Target, CheckCircle2, Circle, ArrowRight, Info } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Target, CheckCircle2, Circle, ArrowRight, Info, Package } from 'lucide-react';
 import { endgameGoalStages, GoalMaterial } from '@/data/progression/endgameGoalMaterials';
 import { useRoadmapStore } from '@/hooks/useRoadmapStore';
 import { NavTabId } from '@/components/layout/NavigationSidebar';
@@ -12,6 +12,14 @@ interface EndgameGoalViewProps {
   onNavigate: (tab: NavTabId) => void;
 }
 
+// Must match INVENTORY_KEY in src/components/lifeskillhub/LifeSkillHubView.tsx
+// exactly - this is the SAME shared "how much of each item do I own"
+// ledger, keyed by item name, so a quantity you enter here for e.g. "Gem
+// of Twilight" is the same number the Life Skill Hub's planner sees, and
+// vice versa. Not re-declared as an import to avoid coupling this file to
+// that component's internals - just the same well-known localStorage key.
+const INVENTORY_KEY = 'rmbdo_inventory_v1';
+
 // Combines Sovereign Weapon (3 pcs) + Slumbering Origin armor (4 pcs) +
 // Kharazad accessories (6 pcs) into one staged progression with a
 // material shopping list - previously scattered across 3 separate
@@ -21,6 +29,24 @@ interface EndgameGoalViewProps {
 // nothing new is invented here.
 export const EndgameGoalView: React.FC<EndgameGoalViewProps> = ({ store, onNavigate }) => {
   const { profile, progressStats } = store;
+  const [inventory, setInventory] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(INVENTORY_KEY);
+      if (raw) setInventory(JSON.parse(raw));
+    } catch {}
+  }, []);
+
+  const setOwned = (name: string, qty: number) => {
+    setInventory((prev) => {
+      const next = { ...prev, [name]: Math.max(0, qty) };
+      try {
+        localStorage.setItem(INVENTORY_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
 
   const isMaterialDone = (m: GoalMaterial): boolean => {
     if (!m.linkedTaskId) return false;
@@ -45,7 +71,7 @@ export const EndgameGoalView: React.FC<EndgameGoalViewProps> = ({ store, onNavig
           ราชันครบชุด + เกราะเทพครบชุด + คาราซัด PEN ครบชุด
         </h1>
         <p className="text-xs text-text-secondary">
-          รวม 3 เป้าหมายที่เคยกระจายอยู่คนละหน้าไว้ในที่เดียว — ดูภาพรวมว่าทำไปถึงไหน ต้องการวัตถุดิบอะไรอีกบ้าง เรียงตามลำดับที่ควรทำก่อน-หลัง
+          รวม 3 เป้าหมายที่เคยกระจายอยู่คนละหน้าไว้ในที่เดียว — ใส่จำนวนที่มีอยู่แล้วต่อวัตถุดิบ ระบบจะคำนวณว่าขาดอีกเท่าไร (ใช้คลังไอเทมชุดเดียวกับ Life Skill Hub — ใส่ที่นี่หรือที่นั่นก็เห็นตรงกัน)
         </p>
       </div>
 
@@ -94,25 +120,46 @@ export const EndgameGoalView: React.FC<EndgameGoalViewProps> = ({ store, onNavig
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {stage.materials.map((m) => {
                   const done = isMaterialDone(m);
+                  const owned = inventory[m.name] ?? 0;
+                  const shortage = Math.max(0, m.quantity - owned);
+                  const enough = owned >= m.quantity;
                   return (
                     <div
                       key={m.id}
                       className={cn(
                         'flex items-start gap-2 p-2.5 rounded-lg border text-xs',
-                        done ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-bg-surface-2 border-border-subtle'
+                        done || enough ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-bg-surface-2 border-border-subtle'
                       )}
                     >
-                      {done ? (
+                      {done || enough ? (
                         <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                       ) : (
                         <Circle className="w-4 h-4 text-text-muted shrink-0 mt-0.5" />
                       )}
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1 space-y-1.5">
                         <div className="flex items-baseline gap-1.5">
-                          <span className={cn('font-bold truncate', done ? 'text-emerald-300' : 'text-text-primary')}>{m.name}</span>
-                          <span className="text-text-muted font-mono text-[10px] shrink-0">x{m.quantity}</span>
+                          <span className={cn('font-bold truncate', done || enough ? 'text-emerald-300' : 'text-text-primary')}>{m.name}</span>
+                          <span className="text-text-muted font-mono text-[10px] shrink-0">ต้องการ x{m.quantity}</span>
                         </div>
-                        {m.note && <p className="text-[10px] text-text-muted mt-0.5 leading-snug">{m.note}</p>}
+                        {m.note && <p className="text-[10px] text-text-muted leading-snug">{m.note}</p>}
+                        <div className="flex items-center gap-2 font-mono text-[10px]">
+                          <span className="flex items-center gap-1 text-text-muted shrink-0">
+                            <Package className="w-3 h-3" /> มีอยู่แล้ว:
+                          </span>
+                          <input
+                            type="number"
+                            min={0}
+                            value={owned || ''}
+                            onChange={(e) => setOwned(m.name, Number(e.target.value) || 0)}
+                            placeholder="0"
+                            className="w-16 px-1.5 py-0.5 bg-bg-surface-3 border border-border-subtle rounded text-center text-text-primary"
+                          />
+                          {shortage > 0 ? (
+                            <span className="text-red-400 font-bold">ขาดอีก {shortage}</span>
+                          ) : (
+                            <span className="text-emerald-400 font-bold">ครบแล้ว</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
