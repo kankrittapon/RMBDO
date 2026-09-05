@@ -1,12 +1,15 @@
 // Daily incremental ingredient-tree backfill. Scrapes a small batch of
-// recipes that don't have a crafting_recipe_details row yet (never all
-// 487+ at once - that's exactly the bulk-scrape pattern this project
-// avoids to stay clear of Cloudflare blocks), prioritized by profit/hour
-// so the recipes a player is actually likely to open first get cached
-// first. Run daily via scripts/collect-and-sync-daily.sh; after a few
-// weeks every profitable recipe accumulates a cached ingredient tree with
-// zero manual clicking, and the deployed app (Vercel, no Playwright) can
-// serve all of it straight from Postgres.
+// recipes that don't have a crafting_recipe_details row yet - starting
+// from the known profitable recipes (crafting_recipes), then following
+// any sub-recipe it discovers (an ingredient that's itself craftable)
+// recursively, breadth-first, until either the batch cap is hit or the
+// queue runs dry (i.e. it bottoms out at raw market materials with no
+// sub-recipe of their own). Never bulk-scrapes everything in one run -
+// bounded by CRAFTING_DETAIL_BATCH_SIZE regardless of how deep the tree
+// goes, same Cloudflare-exposure reasoning as every other collector here.
+// Run daily via scripts/collect-and-sync-daily.sh; over repeated runs this
+// converges on every reachable recipe/sub-recipe/sub-sub-recipe... having
+// a real cached ingredient tree, with zero manual clicking.
 import { readFileSync } from "node:fs"
 import pg from "pg"
 import { scrapeCraftingDetail, saveCraftingDetail } from "./craftingDetail.js"
@@ -26,6 +29,11 @@ if (!process.env.DATABASE_URL) {
 
 const BATCH_SIZE = Number(process.env.CRAFTING_DETAIL_BATCH_SIZE ?? 25)
 
+interface QueueItem {
+  slug: string
+  category: string | null
+}
+
 async function main() {
   if (!process.env.DATABASE_URL) {
     console.error("DATABASE_URL is not set - cannot pick recipes to backfill.")
@@ -35,32 +43,63 @@ async function main() {
   const client = new pg.Client({ connectionString: process.env.DATABASE_URL })
   await client.connect()
 
-  const { rows } = await client.query(
-    `SELECT cr.recipe_slug, cr.recipe_name, cr.category
+  // Seed the queue from known profitable recipes, most-profitable-first -
+  // these are the ones a player is actually likely to open the drawer for.
+  const { rows: seedRows } = await client.query(
+    `SELECT cr.recipe_slug, cr.category
      FROM crafting_recipes cr
      LEFT JOIN crafting_recipe_details d ON d.recipe_slug = cr.recipe_slug
      WHERE cr.recipe_slug IS NOT NULL AND d.recipe_slug IS NULL
-     ORDER BY cr.profit_per_hour DESC NULLS LAST
-     LIMIT $1`,
-    [BATCH_SIZE],
+     ORDER BY cr.profit_per_hour DESC NULLS LAST`,
   )
+  // Everything already cached, so newly-discovered sub-recipes that
+  // happen to already have a details row don't get re-queued.
+  const { rows: cachedRows } = await client.query(`SELECT recipe_slug FROM crafting_recipe_details`)
   await client.end()
 
-  if (rows.length === 0) {
-    console.log("No uncached recipes left to backfill - every recipe with a slug already has an ingredient-tree cache entry.")
+  const cached = new Set<string>(cachedRows.map((r) => r.recipe_slug))
+  const queued = new Set<string>() // slugs already added to the queue this run, to avoid duplicates
+  const queue: QueueItem[] = []
+  for (const r of seedRows) {
+    if (!cached.has(r.recipe_slug) && !queued.has(r.recipe_slug)) {
+      queue.push({ slug: r.recipe_slug, category: r.category })
+      queued.add(r.recipe_slug)
+    }
+  }
+
+  if (queue.length === 0) {
+    console.log("No uncached recipes left to backfill - every known recipe already has an ingredient-tree cache entry.")
     return
   }
 
-  console.log(`Backfilling ingredient trees for ${rows.length} recipe(s) (batch size ${BATCH_SIZE}):`)
+  console.log(`Backfilling up to ${BATCH_SIZE} recipe(s), starting from ${queue.length} known uncached recipe(s), following sub-recipes as they're discovered.`)
   let ok = 0
   let failed = 0
-  for (const row of rows) {
+  let processed = 0
+
+  while (queue.length > 0 && processed < BATCH_SIZE) {
+    const item = queue.shift()!
+    if (cached.has(item.slug)) continue // could have been discovered twice via different parents
+    processed++
     try {
-      const detail = await scrapeCraftingDetail(row.recipe_slug)
-      await saveCraftingDetail(detail, row.category)
+      const detail = await scrapeCraftingDetail(item.slug)
+      await saveCraftingDetail(detail, item.category)
+      cached.add(item.slug)
       ok++
+
+      // Queue any newly-discovered sub-recipes (ingredients that are
+      // themselves craftable) that aren't already cached or queued - this
+      // is what makes the batch follow recipe -> sub-recipe -> sub-sub-
+      // recipe... down to raw materials, which have no sub-recipe at all
+      // and simply stop the chain there.
+      for (const ing of detail.ingredients) {
+        if (ing.isSubRecipe && ing.subRecipeSlug && !cached.has(ing.subRecipeSlug) && !queued.has(ing.subRecipeSlug)) {
+          queue.push({ slug: ing.subRecipeSlug, category: null }) // category unknown for a slug we only found as an ingredient - scrapeCraftingDetail fills in the real name from the page itself
+          queued.add(ing.subRecipeSlug)
+        }
+      }
     } catch (err) {
-      console.error(`Failed to backfill ${row.recipe_slug} (${row.recipe_name}):`, (err as Error).message)
+      console.error(`Failed to backfill ${item.slug}:`, (err as Error).message)
       failed++
       // A Cloudflare block or similar aborts the whole run rather than
       // continuing to hammer the site - same posture as the other
@@ -72,7 +111,7 @@ async function main() {
     }
     await politeDelay()
   }
-  console.log(`Backfill done: ${ok} saved, ${failed} failed.`)
+  console.log(`Backfill done: ${ok} saved, ${failed} failed, ${queue.length} still queued for next run.`)
 }
 
 main().catch((err) => {

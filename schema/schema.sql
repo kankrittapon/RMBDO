@@ -306,7 +306,7 @@ CREATE TABLE crafting_recipe_ingredients (
 CREATE TABLE crafting_recipe_details (
     recipe_slug       TEXT PRIMARY KEY,
     recipe_name       TEXT NOT NULL,
-    category          TEXT NOT NULL,
+    category          TEXT, -- NULL when this recipe was only discovered as a sub-recipe of another (not in the top-level profitable-recipes list), so its category was never known
     total_cost        BIGINT,                        -- bdolytics "Crafting Cost"
     profit            BIGINT,                        -- bdolytics "Profit" (price - cost)
     profit_per_hour   BIGINT,                        -- bdolytics "Silver/Hour" (profit * crafts/hour)
