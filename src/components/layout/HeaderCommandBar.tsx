@@ -72,6 +72,7 @@ export const HeaderCommandBar: React.FC<HeaderCommandBarProps> = ({
     : 'ยังไม่ระบุ';
 
   return (
+    <>
     <header className="sticky top-0 z-40 w-full bg-bg-surface-1/95 backdrop-blur border-b border-border-subtle px-3 md:px-5 py-2.5 shadow-sm">
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 max-w-7xl mx-auto">
         
@@ -186,8 +187,6 @@ export const HeaderCommandBar: React.FC<HeaderCommandBarProps> = ({
 
       </div>
 
-      {isLoginOpen && <LoginModal onClose={() => setIsLoginOpen(false)} />}
-
       {/* Inline Quick Stat Editor Modal/Dropdown */}
       {isEditingStats && (
         <div className="mt-2.5 pt-2.5 border-t border-border-subtle flex flex-wrap items-center justify-between gap-2 max-w-7xl mx-auto animate-in fade-in">
@@ -249,5 +248,7 @@ export const HeaderCommandBar: React.FC<HeaderCommandBarProps> = ({
         </div>
       )}
     </header>
+    {isLoginOpen && <LoginModal onClose={() => setIsLoginOpen(false)} />}
+    </>
   );
 };
