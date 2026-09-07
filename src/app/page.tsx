@@ -27,6 +27,7 @@ import { MigrationModal } from '@/components/modals/MigrationModal';
 import { CheckpointDetailDrawer } from '@/components/modals/CheckpointDetailDrawer';
 import { ImportExportModal } from '@/components/modals/ImportExportModal';
 import { ResetConfirmModal } from '@/components/modals/ResetConfirmModal';
+import { RequireAuthGate } from '@/components/auth/RequireAuthGate';
 
 export default function Home() {
   const store = useRoadmapStore();
@@ -70,9 +71,17 @@ export default function Home() {
       case 'roadmap':
         return <RoadmapView store={store} />;
       case 'olvia_combat':
-        return <OlviaCombatView store={store} />;
+        return (
+          <RequireAuthGate session={store.auth.session} authConfigured={store.auth.authConfigured} featureName="Olvia Academy สายต่อสู้">
+            <OlviaCombatView store={store} />
+          </RequireAuthGate>
+        );
       case 'olvia_life':
-        return <OlviaLifeView store={store} />;
+        return (
+          <RequireAuthGate session={store.auth.session} authConfigured={store.auth.authConfigured} featureName="Olvia Academy สาย Life">
+            <OlviaLifeView store={store} />
+          </RequireAuthGate>
+        );
       case 'slumbering_origin':
         return <SlumberingOriginView store={store} />;
       case 'kharazad':
@@ -82,7 +91,11 @@ export default function Home() {
       case 'sovereign':
         return <SovereignTrackerView store={store as any} />;
       case 'goals':
-        return <EndgameGoalView store={store} onNavigate={(tab) => setActiveTab(tab)} />;
+        return (
+          <RequireAuthGate session={store.auth.session} authConfigured={store.auth.authConfigured} featureName="เป้าหมาย Hyperboost">
+            <EndgameGoalView store={store} onNavigate={(tab) => setActiveTab(tab)} />
+          </RequireAuthGate>
+        );
       case 'safety':
         return <SafetyView />;
       case 'treasures':
