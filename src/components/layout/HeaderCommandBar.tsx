@@ -97,64 +97,76 @@ export const HeaderCommandBar: React.FC<HeaderCommandBarProps> = ({
             </div>
           </div>
 
-          {/* Current Phase Badge */}
-          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-bg-surface-2 border border-border-subtle text-xs">
-            <Zap className="w-3.5 h-3.5 text-brand-gold animate-pulse" />
-            <span className="text-text-muted font-mono text-[11px]">ขั้นปัจจุบัน:</span>
-            <span className="font-heading font-bold text-text-primary text-[11px] truncate max-w-[200px]">
-              {currentPhase.name.split(' ')[1] || currentPhase.name}
-            </span>
-          </div>
+          {/* Current Phase Badge - personal progression, hidden until login
+              so a shared/guest view never shows stale localStorage data
+              from whoever last used this browser. */}
+          {auth.session && (
+            <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-bg-surface-2 border border-border-subtle text-xs">
+              <Zap className="w-3.5 h-3.5 text-brand-gold animate-pulse" />
+              <span className="text-text-muted font-mono text-[11px]">ขั้นปัจจุบัน:</span>
+              <span className="font-heading font-bold text-text-primary text-[11px] truncate max-w-[200px]">
+                {currentPhase.name.split(' ')[1] || currentPhase.name}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Right Stats & Command Actions */}
         <div className="flex items-center justify-between md:justify-end gap-2 text-xs font-mono">
-          
-          {/* Quick Stats Pill (Click to edit) */}
-          <div
-            onClick={() => setIsEditingStats(!isEditingStats)}
-            className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-bg-surface-2 hover:bg-bg-surface-3 border border-border-subtle cursor-pointer transition-colors"
-            title="คลิกเพื่อแก้ไขค่าสเตตัส AP / DP"
-          >
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-text-muted">สเตตัส:</span>
-              <span className="font-bold text-brand-gold">{formattedGS}</span>
-            </div>
-            {!profile.stats.isUnknownStats && profile.stats.ap && (
-              <div className="hidden sm:flex items-center gap-1 text-[11px] text-text-secondary border-l border-border-subtle pl-1.5">
-                <span className="text-amber-400 font-bold">{profile.stats.ap}</span> /
-                <span className="text-purple-400 font-bold">{profile.stats.aap || profile.stats.ap}</span> /
-                <span className="text-emerald-400 font-bold">{profile.stats.dp}</span>
+
+          {/* Quick Stats Pill (Click to edit) - same reasoning: personal
+              stat data, only shown once signed in. */}
+          {auth.session && (
+            <div
+              onClick={() => setIsEditingStats(!isEditingStats)}
+              className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-bg-surface-2 hover:bg-bg-surface-3 border border-border-subtle cursor-pointer transition-colors"
+              title="คลิกเพื่อแก้ไขค่าสเตตัส AP / DP"
+            >
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-text-muted">สเตตัส:</span>
+                <span className="font-bold text-brand-gold">{formattedGS}</span>
               </div>
-            )}
-            <Pencil className="w-3 h-3 text-text-muted" />
-          </div>
+              {!profile.stats.isUnknownStats && profile.stats.ap && (
+                <div className="hidden sm:flex items-center gap-1 text-[11px] text-text-secondary border-l border-border-subtle pl-1.5">
+                  <span className="text-amber-400 font-bold">{profile.stats.ap}</span> /
+                  <span className="text-purple-400 font-bold">{profile.stats.aap || profile.stats.ap}</span> /
+                  <span className="text-emerald-400 font-bold">{profile.stats.dp}</span>
+                </div>
+              )}
+              <Pencil className="w-3 h-3 text-text-muted" />
+            </div>
+          )}
 
-          {/* Action Buttons */}
+          {/* Action Buttons - setup/import-export/reset all operate on the
+              personal profile, so only shown once signed in. */}
           <div className="flex items-center gap-1.5">
-            <button
-              onClick={onOpenSetup}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-brand-primary/15 hover:bg-brand-primary/25 border border-brand-primary/30 text-brand-primary text-xs font-bold transition-colors"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">ตั้งค่าเริ่มต้น</span>
-            </button>
+            {auth.session && (
+              <>
+                <button
+                  onClick={onOpenSetup}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-brand-primary/15 hover:bg-brand-primary/25 border border-brand-primary/30 text-brand-primary text-xs font-bold transition-colors"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">ตั้งค่าเริ่มต้น</span>
+                </button>
 
-            <button
-              onClick={onOpenImportExport}
-              className="p-1.5 rounded-lg bg-bg-surface-2 hover:bg-bg-surface-3 border border-border-subtle text-text-muted hover:text-text-primary transition-colors"
-              title="สำรอง / กู้คืนข้อมูล (JSON)"
-            >
-              <FileCode className="w-3.5 h-3.5" />
-            </button>
+                <button
+                  onClick={onOpenImportExport}
+                  className="p-1.5 rounded-lg bg-bg-surface-2 hover:bg-bg-surface-3 border border-border-subtle text-text-muted hover:text-text-primary transition-colors"
+                  title="สำรอง / กู้คืนข้อมูล (JSON)"
+                >
+                  <FileCode className="w-3.5 h-3.5" />
+                </button>
 
-            <button
-              onClick={onOpenReset}
-              className="p-1.5 rounded-lg bg-bg-surface-2 hover:bg-bg-surface-3 border border-border-subtle text-text-muted hover:text-red-400 transition-colors"
-              title="รีเซ็ตความคืบหน้า"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-            </button>
+                <button
+                  onClick={onOpenReset}
+                  className="p-1.5 rounded-lg bg-bg-surface-2 hover:bg-bg-surface-3 border border-border-subtle text-text-muted hover:text-red-400 transition-colors"
+                  title="รีเซ็ตความคืบหน้า"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+              </>
+            )}
 
             {auth.session ? (
               <button

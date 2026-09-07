@@ -43,11 +43,16 @@ export default function Home() {
     dismissV1Migration,
     selectedDrawerNodeId,
     setSelectedDrawerNodeId,
-    profile
+    profile,
+    auth
   } = store;
 
-  // Show setup wizard if user explicitly opened it or if they are a first-time user who hasn't completed setup
-  const showWizard = isSetupOpen || (!profile.hasCompletedSetup && isHydrated);
+  // Show setup wizard if the user explicitly opened it, or if they're a
+  // logged-in first-time user who hasn't completed setup. Gated on
+  // auth.session too - a guest just browsing public pages (Market, recipe
+  // lookup, Worker Empire) should never get forced into a personal setup
+  // flow before ever signing in.
+  const showWizard = isSetupOpen || (Boolean(auth.session) && !profile.hasCompletedSetup && isHydrated);
 
   const renderActiveView = () => {
     if (showWizard) {
@@ -59,43 +64,43 @@ export default function Home() {
       );
     }
 
+    // Personal progression tracking (this player's own gear/checkpoints/
+    // goals) requires login; shared reference data (Market, recipes,
+    // Worker Empire, Class Guides, etc.) stays open to everyone - per
+    // explicit direction, since this app is shared among a small group
+    // rather than being single-user only.
+    const gate = (featureName: string, node: React.ReactNode) => (
+      <RequireAuthGate session={store.auth.session} authConfigured={store.auth.authConfigured} featureName={featureName}>
+        {node}
+      </RequireAuthGate>
+    );
+
     switch (activeTab) {
       case 'dashboard':
-        return (
+        return gate(
+          'ภาพรวมบัญชี',
           <DashboardView
             onNavigate={(tab) => setActiveTab(tab)}
             store={store}
             onOpenSetup={() => setIsSetupOpen(true)}
-          />
+          />,
         );
       case 'roadmap':
-        return <RoadmapView store={store} />;
+        return gate('เส้นทางพัฒนา', <RoadmapView store={store} />);
       case 'olvia_combat':
-        return (
-          <RequireAuthGate session={store.auth.session} authConfigured={store.auth.authConfigured} featureName="Olvia Academy สายต่อสู้">
-            <OlviaCombatView store={store} />
-          </RequireAuthGate>
-        );
+        return gate('Olvia Academy สายต่อสู้', <OlviaCombatView store={store} />);
       case 'olvia_life':
-        return (
-          <RequireAuthGate session={store.auth.session} authConfigured={store.auth.authConfigured} featureName="Olvia Academy สาย Life">
-            <OlviaLifeView store={store} />
-          </RequireAuthGate>
-        );
+        return gate('Olvia Academy สาย Life', <OlviaLifeView store={store} />);
       case 'slumbering_origin':
-        return <SlumberingOriginView store={store} />;
+        return gate('เกราะเทพผู้ล่วงลับ', <SlumberingOriginView store={store} />);
       case 'kharazad':
-        return <KharazadAccessoriesView store={store} />;
+        return gate('เครื่องประดับคาราชัด', <KharazadAccessoriesView store={store} />);
       case 'gear':
-        return <GearPlannerView store={store as any} />;
+        return gate('อุปกรณ์ (Gear Planner)', <GearPlannerView store={store as any} />);
       case 'sovereign':
-        return <SovereignTrackerView store={store as any} />;
+        return gate('ตีนวกราชัน (Sovereign Forge)', <SovereignTrackerView store={store as any} />);
       case 'goals':
-        return (
-          <RequireAuthGate session={store.auth.session} authConfigured={store.auth.authConfigured} featureName="เป้าหมาย Hyperboost">
-            <EndgameGoalView store={store} onNavigate={(tab) => setActiveTab(tab)} />
-          </RequireAuthGate>
-        );
+        return gate('เป้าหมาย Hyperboost', <EndgameGoalView store={store} onNavigate={(tab) => setActiveTab(tab)} />);
       case 'safety':
         return <SafetyView />;
       case 'treasures':
@@ -117,7 +122,7 @@ export default function Home() {
       case 'market':
         return <MarketPriceView />;
       case 'crafting':
-        return <LifeSkillHubView />;
+        return <LifeSkillHubView session={store.auth.session} />;
       case 'classes':
         return <ClassGuidesView store={store as any} />;
       case 'lifeskills':

@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { ChefHat, Search, TrendingUp, Info, Sparkles, Settings2, Save, CheckCircle2, X, Loader2, AlertCircle, CloudDownload, RefreshCw } from 'lucide-react';
+import { ChefHat, Search, TrendingUp, Info, Sparkles, Settings2, Save, CheckCircle2, X, Loader2, AlertCircle, CloudDownload, RefreshCw, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IngredientTreeNode } from './IngredientTreeNode';
+import type { Session } from '@supabase/supabase-js';
 
 const INVENTORY_KEY = "rmbdo_inventory_v1";
 const LEDGER_KEY = "rmbdo_ledger_v1";
@@ -109,7 +110,16 @@ const MASTERY_FIELDS: Array<{ key: keyof PlayerSettings; label: string; category
 // actual numbers instead of bdolytics' generic default - check each row's
 // "personalized" tag rather than assuming, since a settings change only
 // takes effect on the next collector run (cron), not immediately.
-export const LifeSkillHubView: React.FC = () => {
+interface LifeSkillHubViewProps {
+  // Recipe browsing/pricing is shared reference data, open to everyone.
+  // Mastery settings, owned-inventory, and the shortage calculator are
+  // personal, so they're gated on having a session - null/undefined means
+  // "not logged in" and shows a compact locked notice in their place.
+  session?: Session | null;
+}
+
+export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = null }) => {
+  const isPersonalUnlocked = Boolean(session);
   const [recipes, setRecipes] = useState<CraftingRecipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -281,7 +291,17 @@ export const LifeSkillHubView: React.FC = () => {
         </p>
       </div>
 
-      {/* Mastery settings */}
+      {/* Mastery settings - personal, gated on login. Recipe browsing above
+          this card stays visible to everyone regardless. */}
+      {!isPersonalUnlocked ? (
+        <div className="bg-bg-surface-1 border border-border-subtle rounded-xl p-4 md:p-5 flex items-center gap-3">
+          <Lock className="w-4 h-4 text-text-muted shrink-0" />
+          <p className="text-xs text-text-secondary">
+            เข้าสู่ระบบเพื่อตั้งค่า Mastery ส่วนตัว, sync คลังของคุณจาก Google Sheet, และใช้ตัวคำนวณของขาดต่อสูตร
+            (การดูราคา/สูตร/Silver-Hour ด้านบนไม่ต้อง login)
+          </p>
+        </div>
+      ) : (
       <div className="bg-bg-surface-1 border border-border-subtle rounded-xl p-4 md:p-5 space-y-3">
         <div className="flex items-center gap-2 text-brand-primary font-mono text-xs uppercase tracking-wider">
           <Settings2 className="w-4 h-4" />
@@ -349,6 +369,7 @@ export const LifeSkillHubView: React.FC = () => {
           )}
         </div>
       </div>
+      )}
 
       {/* Today's recommendation */}
       <div className="bg-bg-surface-1 border border-border-subtle rounded-xl p-4 md:p-5 space-y-3">
@@ -615,15 +636,17 @@ export const LifeSkillHubView: React.FC = () => {
                           >
                             1000
                           </button>
-                          <button
-                            onClick={handleSync}
-                            disabled={syncing}
-                            className="ml-auto flex items-center gap-1 px-2 py-1 rounded bg-blue-500/15 border border-blue-500/30 text-blue-300 text-[11px] font-mono hover:bg-blue-500/25 disabled:opacity-50"
-                            title="Sync inventory from Google Sheet (overwrite)"
-                          >
-                            {syncing ? <RefreshCw className="w-3 h-3 animate-spin" /> : <CloudDownload className="w-3 h-3" />}
-                            Sync
-                          </button>
+                          {isPersonalUnlocked && (
+                            <button
+                              onClick={handleSync}
+                              disabled={syncing}
+                              className="ml-auto flex items-center gap-1 px-2 py-1 rounded bg-blue-500/15 border border-blue-500/30 text-blue-300 text-[11px] font-mono hover:bg-blue-500/25 disabled:opacity-50"
+                              title="Sync inventory from Google Sheet (overwrite)"
+                            >
+                              {syncing ? <RefreshCw className="w-3 h-3 animate-spin" /> : <CloudDownload className="w-3 h-3" />}
+                              Sync
+                            </button>
+                          )}
                         </div>
                         {syncMsg && (
                           <div className={`text-[11px] font-mono ${syncMsg.tone === "ok" ? "text-emerald-400" : "text-rose-400"}`}>
