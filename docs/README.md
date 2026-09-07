@@ -14,9 +14,9 @@
 | `05-auth-profiles.md` | Supabase Auth + `user_profiles` + `RequireAuthGate` + อะไรยังไม่มี RLS | ยังไม่เขียน |
 | `06-api-reference.md` | 7 routes + ตัวอย่าง | ยังไม่เขียน |
 | `07-collector.md` | 4 scrapers + stealth + Cloudflare policy | ยังไม่เขียน |
-| `08-crafting-personalization.md` | Mastery 2-step + `personalized` flag + detail-batch | **รอ backfill 90 สูตร + commit ก่อน** |
+| `08-crafting-personalization.md` | Mastery 2-step + `personalized` flag + detail-batch | ยังไม่เขียน (backfill 90 สูตรเสร็จแล้ว - commit `8740e46` - พร้อมเขียนได้) |
 | `09-sheets-sync.md` | `Code.gs` + proxy route + localStorage keys | ยังไม่เขียน |
-| `10-worker-empire.md` | Worker audit + node-yields gap + แผน Phase 0–4 | **เขียนแล้ว (audit เท่าที่ได้, ยังไม่รวมผล backfill)** |
+| `10-worker-empire.md` | Worker Empire: node yields data/API/UI/craft-loop, Phase 0-4 | **เขียนใหม่แล้ว - ครอบคลุม Phase 1-4 + bdocodex เสร็จจริง, verify กับ live DB/API ทุกจุด** |
 | `11-frontend-views.md` | 18 views: live DB / static / gated login | ยังไม่เขียน |
 | `12-data-trust.md` | อันไหนเชื่อได้/ไม่ได้ (รวมจาก audit-2026-09-02) | ยังไม่เขียน |
 | `13-operations.md` | cron local vs Vercel Cron, normalize, backfill-icons, runbook | ยังไม่เขียน |
@@ -33,7 +33,14 @@
 | `handoff-worker-empire-optimizer-2026-09-05.md` | archive บางส่วน + ต่อยอดใน `10-worker-empire.md` |
 | `sync/Code.gs` | คงที่ ไม่ย้าย — เนื้อหาเข้า `09-sheets-sync.md` |
 
-## สิ่งที่รออยู่ตอนนี้ (2026-09-08)
+## สิ่งที่รออยู่ตอนนี้ (2026-09-08, อัปเดตล่าสุด)
 
-1. backfill 90 สูตร (รันเบื้องหลังอยู่) → commit + push อัตโนมัติ (`craftingDetail.ts` rewrite + `_backfillZeroIngredientRecipes.ts`)
-2. หลัง push: re-check diff → `build`/`typecheck` → เขียน `07/08` + ย้ายไฟล์เก่าเข้า `archive/`
+เสร็จแล้ว (verify ทุกจุดกับ live DB/API/DOM แล้ว, push ขึ้น `origin/main` ครบ):
+- backfill 90 สูตรที่เคย 0 ingredient (`8740e46`) — 90/90 fixed
+- Worker Empire node yields Phase 1-4 (`b610893`..`bf8b0c6`) — data layer, API, drawer, craft↔node reverse lookup
+- bdocodex supplemental recipe source (`d91e21a`) — gap-fill สูตรที่ bdolytics ไม่มี
+
+ยังค้าง:
+1. เขียน docs `01-09`, `11-15` (ยังไม่เขียนสักไฟล์) + ย้ายไฟล์เก่าเข้า `archive/`
+2. ผู้ใช้ (kan) ต้องเปิด issue ขออนุญาตใช้ข้อมูลจาก `shrddr/workermanjs` เอง (ดู `10-worker-empire.md`) — ยังไม่ยืนยันว่าเปิดแล้ว
+3. bdocodex ingredient pricing — join ชื่อกับ `market_items` แทนการเดา (ยังไม่ทำ, ดู `10-worker-empire.md` ข้อ 4)
