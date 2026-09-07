@@ -190,3 +190,214 @@ export async function upsertPlayerSettings(settings: {
     [settings.cookingMastery, settings.alchemyMastery, settings.processingMastery],
   )
 }
+
+// ---------------------------------------------------------------------------
+// Worker node yields (Phase 2). Design rule, per explicit direction:
+// normal (unlucky) and giant (unlucky_gi) are NEVER averaged together -
+// they are separate worker-kind variants of the same node (a Giant gets
+// ~1.6x base qty, e.g. Wheat 18 normal vs ~29.75 giant). Every response
+// carries both variants side by side; the caller picks which to sort by.
+// Lucky procs are shared by both variants (matches workerman's own math).
+// Items with no live market price get price: null and are EXCLUDED from
+// cycle-value sums - shown, never guessed (anti-fabrication rule).
+// ---------------------------------------------------------------------------
+
+export type DropKind = "unlucky" | "lucky" | "unlucky_gi"
+
+export interface NodeYieldItem {
+  itemId: number | null
+  name: string
+  quantity: number
+  price: number | null // null = no live market price; excluded from cycle value
+  value: number | null // quantity * price, null when price is null
+}
+
+export interface NodeYieldVariant {
+  workerKind: "normal" | "giant"
+  items: NodeYieldItem[] // base (unlucky / unlucky_gi) + shared lucky procs
+  cycleValue: number // Σ value over PRICED items only
+  unpricedCount: number // items shown with price: null
+}
+
+export interface NodeDetail {
+  waypointKey: number
+  name: string | null
+  parentKey: number | null
+  kind: number | null
+  cpCost: number
+  workload: number | null
+  regionGroup: number | null
+  normal: NodeYieldVariant
+  giant: NodeYieldVariant
+}
+
+export interface NodeSearchHit {
+  waypointKey: number
+  name: string | null
+  cpCost: number
+  // Quantities per worker-kind variant for the matched resource only.
+  normalQty: number | null
+  giantQty: number | null
+  luckyQty: number | null
+  price: number | null
+  // Per-cycle values (qty * price) per variant, null when unpriced.
+  normalValue: number | null
+  giantValue: number | null
+  // Ranking keys. null when cpCost is 0 (free node - value shown, not ranked)
+  // or when the price is missing.
+  normalValuePerCp: number | null
+  giantValuePerCp: number | null
+}
+
+/** Latest live price per item name (Central Market, whatever region the
+ * collector last wrote - currently Southeast Asia only). */
+async function getLatestPrices(names: string[]): Promise<Map<string, number>> {
+  const pool = getPool()
+  const map = new Map<string, number>()
+  if (names.length === 0) return map
+  const { rows } = await pool.query(
+    `SELECT DISTINCT ON (item_name) item_name, price FROM market_items
+     WHERE item_name = ANY($1) ORDER BY item_name, collected_at DESC`,
+    [names],
+  )
+  for (const r of rows) {
+    if (r.price !== null) map.set(r.item_name, Number(r.price))
+  }
+  return map
+}
+
+function buildVariant(
+  workerKind: "normal" | "giant",
+  base: { itemId: number | null; name: string; quantity: number }[],
+  lucky: { itemId: number | null; name: string; quantity: number }[],
+  prices: Map<string, number>,
+): NodeYieldVariant {
+  const items: NodeYieldItem[] = [...base, ...lucky].map((it) => {
+    const price = prices.get(it.name) ?? null
+    return { ...it, price, value: price !== null ? it.quantity * price : null }
+  })
+  return {
+    workerKind,
+    items,
+    cycleValue: items.reduce((sum, it) => sum + (it.value ?? 0), 0),
+    unpricedCount: items.filter((it) => it.price === null).length,
+  }
+}
+
+export async function getNodeDetail(waypointKey: number): Promise<NodeDetail | null> {
+  const pool = getPool()
+  const meta = await pool.query(
+    `SELECT waypoint_key, name, parent_key, kind, cp_cost FROM node_meta WHERE waypoint_key = $1`,
+    [waypointKey],
+  )
+  if (meta.rows.length === 0) return null
+  const m = meta.rows[0]
+  const res = await pool.query(
+    `SELECT resource_item_id, resource_name, quantity, drop_kind, workload, region_group
+     FROM node_resources WHERE waypoint_key = $1`,
+    [waypointKey],
+  )
+  const row = (kind: DropKind) =>
+    res.rows
+      .filter((r) => r.drop_kind === kind)
+      .map((r) => ({ itemId: r.resource_item_id, name: r.resource_name, quantity: Number(r.quantity) }))
+  const prices = await getLatestPrices(res.rows.map((r) => r.resource_name))
+  const lucky = row("lucky")
+  return {
+    waypointKey: m.waypoint_key,
+    name: m.name,
+    parentKey: m.parent_key,
+    kind: m.kind,
+    cpCost: Number(m.cp_cost),
+    workload: res.rows[0]?.workload ?? null,
+    regionGroup: res.rows[0]?.region_group ?? null,
+    normal: buildVariant("normal", row("unlucky"), lucky, prices),
+    giant: buildVariant("giant", row("unlucky_gi"), lucky, prices),
+  }
+}
+
+/** Reverse lookup: which nodes yield this resource. One row per node, both
+ * worker-kind variants kept separate; `kind` param only picks the sort key. */
+export async function searchNodesByResource(
+  search: string,
+  kind: "normal" | "giant" = "normal",
+): Promise<NodeSearchHit[]> {
+  const pool = getPool()
+  const { rows } = await pool.query(
+    `SELECT m.waypoint_key, m.name, m.cp_cost,
+            r.resource_name, r.quantity, r.drop_kind
+     FROM node_resources r JOIN node_meta m ON m.waypoint_key = r.waypoint_key
+     WHERE r.resource_name ILIKE $1`,
+    [`%${search}%`],
+  )
+  const byNode = new Map<number, NodeSearchHit & { _q: Record<string, number> }>()
+  for (const r of rows) {
+    let hit = byNode.get(r.waypoint_key)
+    if (!hit) {
+      hit = {
+        waypointKey: r.waypoint_key,
+        name: r.name,
+        cpCost: Number(r.cp_cost),
+        normalQty: null,
+        giantQty: null,
+        luckyQty: null,
+        price: null,
+        normalValue: null,
+        giantValue: null,
+        normalValuePerCp: null,
+        giantValuePerCp: null,
+        _q: {},
+      }
+      byNode.set(r.waypoint_key, hit)
+    }
+    // Same resource name matched twice (e.g. exact + ILIKE dupes can't
+    // happen per UNIQUE key, but keep the merge total-free: one qty per kind)
+    hit._q[r.drop_kind] = Number(r.quantity)
+  }
+  const names = Array.from(byNode.values()).map((h) => {
+    const first = rows.find((r) => r.waypoint_key === h.waypointKey)
+    return first.resource_name as string
+  })
+  const prices = await getLatestPrices(names)
+  const hits: NodeSearchHit[] = []
+  byNode.forEach((hit) => {
+    const first = rows.find((r) => r.waypoint_key === hit.waypointKey)
+    const price = prices.get(first.resource_name) ?? null
+    const q = hit._q
+    // Lucky procs count toward BOTH variants (shared table, see above)
+    const lucky = q["lucky"] ?? null
+    const mk = (qty: number | null) => (qty !== null && price !== null ? qty * price : null)
+    const perCp = (v: number | null) => (v !== null && hit.cpCost > 0 ? v / hit.cpCost : null)
+    const normalValue = mk(q["unlucky"] ?? null)
+    const giantValue = mk(q["unlucky_gi"] ?? null)
+    const { _q, ...rest } = hit
+    void _q
+    hits.push({
+      ...rest,
+      normalQty: q["unlucky"] ?? null,
+      giantQty: q["unlucky_gi"] ?? null,
+      luckyQty: lucky,
+      price,
+      // NOTE: lucky-proc value intentionally NOT folded into these
+      // per-resource sort values - this endpoint ranks nodes for ONE
+      // resource, and the lucky table usually pays a different item.
+      // Full cycle value (base + lucky) lives on getNodeDetail instead.
+      normalValue,
+      giantValue,
+      normalValuePerCp: perCp(normalValue),
+      giantValuePerCp: perCp(giantValue),
+    })
+  })
+  const key = kind === "giant" ? "giantValuePerCp" : "normalValuePerCp"
+  // Ranked rows first (priced + CP > 0), then unrankable rows (free nodes
+  // and unpriced resources) in name order - never hidden, never guessed.
+  hits.sort((a, b) => {
+    const av = a[key]
+    const bv = b[key]
+    if (av !== null && bv !== null) return bv - av
+    if (av !== null) return -1
+    if (bv !== null) return 1
+    return (a.name ?? "").localeCompare(b.name ?? "")
+  })
+  return hits.slice(0, 100)
+}
