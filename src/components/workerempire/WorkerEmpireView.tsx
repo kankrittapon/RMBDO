@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { Network, Plus, Trash2, Loader2, Info, MapPin } from 'lucide-react';
+import { Network, Plus, Trash2, Loader2, Info, MapPin, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WorkerMapCanvas } from './WorkerMapCanvas';
+import { suggestNearestPlantzones, type NodeSuggestion } from '@/lib/workerEmpire/suggestNodes';
 
 // This view solves BDO's real worker-empire node-connection problem: given
 // a set of (terminal, root) waypoint pairs, which nodes to activate to
@@ -188,6 +189,42 @@ export const WorkerEmpireView: React.FC = () => {
 
   const activePair = pairs.find((p) => p.id === activePairId) ?? null;
 
+  // "โหมดแนะนำ" - rank the cheapest plantzones reachable from a base town
+  // the user already picked, so they don't have to eyeball the map guessing
+  // what's worth connecting. Recomputed on demand (button click), not on
+  // every keystroke, since Dijkstra over ~1000 nodes is cheap but there's
+  // no reason to re-run it before the user has settled on a base town.
+  const [suggestFromText, setSuggestFromText] = useState('');
+  const [suggestions, setSuggestions] = useState<NodeSuggestion[] | null>(null);
+  const [suggestError, setSuggestError] = useState<string | null>(null);
+
+  const runSuggest = () => {
+    if (!graph) return;
+    setSuggestError(null);
+    const fromId = parseNodeInput(suggestFromText, graph);
+    if (fromId === null) {
+      setSuggestError('หา Base Town ไม่เจอ - เลือกจากรายการ autocomplete');
+      setSuggestions(null);
+      return;
+    }
+    if (!graph[String(fromId)].is_base_town) {
+      setSuggestError(`${graph[String(fromId)].name ?? `#${fromId}`} ไม่ใช่ Base Town - เลือก Base Town ที่คุณมีจริง`);
+      setSuggestions(null);
+      return;
+    }
+    setSuggestions(suggestNearestPlantzones(graph, fromId, 10));
+  };
+
+  const applySuggestion = (fromId: number, suggestion: NodeSuggestion) => {
+    if (!graph) return;
+    const fromNode = graph[String(fromId)];
+    const targetNode = graph[String(suggestion.waypointKey)];
+    if (!fromNode || !targetNode) return;
+    const newId = addPair();
+    updatePair(newId, 'terminalText', nodeLabel(targetNode));
+    updatePair(newId, 'rootText', nodeLabel(fromNode));
+  };
+
   const nodeOptions = useMemo(() => {
     if (!graph) return [];
     return Object.values(graph)
@@ -337,6 +374,64 @@ export const WorkerEmpireView: React.FC = () => {
               ลาก = แพน, scroll = ซูม • Node ที่ไม่ขึ้นบนแผนที่ (โซนใหม่ เช่น Land of the Morning
               Light) ยังเลือกได้จากช่องพิมพ์ชื่อด้านล่าง
             </p>
+          </div>
+
+          <div className="bg-bg-surface-1 border border-border-subtle rounded-xl p-4 space-y-3">
+            <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              โหมดแนะนำ: Node ที่คุ้มที่สุดต่อจาก Base Town
+            </h3>
+            <p className="text-[11px] text-text-secondary">
+              เลือก Base Town ที่คุณมีอยู่แล้ว ระบบจะไล่หา plantzone ที่ใช้ CP น้อยที่สุดในการต่อถึง
+              (คำนวณด้วย Dijkstra ตาม CP ต่อ node จริง ไม่ใช่ค่าคาดเดา)
+            </p>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                list="worker-empire-node-options"
+                placeholder="Base Town ของคุณ เช่น Velia"
+                value={suggestFromText}
+                onChange={(e) => setSuggestFromText(e.target.value)}
+                className="flex-1 bg-bg-surface-2 border border-border-subtle rounded-lg px-3 py-1.5 text-sm text-text-primary"
+              />
+              <button
+                onClick={runSuggest}
+                className="px-3 py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-mono font-bold hover:bg-amber-500/30 transition-colors whitespace-nowrap"
+              >
+                แนะนำให้หน่อย
+              </button>
+            </div>
+            {suggestError && <p className="text-xs text-red-400">{suggestError}</p>}
+            {suggestions && (
+              <div className="space-y-1.5">
+                {suggestions.length === 0 ? (
+                  <p className="text-xs text-text-muted">ไม่พบ plantzone ที่เชื่อมถึงได้จาก Base Town นี้</p>
+                ) : (
+                  suggestions.map((s) => {
+                    const fromId = graph ? parseNodeInput(suggestFromText, graph) : null;
+                    return (
+                      <div
+                        key={s.waypointKey}
+                        className="flex items-center justify-between p-2 rounded-lg bg-bg-surface-2 border border-border-subtle text-xs"
+                      >
+                        <div>
+                          <span className="font-bold text-text-primary">{s.name ?? `#${s.waypointKey}`}</span>
+                          <span className="ml-2 text-text-muted font-mono">
+                            {s.cpCost} CP • {s.hops} hop • {s.workerTypeCount} worker type
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => fromId !== null && applySuggestion(fromId, s)}
+                          className="px-2 py-1 rounded bg-brand-primary/20 border border-brand-primary/30 text-brand-primary font-mono hover:bg-brand-primary/30"
+                        >
+                          ใส่ในคู่
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
           </div>
 
           <div className="bg-bg-surface-1 border border-border-subtle rounded-xl p-4 space-y-3">
