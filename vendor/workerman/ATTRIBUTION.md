@@ -18,6 +18,7 @@ Data in this folder is curated by **shrddr (Workerman)** — https://shrddr.gith
 | `worker_static.json` | `data/worker_static.json` (101 workers) | base worker stats for median-lv40 yield math |
 | `skills.json` | `data/manual/skills.json` (54 skills) | worker skill bonuses (wspd/mspd/luck) |
 | `regiongroups.json` | `data/manual/regiongroups.json` | productivity per region group |
+| `plantzone.json` | `data/plantzone.json` (437 entries) | static per-node kind/CP/pos/parent — cross-check for `node_meta` |
 | `distances_tk2pzk.json` | `data/distances_tk2pzk.json` | town→node distances for cycles/day |
 
 Join key: `waypoint_key` — verified 370/370 drop entries exist in

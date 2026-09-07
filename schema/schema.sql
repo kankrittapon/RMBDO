@@ -370,6 +370,44 @@ CREATE POLICY "update own profile" ON user_profiles
     FOR UPDATE USING (auth.uid() = user_id);
 
 -- ---------------------------------------------------------
+-- Worker node yields (Phase 1, 2026-09-08). Source: vendor/workerman/
+-- (shrddr/workermanjs@c2ae3c2, see vendor/workerman/ATTRIBUTION.md).
+-- Quantities are observed expected yields per cycle, NOT guarantees.
+-- Prices are never stored here - they join market_items (live) at query
+-- time. Keep in sync with schema/migrations/001_node_resources.sql
+-- (re-runnable path for existing databases).
+-- ---------------------------------------------------------
+
+CREATE TABLE node_meta (
+    waypoint_key  INT PRIMARY KEY,
+    name          TEXT,
+    parent_key    INT,
+    kind          INT,
+    cp_cost       NUMERIC NOT NULL DEFAULT 0,
+    source        TEXT NOT NULL DEFAULT 'workerman@c2ae3c2',
+    collected_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE node_resources (
+    id              SERIAL PRIMARY KEY,
+    waypoint_key    INT NOT NULL REFERENCES node_meta(waypoint_key) ON DELETE CASCADE,
+    resource_item_id INT,
+    resource_name   TEXT NOT NULL,
+    quantity        NUMERIC NOT NULL,
+    drop_kind       TEXT NOT NULL,
+    workload        INT,
+    region_group    INT,
+    source          TEXT NOT NULL DEFAULT 'workerman@c2ae3c2',
+    collected_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (waypoint_key, resource_item_id, drop_kind),
+    CHECK (drop_kind IN ('unlucky', 'lucky', 'unlucky_gi'))
+);
+
+CREATE INDEX idx_node_resources_waypoint ON node_resources(waypoint_key);
+CREATE INDEX idx_node_resources_item ON node_resources(resource_item_id);
+CREATE INDEX idx_node_resources_name ON node_resources(resource_name);
+
+-- ---------------------------------------------------------
 -- Indexes
 -- ---------------------------------------------------------
 
