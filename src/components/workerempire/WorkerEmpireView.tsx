@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Network, Plus, Trash2, Loader2, Info, MapPin, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WorkerMapCanvas } from './WorkerMapCanvas';
+import { NodeYieldsDrawer } from './NodeYieldsDrawer';
 import { suggestNearestPlantzones, type NodeSuggestion } from '@/lib/workerEmpire/suggestNodes';
 
 // This view solves BDO's real worker-empire node-connection problem: given
@@ -197,6 +198,22 @@ export const WorkerEmpireView: React.FC = () => {
   const [suggestFromText, setSuggestFromText] = useState('');
   const [suggestions, setSuggestions] = useState<NodeSuggestion[] | null>(null);
   const [suggestError, setSuggestError] = useState<string | null>(null);
+  // Node yields drawer - holds a WAYPOINT (node) id, never a resource item
+  // id. Opened from suggestion/result rows; "send to solver" below fills a
+  // terminal→root pair with this same node id.
+  const [drawerNodeId, setDrawerNodeId] = useState<number | null>(null);
+
+  const sendNodeToSolver = (waypointKey: number) => {
+    if (!graph) return;
+    const node = graph[String(waypointKey)];
+    if (!node) return;
+    const newId = addPair();
+    updatePair(newId, 'terminalText', nodeLabel(node));
+    updatePair(newId, 'rootText', '');
+    setActivePairId(newId);
+    setActiveRole('rootText');
+    setDrawerNodeId(null);
+  };
 
   const runSuggest = () => {
     if (!graph) return;
@@ -420,12 +437,20 @@ export const WorkerEmpireView: React.FC = () => {
                             {s.cpCost} CP • {s.hops} hop • {s.workerTypeCount} worker type
                           </span>
                         </div>
-                        <button
-                          onClick={() => fromId !== null && applySuggestion(fromId, s)}
-                          className="px-2 py-1 rounded bg-brand-primary/20 border border-brand-primary/30 text-brand-primary font-mono hover:bg-brand-primary/30"
-                        >
-                          ใส่ในคู่
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => setDrawerNodeId(s.waypointKey)}
+                            className="px-2 py-1 rounded bg-bg-surface-3 border border-border-subtle text-text-secondary font-mono hover:text-text-primary"
+                          >
+                            yields
+                          </button>
+                          <button
+                            onClick={() => fromId !== null && applySuggestion(fromId, s)}
+                            className="px-2 py-1 rounded bg-brand-primary/20 border border-brand-primary/30 text-brand-primary font-mono hover:bg-brand-primary/30"
+                          >
+                            ใส่ในคู่
+                          </button>
+                        </div>
                       </div>
                     );
                   })
@@ -544,7 +569,15 @@ export const WorkerEmpireView: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    <span className="text-text-muted font-mono">{node.need_exploration_point} CP</span>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => setDrawerNodeId(id)}
+                        className="px-2 py-0.5 rounded bg-bg-surface-3 border border-border-subtle text-text-secondary font-mono text-[10px] hover:text-text-primary"
+                      >
+                        yields
+                      </button>
+                      <span className="text-text-muted font-mono">{node.need_exploration_point} CP</span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -559,6 +592,12 @@ export const WorkerEmpireView: React.FC = () => {
               ถ้าเกมมีการเพิ่ม node ใหม่)
             </p>
           </div>
+
+          <NodeYieldsDrawer
+            waypointKey={drawerNodeId}
+            onClose={() => setDrawerNodeId(null)}
+            onSendToSolver={sendNodeToSolver}
+          />
         </>
       )}
     </div>
