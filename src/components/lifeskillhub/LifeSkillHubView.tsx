@@ -141,6 +141,30 @@ export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = nu
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
 
+  // Supplemental (bdocodex) state — separate table, separate fetch, never
+  // merged into the bdolytics list above. No profitability data exists for
+  // these rows by design (bdocodex computes none).
+  interface BdocodexRecipe {
+    bdocodexId: number;
+    recipeName: string;
+    category: string;
+    skillLevel: string | null;
+    exp: string | null;
+    iconUrl: string | null;
+    sourceUrl: string;
+  }
+  interface BdocodexDetail {
+    recipe: BdocodexRecipe;
+    ingredients: Array<{ itemId: number | null; name: string; quantity: number; isBase: boolean; iconUrl: string | null }>;
+    source: string;
+  }
+  const [supp, setSupp] = useState<BdocodexRecipe[]>([]);
+  const [suppLoading, setSuppLoading] = useState(true);
+  const [selectedSupp, setSelectedSupp] = useState<BdocodexRecipe | null>(null);
+  const [suppDetail, setSuppDetail] = useState<BdocodexDetail | null>(null);
+  const [suppDetailLoading, setSuppDetailLoading] = useState(false);
+  const [suppDetailError, setSuppDetailError] = useState<string | null>(null);
+
   // Planner state — batch + inventory (persisted in localStorage, shared across recipes)
   const [batchCount, setBatchCount] = useState<number>(100);
   const [inventory, setInventory] = useState<Record<string, number>>({});
@@ -242,6 +266,40 @@ export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = nu
       .finally(() => setLoading(false));
     return () => controller.abort();
   }, [search, category]);
+
+  // Supplemental list - same filters, separate endpoint
+  useEffect(() => {
+    setSuppLoading(true);
+    const params = new URLSearchParams();
+    if (search.trim()) params.set('q', search.trim());
+    if (category) params.set('category', category);
+    const qs = params.toString();
+    fetch(`/api/bdocodex-recipes${qs ? `?${qs}` : ''}`, { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data: { recipes?: BdocodexRecipe[] }) => setSupp(data.recipes ?? []))
+      .catch(() => setSupp([]))
+      .finally(() => setSuppLoading(false));
+  }, [search, category]);
+
+  // Supplemental detail when its drawer opens
+  useEffect(() => {
+    if (!selectedSupp) {
+      setSuppDetail(null);
+      setSuppDetailError(null);
+      return;
+    }
+    setSuppDetail(null);
+    setSuppDetailError(null);
+    setSuppDetailLoading(true);
+    fetch(`/api/bdocodex-recipes/${selectedSupp.bdocodexId}/ingredients`, { cache: 'no-store' })
+      .then(async (res) => {
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data: BdocodexDetail) => setSuppDetail(data))
+      .catch((err: Error) => setSuppDetailError(err.message))
+      .finally(() => setSuppDetailLoading(false));
+  }, [selectedSupp]);
 
   const saveSettings = async () => {
     setSaving(true);
@@ -524,6 +582,50 @@ export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = nu
         </div>
       </div>
 
+      {/* Supplemental recipes (bdocodex) — separate source, separate section.
+          No Silver/Hour exists for these rows (bdocodex computes none), so
+          they are listed by name with a source badge, never ranked. */}
+      <div className="bg-bg-surface-1 border border-border-subtle rounded-xl p-4 md:p-5 shadow-lg space-y-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <h2 className="text-sm font-bold text-text-primary">Supplemental recipes</h2>
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-500/15 border border-violet-500/30 text-violet-300 font-mono">
+            source: bdocodex
+          </span>
+          <span className="text-[11px] text-text-muted">
+            สูตรที่ bdolytics ไม่มี — มีแค่รายการวัตถุดิบคงที่ ไม่มี Silver/Hour
+          </span>
+        </div>
+        {suppLoading ? (
+          <p className="text-xs text-text-muted">กำลังโหลด...</p>
+        ) : supp.length === 0 ? (
+          <p className="text-xs text-text-muted">ยังไม่มีสูตร supplemental — เพิ่มใน data/bdocodex-missing.json แล้วรัน `npm run collect:bdocodex -- &lt;id&gt;`</p>
+        ) : (
+          <div className="space-y-1.5">
+            {supp.map((r) => (
+              <div
+                key={r.bdocodexId}
+                onClick={() => setSelectedSupp(r)}
+                className="flex items-center gap-2 p-2.5 rounded-lg bg-bg-surface-2 border border-border-subtle hover:bg-bg-surface-3/60 cursor-pointer transition-colors"
+              >
+                {r.iconUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={r.iconUrl} alt="" className="w-6 h-6 rounded shrink-0 bg-bg-surface-3" loading="lazy" />
+                )}
+                <div className="min-w-0">
+                  <span className="text-xs font-bold text-text-primary">{r.recipeName}</span>
+                  <span className="ml-2 text-[10px] font-mono text-text-muted">
+                    {r.category}{r.skillLevel ? ` • ${r.skillLevel}` : ''}
+                  </span>
+                </div>
+                <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-violet-500/15 border border-violet-500/30 text-violet-300 font-mono shrink-0">
+                  bdocodex #{r.bdocodexId}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Ingredient Tree Drawer — on-demand, never bulk */}
       {selected && (
         <div className="fixed inset-0 z-50 flex justify-end">
@@ -715,6 +817,88 @@ export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = nu
             <div className="p-3 border-t border-border-subtle bg-bg-surface-2/50 flex justify-end">
               <button
                 onClick={() => setSelected(null)}
+                className="px-3 py-1.5 rounded-lg bg-bg-surface-3 border border-border-subtle text-xs font-mono text-text-primary hover:bg-bg-surface-2"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Supplemental (bdocodex) Drawer — static ingredient list, no profit math */}
+      {selectedSupp && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedSupp(null)} />
+          <div className="relative w-full max-w-lg bg-bg-surface-1 border-l border-border-subtle shadow-2xl flex flex-col max-h-screen">
+            <div className="flex items-center justify-between p-4 border-b border-border-subtle">
+              <div className="space-y-1">
+                <h2 className="text-sm font-bold text-text-primary">{selectedSupp.recipeName}</h2>
+                <p className="text-[11px] font-mono text-text-muted">
+                  {selectedSupp.category}{selectedSupp.skillLevel ? ` • ${selectedSupp.skillLevel}` : ''}{selectedSupp.exp ? ` • EXP ${selectedSupp.exp}` : ''}
+                </p>
+                <span className="inline-block text-[10px] px-1.5 py-0.5 rounded bg-violet-500/15 border border-violet-500/30 text-violet-300 font-mono">
+                  source: bdocodex #{selectedSupp.bdocodexId} — ไม่มี Silver/Hour
+                </span>
+              </div>
+              <button
+                onClick={() => setSelectedSupp(null)}
+                className="p-1.5 rounded-lg hover:bg-bg-surface-2 text-text-muted hover:text-text-primary"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {suppDetailLoading && (
+                <div className="flex items-center gap-2 text-xs text-text-muted font-mono">
+                  <Loader2 className="w-4 h-4 animate-spin" /> กำลังโหลดสูตร...
+                </div>
+              )}
+              {suppDetailError && (
+                <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
+                  {suppDetailError}
+                </div>
+              )}
+              {suppDetail && !suppDetailLoading && (
+                <div className="space-y-2">
+                  <h3 className="text-xs font-bold text-text-primary">
+                    Ingredients — Shortage Calculator
+                    <span className="ml-2 font-normal text-text-muted">(ราคา: ไม่มี — คิดแค่จำนวนขาด)</span>
+                  </h3>
+                  <div className="space-y-1.5">
+                    {suppDetail.ingredients.map((ing, idx) => (
+                      <IngredientTreeNode
+                        key={`${ing.name}-${idx}`}
+                        ingredient={{
+                          name: ing.name,
+                          quantity: ing.quantity,
+                          unitPrice: null,
+                          totalCost: null,
+                          isSubRecipe: false,
+                          subRecipeSlug: null,
+                          iconUrl: ing.iconUrl,
+                          note: ing.isBase ? 'base — ห้ามแทน' : undefined,
+                        }}
+                        parentBatch={Math.max(1, batchCount || 1)}
+                        inventory={inventory}
+                        setInventory={setInventory}
+                        getProcurementAdvice={getProcurementAdvice}
+                        fmtSilver={fmtSilver}
+                        categoryHint={selectedSupp.category}
+                      />
+                    ))}
+                  </div>
+                  <div className="text-[10px] font-mono text-text-muted border-t border-border-subtle pt-2">
+                    Source: bdocodex static • <a href={suppDetail.recipe.sourceUrl} target="_blank" rel="noreferrer" className="underline text-brand-primary">{suppDetail.recipe.sourceUrl}</a> • owned shared via {INVENTORY_KEY}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-3 border-t border-border-subtle bg-bg-surface-2/50 flex justify-end">
+              <button
+                onClick={() => setSelectedSupp(null)}
                 className="px-3 py-1.5 rounded-lg bg-bg-surface-3 border border-border-subtle text-xs font-mono text-text-primary hover:bg-bg-surface-2"
               >
                 Close

@@ -408,6 +408,39 @@ CREATE INDEX idx_node_resources_item ON node_resources(resource_item_id);
 CREATE INDEX idx_node_resources_name ON node_resources(resource_name);
 
 -- ---------------------------------------------------------
+-- bdocodex supplemental recipes (2026-09-08). Separate tables on purpose:
+-- different trust level (static lists, hand-verified once) and shape (no
+-- profit columns - bdocodex computes no profitability). Keep in sync with
+-- schema/migrations/002_bdocodex_recipes.sql (re-runnable path).
+-- ---------------------------------------------------------
+
+CREATE TABLE bdocodex_recipes (
+    bdocodex_id     INT PRIMARY KEY,
+    recipe_name     TEXT NOT NULL,
+    category        TEXT NOT NULL,
+    skill_level     TEXT,
+    exp             TEXT,
+    icon_url        TEXT,
+    source_url      TEXT NOT NULL,
+    collected_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE bdocodex_recipe_ingredients (
+    id              SERIAL PRIMARY KEY,
+    bdocodex_id     INT NOT NULL REFERENCES bdocodex_recipes(bdocodex_id) ON DELETE CASCADE,
+    item_id         INT,
+    ingredient_name TEXT NOT NULL,
+    quantity        NUMERIC NOT NULL,
+    is_base         BOOLEAN NOT NULL DEFAULT FALSE,
+    icon_url        TEXT,
+    collected_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (bdocodex_id, item_id)
+);
+
+CREATE INDEX idx_bdocodex_recipes_category ON bdocodex_recipes(category);
+CREATE INDEX idx_bdocodex_ingredients_recipe ON bdocodex_recipe_ingredients(bdocodex_id);
+
+-- ---------------------------------------------------------
 -- Indexes
 -- ---------------------------------------------------------
 

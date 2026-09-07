@@ -1,0 +1,11 @@
+{
+  "_comment": "Curated gap-fill list for the bdocodex supplemental source (npm run collect:bdocodex). Each entry is a recipe VERIFIED missing from bdolytics' Crafting Calculator. This list is a scope decision, not a technical limit: bdocodex category listings do render recipe links after JS load, so bulk harvesting would be technically possible - but per project anti-bulk policy only hand-verified missing recipes go here. Add entries as new gaps are confirmed (name + numeric bdocodex ID from the page URL /us/recipe/<id>/).",
+  "recipes": [
+    {
+      "name": "Sweet Honey Wine",
+      "bdocodexId": 225,
+      "category": "Cooking",
+      "note": "Confirmed absent from all 4 bdolytics Cooking pages (152 recipes). Ingredients: Top-quality Cooking Honey x2, Full-bodied Makgeolli x4, Sugar x10, Apple x2."
+    }
+  ]
+}

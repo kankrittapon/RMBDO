@@ -20,6 +20,9 @@ export interface TreeIngredient {
   isSubRecipe: boolean;
   subRecipeSlug: string | null;
   iconUrl: string | null;
+  // Optional tag shown next to the name (e.g. bdocodex "base — cannot
+  // substitute"). Display-only, no behavior change.
+  note?: string;
 }
 
 interface RecipeDetailLite {
@@ -124,6 +127,11 @@ export const IngredientTreeNode: React.FC<IngredientTreeNodeProps> = ({
               {ingredient.isSubRecipe && (
                 <span className="text-[10px] px-1 py-0.5 rounded bg-brand-primary/15 border border-brand-primary/30 text-brand-primary">
                   sub-recipe
+                </span>
+              )}
+              {ingredient.note && (
+                <span className="text-[10px] px-1 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-200">
+                  {ingredient.note}
                 </span>
               )}
             </div>

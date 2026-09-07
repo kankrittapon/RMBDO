@@ -406,3 +406,97 @@ export async function searchNodesByResource(
   })
   return hits.slice(0, 100)
 }
+
+// ---------------------------------------------------------------------------
+// bdocodex supplemental recipes. Separate tables, separate functions -
+// NEVER merged into the bdolytics crafting_recipes queries above. These
+// rows carry no profitability data by design (bdocodex computes none):
+// profit fields are absent, ingredient prices are null ("no price").
+// ---------------------------------------------------------------------------
+
+export interface BdocodexRecipeRow {
+  bdocodexId: number
+  recipeName: string
+  category: string
+  skillLevel: string | null
+  exp: string | null
+  iconUrl: string | null
+  sourceUrl: string
+  collectedAt: string
+}
+
+export interface BdocodexIngredientRow {
+  itemId: number | null
+  name: string
+  quantity: number
+  isBase: boolean
+  iconUrl: string | null
+}
+
+export async function getBdocodexRecipes(search?: string, category?: string): Promise<BdocodexRecipeRow[]> {
+  const pool = getPool()
+  const conditions: string[] = []
+  const params: string[] = []
+  if (search) {
+    params.push(`%${search}%`)
+    conditions.push(`recipe_name ILIKE $${params.length}`)
+  }
+  if (category) {
+    params.push(category)
+    conditions.push(`category = $${params.length}`)
+  }
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : ""
+  const { rows } = await pool.query(
+    `SELECT bdocodex_id, recipe_name, category, skill_level, exp, icon_url, source_url, collected_at
+     FROM bdocodex_recipes ${where} ORDER BY recipe_name LIMIT 200`,
+    params,
+  )
+  return rows.map((r) => ({
+    bdocodexId: r.bdocodex_id,
+    recipeName: r.recipe_name,
+    category: r.category,
+    skillLevel: r.skill_level,
+    exp: r.exp,
+    iconUrl: r.icon_url,
+    sourceUrl: r.source_url,
+    collectedAt: r.collected_at,
+  }))
+}
+
+export async function getBdocodexDetail(id: number): Promise<{
+  recipe: BdocodexRecipeRow
+  ingredients: BdocodexIngredientRow[]
+} | null> {
+  const pool = getPool()
+  const meta = await pool.query(
+    `SELECT bdocodex_id, recipe_name, category, skill_level, exp, icon_url, source_url, collected_at
+     FROM bdocodex_recipes WHERE bdocodex_id = $1`,
+    [id],
+  )
+  if (meta.rows.length === 0) return null
+  const m = meta.rows[0]
+  const ing = await pool.query(
+    `SELECT item_id, ingredient_name, quantity, is_base, icon_url
+     FROM bdocodex_recipe_ingredients WHERE bdocodex_id = $1 ORDER BY id`,
+    [id],
+  )
+  return {
+    recipe: {
+      bdocodexId: m.bdocodex_id,
+      recipeName: m.recipe_name,
+      category: m.category,
+      skillLevel: m.skill_level,
+      exp: m.exp,
+      iconUrl: m.icon_url,
+      sourceUrl: m.source_url,
+      collectedAt: m.collected_at,
+    },
+    ingredients: ing.rows.map((r) => ({
+      itemId: r.item_id,
+      name: r.ingredient_name,
+      quantity: Number(r.quantity),
+      isBase: r.is_base,
+      iconUrl: r.icon_url,
+    })),
+  }
+}
