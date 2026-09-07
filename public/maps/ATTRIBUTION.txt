@@ -1,0 +1,18 @@
+bdo-world-map.webp
+==================
+
+Source: Thell/bdo-noderouter (github.com/Thell/bdo-noderouter),
+python/noderouter/data/maptiles/whole.webp, unmodified.
+
+License: Unlicense (public domain) - see
+src/lib/noderouter/LICENSE-noderouter-unlicense.txt in this same repo for
+the full text (same license covers this file, from the same upstream repo).
+
+Note: this map render predates the Land of the Morning Light expansion
+(and a few other newer zones) - roughly 40 of this project's 1025 node
+graph entries fall outside this image's visible area as a result. Those
+nodes are still usable via the text-input pair list in
+src/components/workerempire/WorkerEmpireView.tsx; they just don't have a
+clickable marker on the map canvas. See
+docs/handoff-worker-empire-optimizer-2026-09-05.md for the coordinate
+calibration this was verified against.

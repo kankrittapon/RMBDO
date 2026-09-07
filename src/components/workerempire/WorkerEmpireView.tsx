@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { Network, Plus, Trash2, Loader2, Info } from 'lucide-react';
+import { Network, Plus, Trash2, Loader2, Info, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { WorkerMapCanvas } from './WorkerMapCanvas';
 
 // This view solves BDO's real worker-empire node-connection problem: given
 // a set of (terminal, root) waypoint pairs, which nodes to activate to
@@ -98,6 +99,13 @@ export const WorkerEmpireView: React.FC = () => {
   const [solving, setSolving] = useState(false);
   const [solveError, setSolveError] = useState<string | null>(null);
 
+  // Which pair + which side (terminal/root) a map click writes into. Clicking
+  // the map is just an alternate way of filling in the same `pairs` state
+  // the text inputs use - both stay in sync automatically since they share
+  // this one source of truth.
+  const [activePairId, setActivePairId] = useState<string | null>(null);
+  const [activeRole, setActiveRole] = useState<'terminalText' | 'rootText'>('terminalText');
+
   useEffect(() => {
     setPairs(loadSavedPairs());
   }, []);
@@ -146,16 +154,39 @@ export const WorkerEmpireView: React.FC = () => {
   }, []);
 
   const addPair = () => {
-    setPairs((prev) => [...prev, { id: crypto.randomUUID(), terminalText: '', rootText: '' }]);
+    const newPair = { id: crypto.randomUUID(), terminalText: '', rootText: '' };
+    setPairs((prev) => [...prev, newPair]);
+    setActivePairId(newPair.id);
+    setActiveRole('terminalText');
+    return newPair.id;
   };
 
   const removePair = (id: string) => {
     setPairs((prev) => prev.filter((p) => p.id !== id));
+    setActivePairId((prev) => (prev === id ? null : prev));
   };
 
   const updatePair = (id: string, field: 'terminalText' | 'rootText', value: string) => {
     setPairs((prev) => prev.map((p) => (p.id === id ? { ...p, [field]: value } : p)));
   };
+
+  const handleMapPickNode = (waypointKey: number) => {
+    if (!graph) return;
+    const node = graph[String(waypointKey)];
+    if (!node) return;
+    const label = nodeLabel(node);
+
+    let targetPairId = activePairId;
+    if (!targetPairId || !pairs.some((p) => p.id === targetPairId)) {
+      targetPairId = addPair();
+    }
+    updatePair(targetPairId, activeRole, label);
+    // After picking a terminal, switch to picking the root next (common
+    // flow: click one node, then click the town you want it routed to).
+    setActiveRole((prev) => (prev === 'terminalText' ? 'rootText' : 'terminalText'));
+  };
+
+  const activePair = pairs.find((p) => p.id === activePairId) ?? null;
 
   const nodeOptions = useMemo(() => {
     if (!graph) return [];
@@ -202,6 +233,9 @@ export const WorkerEmpireView: React.FC = () => {
       setSolving(false);
     }
   };
+
+  const activeTerminalId = graph && activePair ? parseNodeInput(activePair.terminalText, graph) : null;
+  const activeRootId = graph && activePair ? parseNodeInput(activePair.rootText, graph) : null;
 
   const resultNodes = useMemo(() => {
     if (!result || !graph) return [];
@@ -260,6 +294,52 @@ export const WorkerEmpireView: React.FC = () => {
       {status === 'ready' && graph && (
         <>
           <div className="bg-bg-surface-1 border border-border-subtle rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5" />
+                คลิกแผนที่เพื่อเลือก Node
+              </h3>
+              <div className="flex items-center gap-1.5 text-[11px] font-mono">
+                <span className="text-text-muted">กำลังเลือก:</span>
+                <button
+                  onClick={() => setActiveRole('terminalText')}
+                  className={cn(
+                    'px-2 py-1 rounded border',
+                    activeRole === 'terminalText'
+                      ? 'bg-red-500/20 border-red-500/40 text-red-300 font-bold'
+                      : 'bg-bg-surface-2 border-border-subtle text-text-muted',
+                  )}
+                >
+                  Terminal
+                </button>
+                <button
+                  onClick={() => setActiveRole('rootText')}
+                  className={cn(
+                    'px-2 py-1 rounded border',
+                    activeRole === 'rootText'
+                      ? 'bg-violet-500/20 border-violet-500/40 text-violet-300 font-bold'
+                      : 'bg-bg-surface-2 border-border-subtle text-text-muted',
+                  )}
+                >
+                  Root
+                </button>
+                {!activePair && <span className="text-text-muted">(คลิก node แรกจะสร้างคู่ใหม่ให้เอง)</span>}
+              </div>
+            </div>
+            <WorkerMapCanvas
+              graph={graph}
+              terminalId={activeTerminalId}
+              rootId={activeRootId}
+              resultNodeIds={result?.nodeIds ?? null}
+              onPickNode={handleMapPickNode}
+            />
+            <p className="text-[10px] text-text-muted">
+              ลาก = แพน, scroll = ซูม • Node ที่ไม่ขึ้นบนแผนที่ (โซนใหม่ เช่น Land of the Morning
+              Light) ยังเลือกได้จากช่องพิมพ์ชื่อด้านล่าง
+            </p>
+          </div>
+
+          <div className="bg-bg-surface-1 border border-border-subtle rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider">
                 คู่ Terminal → Root ({pairs.length})
@@ -279,12 +359,23 @@ export const WorkerEmpireView: React.FC = () => {
 
             <div className="space-y-2">
               {pairs.map((pair) => (
-                <div key={pair.id} className="flex items-center gap-2">
+                <div
+                  key={pair.id}
+                  onFocus={() => setActivePairId(pair.id)}
+                  className={cn(
+                    'flex items-center gap-2 rounded-lg p-1',
+                    activePairId === pair.id && 'ring-1 ring-brand-primary/50',
+                  )}
+                >
                   <input
                     type="text"
                     list="worker-empire-node-options"
                     placeholder="พิมพ์ชื่อ Node เช่น Velia"
                     value={pair.terminalText}
+                    onFocus={() => {
+                      setActivePairId(pair.id);
+                      setActiveRole('terminalText');
+                    }}
                     onChange={(e) => updatePair(pair.id, 'terminalText', e.target.value)}
                     className="flex-1 bg-bg-surface-2 border border-border-subtle rounded-lg px-3 py-1.5 text-sm text-text-primary"
                   />
@@ -294,6 +385,10 @@ export const WorkerEmpireView: React.FC = () => {
                     list="worker-empire-node-options"
                     placeholder="Root เช่น Heidel"
                     value={pair.rootText}
+                    onFocus={() => {
+                      setActivePairId(pair.id);
+                      setActiveRole('rootText');
+                    }}
                     onChange={(e) => updatePair(pair.id, 'rootText', e.target.value)}
                     className="flex-1 bg-bg-surface-2 border border-border-subtle rounded-lg px-3 py-1.5 text-sm text-text-primary"
                   />
