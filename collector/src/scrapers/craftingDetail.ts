@@ -83,77 +83,75 @@ export async function scrapeCraftingDetail(slug: string): Promise<CraftingDetail
     const title = await page.locator("h1").first().innerText().catch(() => slug)
     const bodyText = await page.locator("main").innerText().catch(() => "")
 
-    // Try to find ingredients via DOM: look for links to /crafting/ inside main.
-    // The detail page shows each ingredient TWICE: once in the main
-    // breakdown list (anchor text is "<Name> ×<qty>", e.g. "Hot Pepper ×2"
-    // — the multiplication sign U+00D7, not ASCII "x", confirmed by
-    // running this against a live page) and once in a sidebar dependency
-    // tree (anchor text is "<Name> (<rate>/h)", no quantity at all). A
-    // first version of this function looked for an ASCII "x5"/"5x" pattern
-    // in the anchor's *parent* text, which never matched either real
-    // format, so quantity always came back 1 and both occurrences were
-    // kept as separate (duplicate) ingredient rows - confirmed by running
-    // it against a real recipe. Fixed by reading the quantity straight out
-    // of the anchor's own text (×N form) and skipping the (rate/h) variant
-    // entirely when the ×N variant for the same sub-recipe is present.
+    // Ingredient extraction, rewritten 2026-09-07 after a real bug: recipes
+    // whose ingredients are ALL raw/base materials (nothing craftable, e.g.
+    // "Beer" = Wheat + Sugar + Leavening Agent + Mineral Water) came back
+    // with ZERO ingredients, because the old version only ever looked for
+    // `<a href="/crafting/...">` anchors - which only exist for ingredients
+    // that are themselves sub-recipes. Confirmed by live DOM inspection:
+    // the page renders a fully-expanded dependency tree as nested
+    // `<ul><li>` elements (one root `<ul>` per DIRECT ingredient of this
+    // recipe; a sub-recipe's own ingredients render as a further-nested
+    // `<ul>` inside that root `<ul>`'s `<li>`, recursively). Each root
+    // `<ul>`'s single direct `<li>` child holds: a small quantity number
+    // (`span.text-sm.text-darker`, e.g. "5" - this is the real per-craft
+    // amount, NOT the large comma-formatted bulk number in the separate
+    // summary table above), the ingredient name (inside an `<a
+    // href="/crafting/...">` when it's a sub-recipe, otherwise a plain
+    // `<span>`), and its icon. Taking only ROOT-level `<ul>`s (those whose
+    // parent isn't itself a `<ul>`) - rather than every `<li>` on the page -
+    // is what keeps this to exactly this recipe's own direct ingredients,
+    // not the flattened recursive tree of every sub-ingredient too (which
+    // this app's own IngredientTreeNode already fetches on demand,
+    // separately, when the user expands a sub-recipe row).
     const ingredients = await page.evaluate(() => {
       const main = document.querySelector("main")
-      if (!main) return [] as Array<{ name: string; href: string | null; rawText: string; iconUrl: string | null }>
-      const rows: Array<{ name: string; href: string | null; rawText: string; iconUrl: string | null }> = []
-      const anchors = Array.from(main.querySelectorAll('a[href*="/crafting/"]')) as HTMLAnchorElement[]
-      for (const a of anchors) {
-        const rawText = (a.innerText || a.textContent || "").trim()
-        if (!rawText || rawText.length < 2) continue
-        if (a.closest("h1")) continue // skip the title itself
-        const img = a.querySelector("img") as HTMLImageElement | null
-        rows.push({ name: rawText, href: a.getAttribute("href"), rawText, iconUrl: img?.src || null })
+      if (!main) return [] as Array<{ name: string; qtyText: string | null; href: string | null; iconUrl: string | null }>
+      const rows: Array<{ name: string; qtyText: string | null; href: string | null; iconUrl: string | null }> = []
+      const allUls = Array.from(main.querySelectorAll("ul"))
+      const rootUls = allUls.filter((ul) => ul.parentElement?.tagName !== "UL")
+      for (const ul of rootUls) {
+        const li = ul.querySelector(":scope > li")
+        if (!li || !(li.className || "").includes("select-none")) continue
+        const a = li.querySelector('a[href*="/crafting/"]') as HTMLAnchorElement | null
+        // The name lives in the bold/colored `div[style*="font-weight"]` -
+        // NOT just "the next span", which would match the quantity span
+        // (e.g. "5") that comes first in document order instead.
+        const nameEl: Element | null = a ?? li.querySelector('div[style*="font-weight"]')
+        // Sub-recipe anchors include a trailing profit-rate annotation in
+        // their own text (e.g. "Red Sauce (22.6M/h)", "Onion (0/h)") -
+        // strip it so the stored ingredient name matches the plain-text
+        // name used everywhere else (recipe lists, market items, icons).
+        const name = (nameEl?.textContent || "")
+          .replace(/\(\s*-?[\d,.]+[KMB]?\s*\/\s*h\s*\)\s*$/i, "")
+          .trim()
+        if (!name) continue
+        const qtySpan = li.querySelector("span.text-sm.text-darker") as HTMLElement | null
+        const img = li.querySelector("img") as HTMLImageElement | null
+        rows.push({
+          name,
+          qtyText: qtySpan?.textContent?.trim() ?? null,
+          href: a?.getAttribute("href") ?? null,
+          iconUrl: img?.src || null,
+        })
       }
       return rows
     })
 
-    // If we got nothing via DOM, try to parse bodyText for ingredient-like lines
     let parsedIngredients: CraftingIngredient[] = []
-    if (ingredients.length > 0) {
-      const bySlug = new Map<string, CraftingIngredient>()
-      for (const ing of ingredients) {
-        const subSlugMatch = ing.href?.match(/\/crafting\/([^/?#]+)/)
-        const subSlug = subSlugMatch ? subSlugMatch[1] : null
-        const key = subSlug ?? ing.rawText // ingredients with no sub-recipe link (raw market materials) have no slug to dedupe on
-
-        const qtyMatch = ing.rawText.match(/[×x]\s*(\d+(?:\.\d+)?)/i)
-        const isRateVariant = /\(\s*-?[\d,.]+[KMB]?\s*\/\s*h\s*\)/i.test(ing.rawText) // "(0/h)" sidebar-tree form, no quantity
-
-        if (bySlug.has(key)) {
-          // Already have an entry for this ingredient - only replace it if
-          // this occurrence actually carries a real quantity and the
-          // existing one doesn't (prefer the ×N form over the (rate/h) form).
-          if (qtyMatch && bySlug.get(key)!.quantity === 1 && !isRateVariant) {
-            // fall through to overwrite below
-          } else {
-            continue
-          }
-        }
-        if (isRateVariant && !qtyMatch) continue // pure sidebar-tree duplicate, no new info
-
-        const name = ing.rawText.replace(/[×x]\s*\d+(?:\.\d+)?\s*$/i, "").replace(/\(\s*-?[\d,.]+[KMB]?\s*\/\s*h\s*\)\s*$/i, "").trim()
-        const qty = qtyMatch ? parseFloat(qtyMatch[1]) : 1
-        bySlug.set(key, {
-          name: name || ing.rawText,
-          quantity: isNaN(qty) ? 1 : qty,
-          unitPrice: null, // will be filled from market or detail page price column if available
-          totalCost: null,
-          isSubRecipe: !!subSlug,
-          subRecipeSlug: subSlug,
-          iconUrl: ing.iconUrl,
-        })
-      }
-      parsedIngredients = Array.from(bySlug.values())
-    } else {
-      // Fallback: try to parse bodyText for "Cost" lines
-      // Look for lines that contain ingredient names (heuristic)
-      const lines = bodyText.split("\n").map((l) => l.trim()).filter(Boolean)
-      // No reliable parse — return empty and let caller know
-      parsedIngredients = []
+    for (const ing of ingredients) {
+      const subSlugMatch = ing.href?.match(/\/crafting\/([^/?#]+)/)
+      const subSlug = subSlugMatch ? subSlugMatch[1] : null
+      const qty = ing.qtyText ? parseFloat(ing.qtyText) : 1
+      parsedIngredients.push({
+        name: ing.name,
+        quantity: isNaN(qty) ? 1 : qty,
+        unitPrice: null, // will be filled from market or detail page price column if available
+        totalCost: null,
+        isSubRecipe: !!subSlug,
+        subRecipeSlug: subSlug,
+        iconUrl: ing.iconUrl,
+      })
     }
 
     // Extract top-level costs from bodyText if possible
