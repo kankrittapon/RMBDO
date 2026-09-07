@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { ChevronRight, ChevronDown, Loader2, AlertCircle, ShoppingCart, Pickaxe, Wheat, Package } from 'lucide-react';
+import { NodeSourceLookup } from './NodeSourceLookup';
 
 // Renders one ingredient row, and — if it's a sub-recipe — lets it expand
 // inline into its own ingredient list on click, recursively. Replaces the
@@ -187,6 +188,11 @@ export const IngredientTreeNode: React.FC<IngredientTreeNodeProps> = ({
             </span>
           )}
         </div>
+
+        {/* Worker-node ingredients can be reverse-looked-up to the exact
+            nodes that yield them. Only for 'node' advice - Gather/Market
+            items don't come from worker nodes. */}
+        {advice.icon === 'node' && <NodeSourceLookup ingredientName={ingredient.name} />}
       </div>
 
       {expanded && error && (

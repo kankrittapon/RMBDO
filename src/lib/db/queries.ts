@@ -235,6 +235,10 @@ export interface NodeSearchHit {
   waypointKey: number
   name: string | null
   cpCost: number
+  // The resource name this row matched (the ILIKE query can match
+  // near-misses - clients MUST re-filter to exact names themselves and
+  // never present a near-miss as a source).
+  matchedName: string
   // Quantities per worker-kind variant for the matched resource only.
   normalQty: number | null
   giantQty: number | null
@@ -338,6 +342,7 @@ export async function searchNodesByResource(
         waypointKey: r.waypoint_key,
         name: r.name,
         cpCost: Number(r.cp_cost),
+        matchedName: r.resource_name,
         normalQty: null,
         giantQty: null,
         luckyQty: null,
