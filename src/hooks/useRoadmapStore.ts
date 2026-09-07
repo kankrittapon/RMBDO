@@ -19,6 +19,8 @@ import { masterCheckpointsList } from '@/data/progression/checkpoints';
 import { treasureList } from '@/data/treasures/treasureList';
 import { permanentJournals } from '@/data/permanent/journals';
 import { initialGearSlots } from '@/data/gear/gearSlots';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase/client';
 
 const STORAGE_KEY_V2 = 'bdo_progression_state_v2';
 const STORAGE_KEY_V1 = 'bdo_progression_state_v1';
@@ -142,6 +144,15 @@ export function useRoadmapStore() {
   const [selectedSpotId, setSelectedSpotId] = useState<string>('gyfin_underground');
   const [selectedClassId, setSelectedClassId] = useState<string>('witch_awakening');
 
+  // Login / cross-device sync (added 2026-09-07). localStorage stays the
+  // fast, always-on cache; when signed in, the same profile blob also
+  // mirrors to Postgres (user_profiles, one JSONB row per user) so it
+  // follows the account across devices/browsers instead of being stuck on
+  // one machine. Logged-out behavior is unchanged from before this existed.
+  const auth = useAuth();
+  const [cloudSyncStatus, setCloudSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle');
+  const [hasPulledCloudProfile, setHasPulledCloudProfile] = useState(false);
+
   // Hydrate from localStorage on client mount
   useEffect(() => {
     try {
@@ -185,6 +196,75 @@ export function useRoadmapStore() {
       console.error('Failed to save to localStorage v2:', e);
     }
   }, [profile, isHydrated]);
+
+  // Pull the cloud profile once per login (after local hydration finishes,
+  // so we have something real to compare against). Whichever side has the
+  // newer updatedAt wins - this handles both "first login on a new device"
+  // (cloud is newer/only copy, adopt it) and "signed up just now with
+  // existing local progress" (local is newer/only copy, push it up) without
+  // needing a separate "is this a new account" flag.
+  useEffect(() => {
+    if (!isHydrated || !auth.session || !supabase || hasPulledCloudProfile) return;
+    const userId = auth.session.user.id;
+    setCloudSyncStatus('syncing');
+    supabase
+      .from('user_profiles')
+      .select('profile, updated_at')
+      .eq('user_id', userId)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        setHasPulledCloudProfile(true);
+        if (error) {
+          console.error('Cloud profile pull failed:', error.message);
+          setCloudSyncStatus('error');
+          return;
+        }
+        if (data?.profile) {
+          const cloudUpdatedAt = new Date(data.updated_at).getTime();
+          const localUpdatedAt = new Date(profile.updatedAt).getTime();
+          if (cloudUpdatedAt > localUpdatedAt) {
+            setProfile(data.profile as PlayerProfile);
+          }
+          // else: local is newer (or equal) - keep it, the push-effect
+          // below will overwrite the cloud row with it shortly.
+        }
+        setCloudSyncStatus('synced');
+      });
+    // profile.updatedAt intentionally excluded - this should only run once
+    // right after login, not re-run every time the profile changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isHydrated, auth.session, hasPulledCloudProfile]);
+
+  // Reset the "already pulled" flag on logout, so a different account
+  // logging in next does its own fresh pull instead of reusing this one's.
+  useEffect(() => {
+    if (!auth.session) setHasPulledCloudProfile(false);
+  }, [auth.session]);
+
+  // Push to the cloud on profile change, debounced (matches this project's
+  // existing pattern of not hammering the network on every keystroke - see
+  // the Life Skill Hub Mastery save button for the non-debounced-on-purpose
+  // counterexample, which is fine there because it's an explicit button
+  // click, not a stream of automatic state changes like this one).
+  useEffect(() => {
+    if (!isHydrated || !auth.session || !supabase || !hasPulledCloudProfile) return;
+    const userId = auth.session.user.id;
+    const timer = setTimeout(() => {
+      setCloudSyncStatus('syncing');
+      supabase!
+        .from('user_profiles')
+        .upsert({ user_id: userId, profile, updated_at: new Date().toISOString() })
+        .then(({ error }) => {
+          if (error) {
+            console.error('Cloud profile push failed:', error.message);
+            setCloudSyncStatus('error');
+          } else {
+            setCloudSyncStatus('synced');
+          }
+        });
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [profile, isHydrated, auth.session, hasPulledCloudProfile]);
 
   // Actions
   const updateStats = useCallback((newStats: Partial<PlayerStats>) => {
@@ -617,6 +697,8 @@ export function useRoadmapStore() {
     progressStats,
     currentPhase,
     nextActions,
-    unverifiedAudits
+    unverifiedAudits,
+    auth,
+    cloudSyncStatus
   };
 }

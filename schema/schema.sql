@@ -343,6 +343,33 @@ CREATE TABLE player_settings (
 );
 
 -- ---------------------------------------------------------
+-- Login / cross-device progression sync (added 2026-09-07). One JSONB blob
+-- per user, mirroring the exact shape useRoadmapStore already keeps in
+-- localStorage (bdo_progression_state_v2) - a relational rewrite of that
+-- whole profile shape isn't worth it: it's player-specific state read/
+-- written as one unit, never queried by field from SQL, so JSONB is the
+-- right fit here (same reasoning as this project's other single-blob
+-- tables). RLS restricts each row to its own auth.uid() - this table is
+-- read/written directly from the browser via the Supabase client SDK, not
+-- through a server API route, so RLS is the only thing enforcing isolation.
+-- ---------------------------------------------------------
+
+CREATE TABLE user_profiles (
+    user_id     UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    profile     JSONB NOT NULL,
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "select own profile" ON user_profiles
+    FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "insert own profile" ON user_profiles
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "update own profile" ON user_profiles
+    FOR UPDATE USING (auth.uid() = user_id);
+
+-- ---------------------------------------------------------
 -- Indexes
 -- ---------------------------------------------------------
 

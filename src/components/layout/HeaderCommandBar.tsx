@@ -10,10 +10,16 @@ import {
   CheckCircle2,
   FileCode,
   HelpCircle,
-  Pencil
+  Pencil,
+  LogIn,
+  LogOut,
+  CloudUpload,
+  CloudOff,
+  Loader2
 } from 'lucide-react';
 import { useRoadmapStore } from '@/hooks/useRoadmapStore';
 import { cn } from '@/lib/utils';
+import { LoginModal } from '@/components/auth/LoginModal';
 
 interface HeaderCommandBarProps {
   store: ReturnType<typeof useRoadmapStore>;
@@ -28,8 +34,9 @@ export const HeaderCommandBar: React.FC<HeaderCommandBarProps> = ({
   onOpenImportExport,
   onOpenReset
 }) => {
-  const { profile, updateStats, currentPhase } = store;
+  const { profile, updateStats, currentPhase, auth, cloudSyncStatus } = store;
   const [isEditingStats, setIsEditingStats] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [ap, setAp] = useState<string>(profile.stats.ap ? String(profile.stats.ap) : '');
   const [aap, setAap] = useState<string>(profile.stats.aap ? String(profile.stats.aap) : '');
   const [dp, setDp] = useState<string>(profile.stats.dp ? String(profile.stats.dp) : '');
@@ -147,11 +154,39 @@ export const HeaderCommandBar: React.FC<HeaderCommandBarProps> = ({
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </button>
+
+            {auth.session ? (
+              <button
+                onClick={() => auth.signOut()}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-bg-surface-2 hover:bg-bg-surface-3 border border-border-subtle text-text-muted hover:text-red-400 transition-colors"
+                title={`ล็อกอินเป็น ${auth.session.user.email} - คลิกเพื่อออกจากระบบ`}
+              >
+                {cloudSyncStatus === 'syncing' ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : cloudSyncStatus === 'error' ? (
+                  <CloudOff className="w-3.5 h-3.5 text-amber-400" />
+                ) : (
+                  <CloudUpload className="w-3.5 h-3.5 text-emerald-400" />
+                )}
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsLoginOpen(true)}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-bg-surface-2 hover:bg-bg-surface-3 border border-border-subtle text-text-muted hover:text-text-primary transition-colors"
+                title="เข้าสู่ระบบเพื่อซิงค์ข้อมูลข้ามเครื่อง"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline text-[11px]">เข้าสู่ระบบ</span>
+              </button>
+            )}
           </div>
 
         </div>
 
       </div>
+
+      {isLoginOpen && <LoginModal onClose={() => setIsLoginOpen(false)} />}
 
       {/* Inline Quick Stat Editor Modal/Dropdown */}
       {isEditingStats && (
