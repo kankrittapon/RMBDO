@@ -76,11 +76,23 @@ async function main() {
   console.log(`Untranslated names in top-120: ${need.size}`)
 
   // Candidate pages: cached details with ingredients, most-profitable first.
+  // EXCLUDES Imperial Crates, EXCEPT crates whose TITLE is still
+  // untranslated (their live pages yield title + 1 row - fine for titles,
+  // but their DB ingredient rows predate the 2026-09-07 extractor rewrite
+  // (avg ~19 stale rows/slug vs 1 live row), so crate ingredients must not
+  // drive page selection or they'd grind 121 pages for names that don't
+  // exist on any live page. Titles came mostly from thNamesLists.ts.)
+  // (The stale EN crate rows themselves are a separate EN-cache
+  // data-quality issue - this script never touches EN.)
   const pages = await client.query(
-    `SELECT d.recipe_slug, MAX(d.recipe_name) AS recipe_name, MAX(cr.profit_per_hour) AS pph
+    `SELECT d.recipe_slug, MAX(d.recipe_name) AS recipe_name, MAX(cr.profit_per_hour) AS pph,
+            MAX(cr.category) AS category, MAX(t.en_name) AS already
      FROM crafting_recipe_details d JOIN crafting_recipes cr ON cr.recipe_slug = d.recipe_slug
+     LEFT JOIN item_name_translations t ON t.en_name = cr.recipe_name
      WHERE cr.profit_per_hour > 0 AND d.recipe_slug IS NOT NULL
-     GROUP BY d.recipe_slug ORDER BY pph DESC NULLS LAST LIMIT 400`,
+     GROUP BY d.recipe_slug
+     HAVING MAX(cr.category) <> 'Imperial Crates' OR MAX(t.en_name) IS NULL
+     ORDER BY pph DESC NULLS LAST LIMIT 400`,
   )
   const ingBySlug = new Map<string, string[]>()
   for (const p of pages.rows) {
@@ -88,15 +100,36 @@ async function main() {
     ingBySlug.set(p.recipe_slug, g.rows.map((x) => x.ingredient_name as string))
   }
 
-  // Greedy set-cover over need, bounded by LIMIT.
+  // Slugs already processed by a previous th-run (translations stamped
+  // with their page URL). Excluded so stale DB rows - e.g. crate pages
+  // whose DB rows predate the 2026-09-07 extractor rewrite and no longer
+  // match EITHER live page - can't cause the same page to be re-picked
+  // forever. (Those stale EN rows are a separate data-quality issue in the
+  // EN detail cache; this script never touches EN tables.)
+  const doneRows = await client.query(
+    `SELECT DISTINCT source_url FROM item_name_translations WHERE source = 'bdolytics-th' AND source_url LIKE '%/crafting/%'`,
+  )
+  const done = new Set<string>()
+  for (const r of doneRows.rows) {
+    const m = (r.source_url as string).match(/\/crafting\/([^/?#]+)/)
+    if (m) done.add(m[1])
+  }
+
+  // Greedy set-cover over need, bounded by LIMIT. Titles count too (a
+  // crate page is worth picking for an untranslated title alone).
   const picked: string[] = []
   const covered = new Set<string>()
   const remaining = new Map(ingBySlug)
+  const titleBySlug = new Map<string, string>()
+  for (const p of pages.rows) titleBySlug.set(p.recipe_slug, p.recipe_name)
+  for (const slug of done) remaining.delete(slug)
   while (picked.length < LIMIT && remaining.size > 0) {
     let best: string | null = null
     let bestGain = 0
     for (const [slug, ings] of remaining) {
-      const gain = ings.filter((n) => need.has(n) && !covered.has(n)).length
+      let gain = ings.filter((n) => need.has(n) && !covered.has(n)).length
+      const title = titleBySlug.get(slug)
+      if (title && need.has(title) && !covered.has(title)) gain += 1
       if (gain > bestGain) {
         bestGain = gain
         best = slug
@@ -105,6 +138,8 @@ async function main() {
     if (!best || bestGain === 0) break
     picked.push(best)
     for (const n of remaining.get(best)!) covered.add(n)
+    const bt = titleBySlug.get(best)
+    if (bt) covered.add(bt)
     remaining.delete(best)
   }
   console.log(`Picked ${picked.length} page(s), covering ~${covered.size} untranslated name(s).`)
