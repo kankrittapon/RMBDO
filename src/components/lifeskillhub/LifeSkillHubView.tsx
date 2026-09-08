@@ -155,7 +155,7 @@ export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = nu
   }
   interface BdocodexDetail {
     recipe: BdocodexRecipe;
-    ingredients: Array<{ itemId: number | null; name: string; quantity: number; isBase: boolean; iconUrl: string | null }>;
+    ingredients: Array<{ itemId: number | null; name: string; quantity: number; isBase: boolean; iconUrl: string | null; subRecipe: { source: 'bdolytics'; slug: string } | { source: 'bdocodex'; id: number } | null }>;
     source: string;
   }
   const [supp, setSupp] = useState<BdocodexRecipe[]>([]);
@@ -875,8 +875,9 @@ export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = nu
                           quantity: ing.quantity,
                           unitPrice: null,
                           totalCost: null,
-                          isSubRecipe: false,
+                          isSubRecipe: ing.subRecipe !== null,
                           subRecipeSlug: null,
+                          subRecipe: ing.subRecipe ?? undefined,
                           iconUrl: ing.iconUrl,
                           note: ing.isBase ? 'base — ห้ามแทน' : undefined,
                         }}

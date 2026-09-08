@@ -23,6 +23,10 @@ export interface TreeIngredient {
   // Optional tag shown next to the name (e.g. bdocodex "base — cannot
   // substitute"). Display-only, no behavior change.
   note?: string;
+  // Cross-source sub-recipe link (resolved read-time by the API, exact
+  // name match only). bdolytics entries use subRecipeSlug (legacy);
+  // bdocodex-resolved entries use this field for either source.
+  subRecipe?: { source: 'bdolytics'; slug: string } | { source: 'bdocodex'; id: number };
 }
 
 interface RecipeDetailLite {
@@ -70,15 +74,60 @@ export const IngredientTreeNode: React.FC<IngredientTreeNodeProps> = ({
   const missingCost = ingredient.unitPrice !== null ? shortage * ingredient.unitPrice : null;
   const advice = getProcurementAdvice(ingredient.name);
 
-  const canExpand = ingredient.isSubRecipe && ingredient.subRecipeSlug && depth < MAX_DEPTH;
+  const canExpand =
+    (ingredient.isSubRecipe && ingredient.subRecipeSlug && depth < MAX_DEPTH) ||
+    (ingredient.subRecipe !== undefined && depth < MAX_DEPTH);
 
   const toggleExpand = () => {
     if (!canExpand) return;
     if (!expanded && !detail && !loading) {
       setLoading(true);
       setError(null);
+      // bdocodex-resolved sub-recipe: same on-demand pattern, bdocodex
+      // endpoint. Prices stay null (no bdocodex price data); nested
+      // children carry their own subRecipe links from the same resolver.
+      if (ingredient.subRecipe?.source === 'bdocodex' && ingredient.subRecipe.id) {
+        const bdxId = ingredient.subRecipe.id;
+        fetch(`/api/bdocodex-recipes/${bdxId}/ingredients`, { cache: 'no-store' })
+          .then(async (res) => {
+            if (!res.ok) {
+              const body = await res.json().catch(() => ({}));
+              throw new Error(body.error || `HTTP ${res.status}`);
+            }
+            return res.json();
+          })
+          .then((data: {
+            ingredients: Array<{
+              name: string;
+              quantity: number;
+              isBase: boolean;
+              iconUrl: string | null;
+              subRecipe: TreeIngredient['subRecipe'] | null;
+            }>;
+          }) =>
+            setDetail({
+              ingredients: data.ingredients.map((c) => ({
+                name: c.name,
+                quantity: c.quantity,
+                unitPrice: null,
+                totalCost: null,
+                isSubRecipe: c.subRecipe !== null,
+                subRecipeSlug: null,
+                iconUrl: c.iconUrl,
+                note: c.isBase ? 'base — ห้ามแทน' : undefined,
+                subRecipe: c.subRecipe ?? undefined,
+              })),
+            }),
+          )
+          .catch((err: Error) => setError(err.message))
+          .finally(() => setLoading(false));
+        setExpanded((prev) => !prev);
+        return;
+      }
+      const slug = ingredient.subRecipe?.source === 'bdolytics' ? ingredient.subRecipe.slug : ingredient.subRecipeSlug;
+      if (!slug) return;
       const categoryParam = categoryHint ? `?category=${encodeURIComponent(categoryHint)}` : '';
-      fetch(`/api/crafting-recipes/${encodeURIComponent(ingredient.subRecipeSlug!)}/ingredients${categoryParam}`)
+      fetch(`/api/crafting-recipes/${encodeURIComponent(slug)}/ingredients${categoryParam}`)
         .then(async (res) => {
           if (!res.ok) {
             const body = await res.json().catch(() => ({}));

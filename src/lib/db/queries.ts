@@ -431,6 +431,13 @@ export interface BdocodexIngredientRow {
   quantity: number
   isBase: boolean
   iconUrl: string | null
+  // Cross-source sub-recipe link, resolved at READ time (never stored):
+  // exact name match (trim + case-insensitive) against recipe outputs in
+  // BOTH tables. bdolytics wins ties (full tree + live prices). Near-miss
+  // names (e.g. "Sugar" vs "Lump of Raw Sugar", "Full-bodied Makgeolli" vs
+  // "Makgeolli") resolve to null - shown flat, never linked. Proc/byproduct
+  // items therefore stay flat by construction.
+  subRecipe: { source: "bdolytics"; slug: string } | { source: "bdocodex"; id: number } | null
 }
 
 export async function getBdocodexRecipes(search?: string, category?: string): Promise<BdocodexRecipeRow[]> {
@@ -480,6 +487,32 @@ export async function getBdocodexDetail(id: number): Promise<{
      FROM bdocodex_recipe_ingredients WHERE bdocodex_id = $1 ORDER BY id`,
     [id],
   )
+  // Batch-resolve sub-recipes: one query per table, exact lower() match.
+  const names = ing.rows.map((r) => r.ingredient_name as string)
+  const bdolyticsByName = new Map<string, string>()
+  const bdocodexByName = new Map<string, number>()
+  if (names.length > 0) {
+    const b = await pool.query(
+      `SELECT recipe_name, recipe_slug FROM crafting_recipes
+       WHERE recipe_slug IS NOT NULL AND LOWER(TRIM(recipe_name)) = ANY($1)
+       ORDER BY profit_per_hour DESC NULLS LAST`,
+      [names.map((n) => n.trim().toLowerCase())],
+    )
+    // First write wins per normalized name; ORDER BY above makes it the
+    // most profitable row when display names collide (Imperial Crates).
+    for (const r of b.rows) {
+      const key = (r.recipe_name as string).trim().toLowerCase()
+      if (!bdolyticsByName.has(key)) bdolyticsByName.set(key, r.recipe_slug as string)
+    }
+    const x = await pool.query(
+      `SELECT recipe_name, bdocodex_id FROM bdocodex_recipes
+       WHERE LOWER(TRIM(recipe_name)) = ANY($1)`,
+      [names.map((n) => n.trim().toLowerCase())],
+    )
+    for (const r of x.rows) {
+      if (r.bdocodex_id !== id) bdocodexByName.set((r.recipe_name as string).trim().toLowerCase(), r.bdocodex_id as number)
+    }
+  }
   return {
     recipe: {
       bdocodexId: m.bdocodex_id,
@@ -491,12 +524,23 @@ export async function getBdocodexDetail(id: number): Promise<{
       sourceUrl: m.source_url,
       collectedAt: m.collected_at,
     },
-    ingredients: ing.rows.map((r) => ({
-      itemId: r.item_id,
-      name: r.ingredient_name,
-      quantity: Number(r.quantity),
-      isBase: r.is_base,
-      iconUrl: r.icon_url,
-    })),
+    ingredients: ing.rows.map((r) => {
+      const key = (r.ingredient_name as string).trim().toLowerCase()
+      const slug = bdolyticsByName.get(key)
+      const bdxId = slug === undefined ? bdocodexByName.get(key) : undefined
+      return {
+        itemId: r.item_id,
+        name: r.ingredient_name,
+        quantity: Number(r.quantity),
+        isBase: r.is_base,
+        iconUrl: r.icon_url,
+        subRecipe:
+          slug !== undefined
+            ? ({ source: "bdolytics", slug } as const)
+            : bdxId !== undefined
+              ? ({ source: "bdocodex", id: bdxId } as const)
+              : null,
+      }
+    }),
   }
 }
