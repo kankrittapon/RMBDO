@@ -28,20 +28,24 @@ const PROCUREMENT_MAP: Record<string, ProcurementAdvice> = {
   "Potato": { label: "Worker Node", icon: "node", tooltip: "Node: Potato (Velia)" },
   "Sweet Potato": { label: "Worker Node", icon: "node", tooltip: "Node: Sweet Potato" },
   "Chicken Meat": { label: "Worker Node", icon: "node", tooltip: "Node: Chicken Meat" },
-  "Oatmeal": { label: "Worker Node", icon: "node", tooltip: "Node: Oatmeal" },
   "White Cedar Timber": { label: "Worker Node", icon: "node", tooltip: "Node: White Cedar" },
   "Maple Timber": { label: "Worker Node", icon: "node", tooltip: "Node: Maple" },
   "Ash Timber": { label: "Worker Node", icon: "node", tooltip: "Node: Ash" },
 };
 
-function getProcurementAdvice(name: string): ProcurementAdvice {
+function getProcurementAdvice(name: string, nodeNames?: Set<string>): ProcurementAdvice {
   if (PROCUREMENT_MAP[name]) return PROCUREMENT_MAP[name];
+  // "Worker Node" ONLY on proof: exact match against verified node yields
+  // (node_resources). The old regex branch here (wheat|tomato|apple|...)
+  // mislabeled farm produce no node actually yields (Tomato, Cabbage,
+  // Onion, Garlic, Apple, ...) as Worker Node - a user caught it in
+  // click-testing. Never guess node provenance again.
+  if (nodeNames?.has(name.trim().toLowerCase())) {
+    return { label: "Worker Node", icon: "node", tooltip: "Worker node yield (verified)" };
+  }
   const lower = name.toLowerCase();
   if (/(meat|blood|trace|sap|hide|leather|feather|claw|hoof)/i.test(lower)) {
     return { label: "Gather", icon: "gather", tooltip: "Hunting / Gathering hotspot" };
-  }
-  if (/(wheat|barley|corn|potato|tomato|pumpkin|grape|apple| timber|wood|ore|coal|iron| copper| zinc| grain|vegetable)/i.test(lower)) {
-    return { label: "Worker Node", icon: "node", tooltip: "Worker Node / Farm" };
   }
   return { label: "Market Buy", icon: "market", tooltip: "Central Market" };
 }
@@ -165,6 +169,21 @@ export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = nu
   const [suppDetailLoading, setSuppDetailLoading] = useState(false);
   const [suppDetailError, setSuppDetailError] = useState<string | null>(null);
 
+  // Verified node-yield names (node_resources) - proof set for "Worker
+  // Node" labels. Empty set = API unavailable, advice falls back to map +
+  // heuristics (never blocks rendering).
+  const [nodeNameSet, setNodeNameSet] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    fetch('/api/node-resource-names', { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data: { names?: string[] }) => {
+        if (Array.isArray(data.names)) {
+          setNodeNameSet(new Set(data.names.map((n) => String(n).trim().toLowerCase())));
+        }
+      })
+      .catch(() => {});
+  }, []);
+  const adviceFor = (name: string) => getProcurementAdvice(name, nodeNameSet);
   // Planner state — batch + inventory (persisted in localStorage, shared across recipes)
   const [batchCount, setBatchCount] = useState<number>(100);
   const [inventory, setInventory] = useState<Record<string, number>>({});
@@ -794,7 +813,7 @@ export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = nu
                             parentBatch={Math.max(1, batchCount || 1)}
                             inventory={inventory}
                             setInventory={setInventory}
-                            getProcurementAdvice={getProcurementAdvice}
+                            getProcurementAdvice={adviceFor}
                             fmtSilver={fmtSilver}
                             categoryHint={selected.category}
                           />
@@ -884,7 +903,7 @@ export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = nu
                         parentBatch={Math.max(1, batchCount || 1)}
                         inventory={inventory}
                         setInventory={setInventory}
-                        getProcurementAdvice={getProcurementAdvice}
+                        getProcurementAdvice={adviceFor}
                         fmtSilver={fmtSilver}
                         categoryHint={selectedSupp.category}
                       />
