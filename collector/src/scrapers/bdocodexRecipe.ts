@@ -384,6 +384,16 @@ export async function saveThNames(entries: Array<{ en: string; th: string }>, so
  * for the Thai name. For items that never appear in a scraped recipe
  * (bdolytics-side ingredients). Same DOM card (#item_name b) as recipes. */
 export async function scrapeThItemName(itemId: number): Promise<{ en: string; th: string } | null> {
+  const all = await scrapeThItemNames([itemId])
+  return all[0] ?? null
+}
+
+/** Multi-ID version: one browser session for the whole list (NOT one
+ * launch per id - a 159-item backlog would mean 159 browser launches).
+ * Polite delay between items, abort on block. Returns only successes. */
+export async function scrapeThItemNames(itemIds: number[]): Promise<Array<{ en: string; th: string }>> {
+  const out: Array<{ en: string; th: string }> = []
+  if (itemIds.length === 0) return out
   const { browser, page } = await launch()
   try {
     const readName = async (url: string, context: string): Promise<string | null> => {
@@ -396,20 +406,24 @@ export async function scrapeThItemName(itemId: number): Promise<{ en: string; th
         return nm || null
       })
     }
-    const en = await readName(`https://bdocodex.com/us/item/${itemId}/`, `bdocodex item ${itemId} (en)`)
-    if (!en) {
-      console.log(`bdocodex item ${itemId}: no EN name found, skipping`)
-      return null
+    for (const itemId of itemIds) {
+      const en = await readName(`https://bdocodex.com/us/item/${itemId}/`, `bdocodex item ${itemId} (en)`)
+      if (!en) {
+        console.log(`bdocodex item ${itemId}: no EN name found, skipping`)
+        continue
+      }
+      const th = await readName(`https://bdocodex.com/th/item/${itemId}/`, `bdocodex item ${itemId} (th)`)
+      if (!th) {
+        console.log(`bdocodex item ${itemId} ("${en}"): no TH name found, skipping`)
+        continue
+      }
+      out.push({ en, th })
+      await saveThNames([{ en, th }], `https://bdocodex.com/th/item/${itemId}/`)
     }
-    const th = await readName(`https://bdocodex.com/th/item/${itemId}/`, `bdocodex item ${itemId} (th)`)
-    if (!th) {
-      console.log(`bdocodex item ${itemId} ("${en}"): no TH name found, skipping`)
-      return null
-    }
-    return { en, th }
   } finally {
     await browser.close().catch(() => {})
   }
+  return out
 }
 
 // CLI: npm run collect:bdocodex -- <id> [category]
@@ -418,15 +432,14 @@ export async function scrapeThItemName(itemId: number): Promise<{ en: string; th
 if (import.meta.url === `file://${process.argv[1]}`) {
   const mode = process.argv[2] === "item" ? "item" : "recipe"
   if (mode === "item") {
-    const itemId = Number(process.argv[3])
-    if (!Number.isInteger(itemId) || itemId <= 0) {
-      console.error("Usage: npm run collect:th-names -- <bdocodex-item-id>   e.g. 7704")
+    const itemIds = process.argv.slice(3).map(Number)
+    if (itemIds.length === 0 || itemIds.some((n) => !Number.isInteger(n) || n <= 0)) {
+      console.error("Usage: npm run collect:th-names -- <bdocodex-item-id> [more ids...]   e.g. 7704 4608 5408")
       process.exit(1)
     }
-    scrapeThItemName(itemId)
-      .then(async (r) => {
-        console.log(JSON.stringify(r, null, 2))
-        if (r) await saveThNames([r], `https://bdocodex.com/th/item/${itemId}/`)
+    scrapeThItemNames(itemIds)
+      .then(async (rows) => {
+        console.log(JSON.stringify(rows, null, 2))
       })
       .catch((err) => {
         console.error(`collect:th-names failed: ${err.message}`)
