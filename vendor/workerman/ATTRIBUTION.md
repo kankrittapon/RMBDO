@@ -27,7 +27,7 @@ Join key: `waypoint_key` — verified 370/370 drop entries exist in
 ## License status
 
 Upstream repo has **no LICENSE file** (checked 2026-09-08). Permission request
-filed at https://github.com/shrddr/workermanjs/issues — **status: PENDING**.
+filed at https://github.com/shrddr/workermanjs/issues/28 — **status: FILED, awaiting reply**.
 Use here is facts-only with credit + link back. **Remove-on-request:** if the
 author declines, delete this folder and all `node_resources` rows sourced from
 it (`source LIKE 'workerman@%'`), then switch to the `bdo-data-extractor`
