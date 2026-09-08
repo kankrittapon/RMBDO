@@ -29,6 +29,24 @@ if (!process.env.DATABASE_URL) {
 
 const BATCH_SIZE = Number(process.env.CRAFTING_DETAIL_BATCH_SIZE ?? 25)
 
+// Refresh mode: re-scrape CACHED details collected before the 2026-09-07
+// root-UL extractor rewrite (commit 8740e46, deployed Sep 07 17:33 UTC).
+// Pre-rewrite rows systematically UNDER-COUNT ingredients (missed
+// raw-material-only patterns, flattened/duplicated others, single-row
+// saves like Antidote Elixir's 1 row vs 4 live) - a user caught the gaps
+// in click-testing. Refresh renders union-of-variants via the current
+// extractor and saveCraftingDetail overwrites wholesale, so re-running is
+// safe; refreshed rows get a new collected_at and drop out of the next
+// refresh queue by themselves. Most-profitable-first (same reasoning as
+// the backfill seed: these are the drawers players actually open).
+// Usage: npm run collect:crafting-detail-batch -- refresh [batchSize]
+const REFRESH_MODE = process.argv[2] === "refresh"
+const REFRESH_CUTOFF = "2026-09-07T17:33:00Z"
+const EFFECTIVE_BATCH =
+  REFRESH_MODE && Number.isInteger(Number(process.argv[3])) && Number(process.argv[3]) > 0
+    ? Number(process.argv[3])
+    : BATCH_SIZE
+
 interface QueueItem {
   slug: string
   category: string | null
@@ -45,13 +63,24 @@ async function main() {
 
   // Seed the queue from known profitable recipes, most-profitable-first -
   // these are the ones a player is actually likely to open the drawer for.
-  const { rows: seedRows } = await client.query(
-    `SELECT cr.recipe_slug, cr.category
-     FROM crafting_recipes cr
-     LEFT JOIN crafting_recipe_details d ON d.recipe_slug = cr.recipe_slug
-     WHERE cr.recipe_slug IS NOT NULL AND d.recipe_slug IS NULL
-     ORDER BY cr.profit_per_hour DESC NULLS LAST`,
-  )
+  // In REFRESH_MODE the seed is instead cached rows older than the
+  // extractor rewrite (same ordering) - see REFRESH_CUTOFF above.
+  const { rows: seedRows } = REFRESH_MODE
+    ? await client.query(
+        `SELECT d.recipe_slug AS recipe_slug, d.category AS category
+         FROM crafting_recipe_details d
+         LEFT JOIN crafting_recipes cr ON cr.recipe_slug = d.recipe_slug
+         WHERE d.recipe_slug IS NOT NULL AND d.collected_at < $1
+         ORDER BY cr.profit_per_hour DESC NULLS LAST`,
+        [REFRESH_CUTOFF],
+      )
+    : await client.query(
+        `SELECT cr.recipe_slug, cr.category
+         FROM crafting_recipes cr
+         LEFT JOIN crafting_recipe_details d ON d.recipe_slug = cr.recipe_slug
+         WHERE cr.recipe_slug IS NOT NULL AND d.recipe_slug IS NULL
+         ORDER BY cr.profit_per_hour DESC NULLS LAST`,
+      )
   // Everything already cached, so newly-discovered sub-recipes that
   // happen to already have a details row don't get re-queued.
   const { rows: cachedRows } = await client.query(`SELECT recipe_slug FROM crafting_recipe_details`)
@@ -61,25 +90,36 @@ async function main() {
   const queued = new Set<string>() // slugs already added to the queue this run, to avoid duplicates
   const queue: QueueItem[] = []
   for (const r of seedRows) {
-    if (!cached.has(r.recipe_slug) && !queued.has(r.recipe_slug)) {
+    // Refresh mode re-processes cached slugs on purpose (the save
+    // overwrites), so the cached-check is backfill-only.
+    if (!REFRESH_MODE && cached.has(r.recipe_slug)) continue
+    if (!queued.has(r.recipe_slug)) {
       queue.push({ slug: r.recipe_slug, category: r.category })
       queued.add(r.recipe_slug)
     }
   }
 
   if (queue.length === 0) {
-    console.log("No uncached recipes left to backfill - every known recipe already has an ingredient-tree cache entry.")
+    console.log(
+      REFRESH_MODE
+        ? "No stale recipes left to refresh - every cached detail postdates the extractor rewrite."
+        : "No uncached recipes left to backfill - every known recipe already has an ingredient-tree cache entry.",
+    )
     return
   }
 
-  console.log(`Backfilling up to ${BATCH_SIZE} recipe(s), starting from ${queue.length} known uncached recipe(s), following sub-recipes as they're discovered.`)
+  console.log(
+    REFRESH_MODE
+      ? `Refreshing up to ${EFFECTIVE_BATCH} stale recipe(s), starting from ${queue.length} pre-rewrite cached recipe(s), most-profitable-first.`
+      : `Backfilling up to ${EFFECTIVE_BATCH} recipe(s), starting from ${queue.length} known uncached recipe(s), following sub-recipes as they're discovered.`,
+  )
   let ok = 0
   let failed = 0
   let processed = 0
 
-  while (queue.length > 0 && processed < BATCH_SIZE) {
+  while (queue.length > 0 && processed < EFFECTIVE_BATCH) {
     const item = queue.shift()!
-    if (cached.has(item.slug)) continue // could have been discovered twice via different parents
+    if (!REFRESH_MODE && cached.has(item.slug)) continue // could have been discovered twice via different parents
     processed++
     try {
       const detail = await scrapeCraftingDetail(item.slug)
@@ -111,7 +151,7 @@ async function main() {
     }
     await politeDelay()
   }
-  console.log(`Backfill done: ${ok} saved, ${failed} failed, ${queue.length} still queued for next run.`)
+  console.log(`${REFRESH_MODE ? "Refresh" : "Backfill"} done: ${ok} saved, ${failed} failed, ${queue.length} still queued for next run.`)
 }
 
 main().catch((err) => {

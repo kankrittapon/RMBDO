@@ -25,6 +25,13 @@ npm run normalize
 # instead of depending on ENABLE_ON_DEMAND_SCRAPE on a local dev server.
 npm run collect:crafting-detail-batch
 
+# Refresh pre-2026-09-07 detail rows, 15/day (see REFRESH_MODE in
+# craftingDetailBatch.ts). Old rows under-count ingredients (single-row
+# saves like Antidote Elixir's 1 row vs 4 live) - a user caught the gaps.
+# Self-terminating: refreshed rows postdate the cutoff and drop out, so
+# this becomes a no-op once the backlog (479 as of 2026-09-08) converges.
+npm run collect:crafting-detail-batch -- refresh 15
+
 # Fills icon_url for any new market/recipe/ingredient rows the runs above
 # just added. Pure DB work (name/ID lookup against a public data dump +
 # Pearl Abyss's own icon CDN) - no scraping, safe to run every day.
