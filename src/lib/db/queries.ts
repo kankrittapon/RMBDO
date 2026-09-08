@@ -408,6 +408,19 @@ export async function searchNodesByResource(
 }
 
 // ---------------------------------------------------------------------------
+// Thai item-name translations (item_name_translations). Missing row =
+// "show English" - the client never blanks or guesses a name.
+// ---------------------------------------------------------------------------
+
+export async function getItemNameTranslations(): Promise<Record<string, string>> {
+  const pool = getPool()
+  const { rows } = await pool.query(`SELECT en_name, th_name FROM item_name_translations`)
+  const map: Record<string, string> = {}
+  for (const r of rows) map[r.en_name as string] = r.th_name as string
+  return map
+}
+
+// ---------------------------------------------------------------------------
 // bdocodex supplemental recipes. Separate tables, separate functions -
 // NEVER merged into the bdolytics crafting_recipes queries above. These
 // rows carry no profitability data by design (bdocodex computes none):

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { ChevronRight, ChevronDown, Loader2, AlertCircle, ShoppingCart, Pickaxe, Wheat, Package } from 'lucide-react';
 import { NodeSourceLookup } from './NodeSourceLookup';
+import { useThNames } from '@/hooks/useThNames';
 
 // Renders one ingredient row, and — if it's a sub-recipe — lets it expand
 // inline into its own ingredient list on click, recursively. Replaces the
@@ -67,6 +68,9 @@ export const IngredientTreeNode: React.FC<IngredientTreeNodeProps> = ({
   const [detail, setDetail] = useState<RecipeDetailLite | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Display name only (TH when toggled, EN fallback) - every logic key
+  // below (inventory, sub-recipe matching, node lookup) stays English.
+  const { t } = useThNames();
 
   const totalReq = ingredient.quantity * parentBatch;
   const owned = inventory[ingredient.name] ?? 0;
@@ -171,7 +175,7 @@ export const IngredientTreeNode: React.FC<IngredientTreeNodeProps> = ({
                 <img src={ingredient.iconUrl} alt="" className="w-5 h-5 rounded shrink-0 bg-bg-surface-3" loading="lazy" />
               )}
               <span onClick={toggleExpand} className={canExpand ? 'cursor-pointer' : undefined}>
-                {ingredient.name}
+                {t(ingredient.name)}
               </span>
               {ingredient.isSubRecipe && (
                 <span className="text-[10px] px-1 py-0.5 rounded bg-brand-primary/15 border border-brand-primary/30 text-brand-primary">

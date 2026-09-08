@@ -20,6 +20,7 @@
     "collect:daily": "npm run collect:daily -w collector",
     "collect:crafting-detail-batch": "npm run collect:crafting-detail-batch -w collector",
     "collect:bdocodex": "npm run collect:bdocodex -w collector",
+    "collect:th-names": "npm run collect:th-names -w collector",
     "collect:all": "npm run collect:all -w collector",
     "normalize": "node --env-file=.env scripts/normalize.mjs",
     "backfill:icons": "node --env-file=.env scripts/backfill-icons.mjs"

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Loader2, AlertCircle, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useThNames } from '@/hooks/useThNames';
 
 interface YieldItem {
   itemId: number | null;
@@ -54,6 +55,9 @@ export const NodeYieldsDrawer: React.FC<NodeYieldsDrawerProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [kind, setKind] = useState<'normal' | 'giant'>('normal');
+  // Yield item names only (TH when toggled, EN fallback) - node proper
+  // names stay English (TH node geography is out of scope for v1).
+  const { t } = useThNames();
 
   useEffect(() => {
     if (waypointKey === null) {
@@ -200,7 +204,7 @@ export const NodeYieldsDrawer: React.FC<NodeYieldsDrawerProps> = ({
                       className="flex items-center justify-between p-2 rounded-lg bg-bg-surface-2 border border-border-subtle text-xs"
                     >
                       <div>
-                        <span className="font-bold text-text-primary">{it.name}</span>
+                        <span className="font-bold text-text-primary">{t(it.name)}</span>
                         <span className="ml-2 text-text-muted font-mono">×{fmt(it.quantity)}</span>
                       </div>
                       <span className={cn('font-mono', it.value === null ? 'text-text-muted' : 'text-text-primary')}>

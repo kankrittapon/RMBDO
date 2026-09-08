@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Loader2, Wheat } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useThNames } from '@/hooks/useThNames';
 
 interface NodeHit {
   waypointKey: number;
@@ -33,6 +34,8 @@ export const NodeSourceLookup: React.FC<{ ingredientName: string }> = ({ ingredi
   const [kind, setKind] = useState<'normal' | 'giant'>('normal');
   const [hits, setHits] = useState<NodeHit[] | null>(null);
   const [loading, setLoading] = useState(false);
+  // Display names only - lookup itself always uses the English name.
+  const { t } = useThNames();
 
   useEffect(() => {
     if (!open) return;
@@ -103,7 +106,7 @@ export const NodeSourceLookup: React.FC<{ ingredientName: string }> = ({ ingredi
 
           {!loading && hits !== null && hits.length === 0 && (
             <p className="text-[11px] text-text-muted">
-              ไม่พบโหนดที่ขุด {ingredientName} ได้ — อาจเป็นของ vendor/farm-only หรือชื่อไม่ตรงกับฐานข้อมูลโหนด
+              ไม่พบโหนดที่ขุด {t(ingredientName)} ได้ — อาจเป็นของ vendor/farm-only หรือชื่อไม่ตรงกับฐานข้อมูลโหนด
             </p>
           )}
 
@@ -120,7 +123,7 @@ export const NodeSourceLookup: React.FC<{ ingredientName: string }> = ({ ingredi
                 >
                   <div className="min-w-0">
                     <span className="font-bold text-text-primary truncate">
-                      {h.name ?? `#${h.waypointKey}`}
+                      {h.name ? t(h.name) : `#${h.waypointKey}`}
                     </span>
                     <span className="ml-1.5 text-text-muted font-mono text-[10px]">
                       #{h.waypointKey} • {h.cpCost} CP • ×{fmt(qty)}

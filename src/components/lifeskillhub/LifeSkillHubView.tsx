@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ChefHat, Search, TrendingUp, Info, Sparkles, Settings2, Save, CheckCircle2, X, Loader2, AlertCircle, CloudDownload, RefreshCw, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IngredientTreeNode } from './IngredientTreeNode';
+import { useThNames } from '@/hooks/useThNames';
 import type { Session } from '@supabase/supabase-js';
 
 const INVENTORY_KEY = "rmbdo_inventory_v1";
@@ -124,6 +125,8 @@ interface LifeSkillHubViewProps {
 
 export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = null }) => {
   const isPersonalUnlocked = Boolean(session);
+  // Item/recipe names EN/TH (codex-sourced, EN fallback). UI chrome stays English.
+  const { lang, setLang, t } = useThNames();
   const [recipes, setRecipes] = useState<CraftingRecipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -275,7 +278,9 @@ export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = nu
     const controller = new AbortController();
     setLoading(true);
     const params = new URLSearchParams();
-    if (search.trim()) params.set('q', search.trim());
+    // TH search matches translated names client-side (server only knows
+    // EN), so fetch unfiltered and filter below - same 500-row shape.
+    if (search.trim() && lang !== 'th') params.set('q', search.trim());
     if (category) params.set('category', category);
     const qs = params.toString();
     fetch(`/api/crafting-recipes${qs ? `?${qs}` : ''}`, { signal: controller.signal })
@@ -284,13 +289,23 @@ export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = nu
       .catch(() => {})
       .finally(() => setLoading(false));
     return () => controller.abort();
-  }, [search, category]);
+  }, [search, category, lang]);
+
+  // Visible rows: EN mode trusts the server filter; TH mode also matches
+  // translated recipe names (server never sees Thai).
+  const visibleRecipes = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (lang !== 'th' || !q) return recipes;
+    return recipes.filter(
+      (r) => r.recipeName.toLowerCase().includes(q) || t(r.recipeName).toLowerCase().includes(q),
+    );
+  }, [recipes, search, lang, t]);
 
   // Supplemental list - same filters, separate endpoint
   useEffect(() => {
     setSuppLoading(true);
     const params = new URLSearchParams();
-    if (search.trim()) params.set('q', search.trim());
+    if (search.trim() && lang !== 'th') params.set('q', search.trim());
     if (category) params.set('category', category);
     const qs = params.toString();
     fetch(`/api/bdocodex-recipes${qs ? `?${qs}` : ''}`, { cache: 'no-store' })
@@ -298,7 +313,15 @@ export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = nu
       .then((data: { recipes?: BdocodexRecipe[] }) => setSupp(data.recipes ?? []))
       .catch(() => setSupp([]))
       .finally(() => setSuppLoading(false));
-  }, [search, category]);
+  }, [search, category, lang]);
+
+  const visibleSupp = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (lang !== 'th' || !q) return supp;
+    return supp.filter(
+      (r) => r.recipeName.toLowerCase().includes(q) || t(r.recipeName).toLowerCase().includes(q),
+    );
+  }, [supp, search, lang, t]);
 
   // Supplemental detail when its drawer opens
   useEffect(() => {
@@ -477,7 +500,7 @@ export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = nu
         {overallTop && (
           <div className="p-3 rounded-lg bg-brand-gold/10 border border-brand-gold/30">
             <span className="text-[10px] font-mono text-brand-gold uppercase block mb-1">อันดับ 1 โดยรวม</span>
-            <p className="text-sm font-bold text-text-primary">{overallTop.recipeName}</p>
+            <p className="text-sm font-bold text-text-primary">{t(overallTop.recipeName)}</p>
             <p className="text-xs font-mono text-text-muted">{overallTop.category}</p>
             <p className="text-lg font-mono font-bold text-emerald-400 mt-1">{fmtSilver(overallTop.profitPerHour)} Silver/ชม.</p>
           </div>
@@ -496,7 +519,7 @@ export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = nu
                 </div>
                 {top ? (
                   <>
-                    <p className="text-xs font-bold text-text-primary truncate">{top.recipeName}</p>
+                    <p className="text-xs font-bold text-text-primary truncate">{t(top.recipeName)}</p>
                     <p className="text-sm font-mono font-bold text-emerald-400">{fmtSilver(top.profitPerHour)} /ชม.</p>
                     {top.personalized && (
                       <span className="text-[9px] font-mono text-emerald-400">✓ ตาม mastery จริง</span>
@@ -525,6 +548,27 @@ export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = nu
             />
           </div>
           <div className="flex gap-1.5 flex-wrap">
+            <button
+              onClick={() => setLang('en')}
+              title="Show item names in English"
+              className={cn(
+                'px-2.5 py-1.5 rounded-lg text-[11px] font-mono border font-bold',
+                lang === 'en' ? 'bg-brand-primary/15 border-brand-primary/40 text-text-primary' : 'bg-bg-surface-3 border-border-subtle text-text-muted hover:text-text-primary'
+              )}
+            >
+              EN
+            </button>
+            <button
+              onClick={() => setLang('th')}
+              title="แสดงชื่อวัตถุดิบภาษาไทย (จาก codex, ไม่มีแปลโชว์อังกฤษ)"
+              className={cn(
+                'px-2.5 py-1.5 rounded-lg text-[11px] font-mono border font-bold',
+                lang === 'th' ? 'bg-brand-primary/15 border-brand-primary/40 text-text-primary' : 'bg-bg-surface-3 border-border-subtle text-text-muted hover:text-text-primary'
+              )}
+            >
+              ไทย
+            </button>
+            <span className="w-px bg-border-subtle mx-1" />
             <button
               onClick={() => setCategory('')}
               className={cn(
@@ -568,10 +612,10 @@ export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = nu
               {loading && (
                 <tr><td colSpan={7} className="p-4 text-center text-text-muted">กำลังโหลด...</td></tr>
               )}
-              {!loading && recipes.length === 0 && (
+              {!loading && visibleRecipes.length === 0 && (
                 <tr><td colSpan={7} className="p-4 text-center text-text-muted">ไม่มีข้อมูล - รัน `npm run collect:crafting` แล้ว `npm run normalize` ก่อน</td></tr>
               )}
-              {recipes.map((r) => (
+              {visibleRecipes.map((r) => (
                 <tr
                   key={r.recipeSlug ? `${r.recipeSlug}` : `${r.category}-${r.recipeName}`}
                   onClick={() => setSelected(r)}
@@ -584,7 +628,7 @@ export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = nu
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={r.iconUrl} alt="" className="w-6 h-6 rounded shrink-0 bg-bg-surface-3" loading="lazy" />
                       )}
-                      <span>{r.recipeName}</span>
+                      <span>{t(r.recipeName)}</span>
                       {r.recipeSlug && <span className="text-[10px] text-brand-primary/60">↗</span>}
                     </div>
                   </td>
@@ -616,11 +660,11 @@ export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = nu
         </div>
         {suppLoading ? (
           <p className="text-xs text-text-muted">กำลังโหลด...</p>
-        ) : supp.length === 0 ? (
+        ) : visibleSupp.length === 0 ? (
           <p className="text-xs text-text-muted">ยังไม่มีสูตร supplemental — เพิ่มใน data/bdocodex-missing.json แล้วรัน `npm run collect:bdocodex -- &lt;id&gt;`</p>
         ) : (
           <div className="space-y-1.5">
-            {supp.map((r) => (
+            {visibleSupp.map((r) => (
               <div
                 key={r.bdocodexId}
                 onClick={() => setSelectedSupp(r)}
@@ -631,7 +675,7 @@ export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = nu
                   <img src={r.iconUrl} alt="" className="w-6 h-6 rounded shrink-0 bg-bg-surface-3" loading="lazy" />
                 )}
                 <div className="min-w-0">
-                  <span className="text-xs font-bold text-text-primary">{r.recipeName}</span>
+                  <span className="text-xs font-bold text-text-primary">{t(r.recipeName)}</span>
                   <span className="ml-2 text-[10px] font-mono text-text-muted">
                     {r.category}{r.skillLevel ? ` • ${r.skillLevel}` : ''}
                   </span>
@@ -652,7 +696,7 @@ export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = nu
           <div className="relative w-full max-w-lg bg-bg-surface-1 border-l border-border-subtle shadow-2xl flex flex-col max-h-screen">
             <div className="flex items-center justify-between p-4 border-b border-border-subtle">
               <div className="space-y-1">
-                <h2 className="text-sm font-bold text-text-primary">{selected.recipeName}</h2>
+                <h2 className="text-sm font-bold text-text-primary">{t(selected.recipeName)}</h2>
                 <p className="text-[11px] font-mono text-text-muted">
                   {selected.category} • {selected.recipeSlug ? `/${selected.recipeSlug}` : "no slug"}
                   {selected.personalized && <span className="ml-2 text-emerald-400">✓ personalized</span>}
@@ -852,7 +896,7 @@ export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = nu
           <div className="relative w-full max-w-lg bg-bg-surface-1 border-l border-border-subtle shadow-2xl flex flex-col max-h-screen">
             <div className="flex items-center justify-between p-4 border-b border-border-subtle">
               <div className="space-y-1">
-                <h2 className="text-sm font-bold text-text-primary">{selectedSupp.recipeName}</h2>
+                <h2 className="text-sm font-bold text-text-primary">{t(selectedSupp.recipeName)}</h2>
                 <p className="text-[11px] font-mono text-text-muted">
                   {selectedSupp.category}{selectedSupp.skillLevel ? ` • ${selectedSupp.skillLevel}` : ''}{selectedSupp.exp ? ` • EXP ${selectedSupp.exp}` : ''}
                 </p>

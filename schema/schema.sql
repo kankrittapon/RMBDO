@@ -441,6 +441,23 @@ CREATE INDEX idx_bdocodex_recipes_category ON bdocodex_recipes(category);
 CREATE INDEX idx_bdocodex_ingredients_recipe ON bdocodex_recipe_ingredients(bdocodex_id);
 
 -- ---------------------------------------------------------
+-- Thai item-name translations (2026-09-08). Keyed by exact English name,
+-- never guessed (missing row = show English). Sources: bdocodex /th/,
+-- bdolytics /th/. Keep in sync with
+-- schema/migrations/003_item_name_translations.sql.
+-- ---------------------------------------------------------
+
+CREATE TABLE item_name_translations (
+    en_name       TEXT PRIMARY KEY,
+    th_name       TEXT NOT NULL,
+    source        TEXT NOT NULL,
+    source_url    TEXT,
+    collected_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_item_name_translations_th ON item_name_translations(th_name);
+
+-- ---------------------------------------------------------
 -- Indexes
 -- ---------------------------------------------------------
 
