@@ -40,7 +40,7 @@ export const AccountSetupWizard: React.FC<AccountSetupWizardProps> = ({ store, o
   } = store;
 
   const [step, setStep] = useState<number>(1);
-  const totalSteps = 8;
+  const totalSteps = 7;
 
   // Local stats state for Step 1
   const [apInput, setApInput] = useState<string>(profile.stats.ap ? String(profile.stats.ap) : '');
@@ -475,68 +475,12 @@ export const AccountSetupWizard: React.FC<AccountSetupWizardProps> = ({ store, o
           </div>
         )}
 
-        {/* STEP 6: Journals & Permanent Stats */}
+        {/* STEP 6: Treasures & Infrastructure */}
         {step === 6 && (
           <div className="space-y-4 animate-in fade-in">
             <div className="space-y-1">
               <h2 className="text-base font-heading font-bold text-text-primary">
-                ขั้นตอนที่ 6: บันทึกการผจญภัย & สเตตัสถาวรประจำตระกูล
-              </h2>
-              <p className="text-xs text-text-secondary">
-                ติ๊กเลือกสมุดบันทึกการผจญภัยที่คุณเคลียร์เสร็จแล้ว (รับ AP/DP ถาวร)
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {[
-                { id: 'bartali_1', name: 'บันทึกอีกอร์ บาร์ทัลลี่ (Igor Bartali)', bonus: 'AP +4, DP +2, HP +90' },
-                { id: 'deve_1', name: 'บันทึกสารานุกรมเดฟ (Deve Encyclopedia)', bonus: 'AP +1' },
-                { id: 'dorin_1', name: 'บันทึกลับโดริน มอร์กริม (Dorin Morgrim)', bonus: 'AP +1, DP +1' },
-                { id: 'herald_1', name: 'บันทึกนักข่าวรูบิน (Herald Journal)', bonus: 'Stamina +100, Max Weight' },
-                { id: 'pavino_1', name: 'บันทึกพาวิโน เกรโก (Pavino Greko)', bonus: 'Max HP +600' },
-                { id: 'barrier_1', name: 'เควสปราการแห่งการต่อสู้ (Barrier of Infestation)', bonus: 'AP +1, DP +1' },
-                { id: 'loml_1', name: 'ศาลาราชันประเทศแห่งรุ่งอรุณ (LoML Boss Blitz)', bonus: 'AP +1, DP +1' }
-              ].map((j) => {
-                const isDone = profile.journalChapters[j.id] === 'COMPLETED';
-
-                return (
-                  <div
-                    key={j.id}
-                    onClick={() => store.setJournalChapterStatus(j.id, isDone ? 'NOT_STARTED' : 'COMPLETED')}
-                    className={cn(
-                      "p-3 rounded-lg border transition-all cursor-pointer flex items-start gap-2.5",
-                      isDone
-                        ? "bg-emerald-500/10 border-emerald-500/40"
-                        : "bg-bg-surface-2 border-border-subtle hover:border-border-active"
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        "w-4 h-4 rounded flex items-center justify-center shrink-0 mt-0.5 border transition-colors",
-                        isDone
-                          ? "bg-emerald-500 text-white border-emerald-500"
-                          : "border-border-subtle bg-bg-surface-3"
-                      )}
-                    >
-                      {isDone && <Check className="w-3 h-3" />}
-                    </div>
-                    <div className="text-xs space-y-0.5">
-                      <div className="font-bold text-text-primary">{j.name}</div>
-                      <div className="text-[10px] font-mono text-emerald-400">{j.bonus}</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* STEP 7: Treasures & Infrastructure */}
-        {step === 7 && (
-          <div className="space-y-4 animate-in fade-in">
-            <div className="space-y-1">
-              <h2 className="text-base font-heading font-bold text-text-primary">
-                ขั้นตอนที่ 7: สมบัติโบราณ & โครงสร้างพื้นฐานบัญชี
+                ขั้นตอนที่ 6: สมบัติโบราณ & โครงสร้างพื้นฐานบัญชี
               </h2>
               <p className="text-xs text-text-secondary">
                 ติ๊กเลือกสมบัติโบราณและสิ่งอำนวยความสะดวกที่คุณครอบครองแล้ว
@@ -586,12 +530,12 @@ export const AccountSetupWizard: React.FC<AccountSetupWizardProps> = ({ store, o
           </div>
         )}
 
-        {/* STEP 8: Summary & Start Dashboard */}
-        {step === 8 && (
+        {/* STEP 7: Summary & Start Dashboard */}
+        {step === 7 && (
           <div className="space-y-4 animate-in fade-in">
             <div className="space-y-1">
               <h2 className="text-base font-heading font-bold text-text-primary">
-                ขั้นตอนที่ 8: ตรวจสอบและเริ่มต้นเข้าสู่หน้าแดชบอร์ด
+                ขั้นตอนที่ 7: ตรวจสอบและเริ่มต้นเข้าสู่หน้าแดชบอร์ด
               </h2>
               <p className="text-xs text-text-secondary">
                 ระบบได้รวบรวมข้อมูลที่คุณติ๊กเลือก และพร้อมคำนวณเป้าหมายถัดไปที่คุณควรทำใน Black Desert Online

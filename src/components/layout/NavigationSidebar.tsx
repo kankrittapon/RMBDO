@@ -72,7 +72,7 @@ const navSections: NavSection[] = [
     items: [
       { id: 'dashboard', label: 'ภาพรวมบัญชี', englishLabel: 'Dashboard', icon: LayoutDashboard },
       { id: 'crafting', label: 'Life Skill Hub', englishLabel: 'วันนี้ทำอะไรดี', icon: ChefHat, badge: 'หลัก', badgeColor: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' },
-      { id: 'roadmap', label: 'เส้นทางพัฒนา', englishLabel: 'Roadmap Timeline', icon: Milestone, badge: '9 จุดตรวจ' },
+      { id: 'roadmap', label: 'เส้นทางพัฒนา', englishLabel: 'Roadmap Timeline', icon: Milestone, badge: '8 จุดตรวจ' },
     ],
   },
   {

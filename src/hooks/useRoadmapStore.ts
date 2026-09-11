@@ -17,7 +17,6 @@ import { kharazadPiecesList } from '@/data/gear/kharazadAccessories';
 import { olviaSubCoursesList } from '@/data/progression/olviaSubCourses';
 import { masterCheckpointsList } from '@/data/progression/checkpoints';
 import { treasureList } from '@/data/treasures/treasureList';
-import { permanentJournals } from '@/data/permanent/journals';
 import { initialGearSlots } from '@/data/gear/gearSlots';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase/client';
@@ -80,17 +79,6 @@ export const initialEmptyProfile: PlayerProfile = {
     acc[c.id] = 0;
     return acc;
   }, {} as Record<string, number>),
-  journalChapters: {
-    bartali_1: 'UNKNOWN',
-    bartali_2: 'UNKNOWN',
-    bartali_3: 'UNKNOWN',
-    deve_1: 'UNKNOWN',
-    dorin_1: 'UNKNOWN',
-    herald_1: 'UNKNOWN',
-    pavino_1: 'UNKNOWN',
-    barrier_1: 'UNKNOWN',
-    loml_1: 'UNKNOWN'
-  },
   treasurePieces: {
     panacea: false,
     tintinnabulum: false,
@@ -404,16 +392,6 @@ export function useRoadmapStore() {
     }));
   }, []);
 
-  const setJournalChapterStatus = useCallback((chapterId: string, status: CheckpointStatus) => {
-    setProfile((prev) => ({
-      ...prev,
-      journalChapters: {
-        ...prev.journalChapters,
-        [chapterId]: status
-      }
-    }));
-  }, []);
-
   const toggleTreasurePiece = useCallback((pieceId: string) => {
     setProfile((prev) => ({
       ...prev,
@@ -696,7 +674,6 @@ export function useRoadmapStore() {
     setSlumberingOriginTaskStatus,
     setKharazadTaskStatus,
     setSubCourseProgress,
-    setJournalChapterStatus,
     toggleTreasurePiece,
     toggleSafetyItemLock,
     updateCustomNotes,

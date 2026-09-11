@@ -60,7 +60,6 @@ export interface PlayerProfile {
   slumberingOriginTasks: Record<string, CheckpointStatus>;
   kharazadTasks: Record<string, CheckpointStatus>;
   subCourseProgress: Record<string, number>;
-  journalChapters: Record<string, CheckpointStatus>;
   treasurePieces: Record<string, boolean>;
   // Per-checkpoint content corrections made by the user in-app (the TS
   // data files are defaults, not fixed truth). Displayed with a

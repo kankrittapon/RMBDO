@@ -229,23 +229,6 @@ export const masterCheckpointsList: CheckpointNode[] = [
     order: 7
   },
   {
-    id: "cp_permanent_journals",
-    paths: ['grind', 'life'],
-    title: "8. บันทึกการผจญภัย & สเตตัสถาวรประจำตระกูล (Permanent Journals)",
-    englishTitle: "Adventure Logs & Permanent Family AP/DP Stats",
-    category: "PERMANENT_STATS",
-    shortDesc: "เคลียร์บันทึกอีกอร์ บาร์ทัลลี่, เดฟ, โดริน มอร์กริม, พาวิโน เกรโก และศาลาราชันแห่งอรุณ",
-    requiredAction: "ทำเควสในสมุดบันทึกการผจญภัยทุกเล่มเพื่อรับ AP ถาวร +9, DP ถาวร +9 และ Max HP +1,000+",
-    requirements: ["บันทึกบาร์ทัลลี่ 15 เล่ม", "บันทึกเดฟ 6 เล่ม", "บันทึกโดริน", "บอสศาลาราชัน 5 ธาตุ"],
-    rewards: ["AP ถาวร +9", "DP ถาวร +9", "Max HP +1,150", "Max Stamina +100"],
-    whyImportant: "เป็นสเตตัสฟรีที่ติดตัวทุกตัวละครในตระกูลแบบถาวร ดัน AP/DP ทะลุ Bracket โดยไม่ต้องเปลี่ยนของ",
-    unlocksWhat: "โบนัสสเตตัส AP/DP Bracket ระดับสูง",
-    nextRecommendedStep: "เริ่มทำบันทึกบาร์ทัลลี่เล่ม 1-10 เป็นอันดับแรกเพื่อรับ AP +4 ทันที",
-    dataSource: "Adventure Log Codex 2026",
-    lastVerified: "2026-09-01",
-    order: 8
-  },
-  {
     id: "cp_infinite_potions",
     paths: ['grind', 'life'],
     title: "9. น้ำยาฟื้นฟูพลังชีวิตและมานาไร้ขีดจำกัด (Infinite Potions)",

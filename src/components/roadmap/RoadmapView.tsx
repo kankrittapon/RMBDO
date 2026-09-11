@@ -57,7 +57,6 @@ export const RoadmapView: React.FC<RoadmapViewProps> = ({ store }) => {
     { id: 'ACADEMY', label: 'Olvia ต่อสู้' },
     { id: 'LIFE_SKILL', label: 'Olvia Life' },
     { id: 'ENDGAME_GEAR', label: 'ราชัน & เกราะเทพ' },
-    { id: 'PERMANENT_STATS', label: 'บันทึกผจญภัย' },
     { id: 'TREASURE', label: 'สมบัติโบราณ' }
   ];
 
