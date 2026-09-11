@@ -5,6 +5,10 @@ export interface CheckpointNode {
   title: string;
   englishTitle: string;
   category: string;
+  // Progression paths this checkpoint belongs to. grind = monster farming
+  // / gear track, life = life-skill track. Drives the roadmap's path tabs;
+  // checkpoints relevant to everyone carry both.
+  paths: Array<'grind' | 'life'>;
   shortDesc: string;
   requiredAction: string;
   requirements: string[];
@@ -22,6 +26,7 @@ export interface CheckpointNode {
 export const masterCheckpointsList: CheckpointNode[] = [
   {
     id: "cp_season",
+    paths: ['grind', 'life'],
     title: "1. สำเร็จการศึกษาเซิร์ฟเวอร์ซีซั่น",
     englishTitle: "Season Server Graduation & Full PEN Tuvala",
     category: "FOUNDATION",
@@ -51,6 +56,7 @@ export const masterCheckpointsList: CheckpointNode[] = [
   },
   {
     id: "cp_hyperboost",
+    paths: ['grind'],
     title: "2. ไฮเปอร์บูสต์ & บริหารจัดการอาวุธดวงดาวรัตติกาล PEN",
     englishTitle: "Hyperboost & PEN Blackstar Weapon Allocation",
     category: "WEAPONS",
@@ -85,6 +91,7 @@ export const masterCheckpointsList: CheckpointNode[] = [
   },
   {
     id: "cp_olvia_combat",
+    paths: ['grind'],
     title: "3. สถาบันฝึกฝนการต่อสู้ Olvia Academy (Combat)",
     englishTitle: "Olvia Combat Academy & Core PvE Specialization",
     category: "ACADEMY",
@@ -119,6 +126,7 @@ export const masterCheckpointsList: CheckpointNode[] = [
   },
   {
     id: "cp_olvia_life",
+    paths: ['life'],
     title: "4. สถาบันฝึกฝนสายอาชีพ Olvia Academy (Life Skill)",
     englishTitle: "Olvia Life Skill Academy & Imperial Delivery",
     category: "LIFE_SKILL",
@@ -151,6 +159,7 @@ export const masterCheckpointsList: CheckpointNode[] = [
   },
   {
     id: "cp_sovereign_forge",
+    paths: ['grind'],
     title: "5. หลอมสร้างอาวุธราชันครบ 3 ชิ้น (Sovereign Weapon Forge)",
     englishTitle: "Sovereign Weapon Synthesis - Main / Awakening / Sub",
     category: "ENDGAME_GEAR",
@@ -184,6 +193,7 @@ export const masterCheckpointsList: CheckpointNode[] = [
   },
   {
     id: "cp_slumbering_armors",
+    paths: ['grind'],
     title: "6. เซ็ตชุดเกราะเทพผู้ล่วงลับครบ 4 ชิ้น (Slumbering Origin Quad)",
     englishTitle: "Slumbering Origin Armor Quad (Labreska, Fallen God, Dahn, Ator)",
     category: "ENDGAME_GEAR",
@@ -202,6 +212,7 @@ export const masterCheckpointsList: CheckpointNode[] = [
   },
   {
     id: "cp_kharazad_accessories",
+    paths: ['grind'],
     title: "7. เครื่องประดับคาราซัด PEN ครบ 6 ชิ้น (Kharazad Accessory Set)",
     englishTitle: "Full PEN Kharazad Accessories via Alustin's Support",
     category: "ENDGAME_GEAR",
@@ -219,6 +230,7 @@ export const masterCheckpointsList: CheckpointNode[] = [
   },
   {
     id: "cp_permanent_journals",
+    paths: ['grind', 'life'],
     title: "8. บันทึกการผจญภัย & สเตตัสถาวรประจำตระกูล (Permanent Journals)",
     englishTitle: "Adventure Logs & Permanent Family AP/DP Stats",
     category: "PERMANENT_STATS",
@@ -235,6 +247,7 @@ export const masterCheckpointsList: CheckpointNode[] = [
   },
   {
     id: "cp_infinite_potions",
+    paths: ['grind', 'life'],
     title: "9. น้ำยาฟื้นฟูพลังชีวิตและมานาไร้ขีดจำกัด (Infinite Potions)",
     englishTitle: "Ornette & Odore Spirit Essence (Infinite HP/MP)",
     category: "TREASURE",
@@ -248,21 +261,5 @@ export const masterCheckpointsList: CheckpointNode[] = [
     dataSource: "Infinite Potion Drop Tables",
     lastVerified: "2026-09-01",
     order: 9
-  },
-  {
-    id: "cp_war_readiness",
-    title: "10. ความพร้อมสำหรับสงครามฐานและสงครามปราสาท (War Readiness)",
-    englishTitle: "7-Pillar Node War & Siege Readiness Audit",
-    category: "WAR_READY",
-    shortDesc: "ตรวจสอบความพร้อม 7 ด้าน: อุปกรณ์, สเตตัสถาวร, สมบัติ, พรีเซ็ตบัฟ, พรีเซ็ตอัญมณี PvP, และความชำนาญอาชีพ",
-    requiredAction: "ผ่านเกณฑ์ขั้นต่ำ 7 เสาหลัก: GS 700+, น้ำยาฟื้นฟูโอเนท, คริสตัล PvP, และน้ำยาบัฟสงครามครบเซ็ต",
-    requirements: ["GS 700+ (AP 305+ / DP 395+)", "น้ำยาโอเนท (Infinite HP)", "บัฟน้ำหอม/อาหาร/อีลิกเซอร์ PvP ครบ"],
-    rewards: ["ความพร้อมในการเข้าร่วมกิลด์ระดับแนวหน้าใน Node War Tier 2-4 และ Siege War"],
-    whyImportant: "ป้องกันการโดนวันช็อต (One-shot) ในสนามรบ และเพิ่มดาเมจเบิสต์ในการสังหารเป้าหมาย",
-    unlocksWhat: "เกียรติยศและรางวัลเงินกิลด์มหาศาลจากชัยชนะในสงคราม",
-    nextRecommendedStep: "ทดสอบคอมโบสกิลในลานประลองเสรี (Battle Arena) ร่วมกับเพื่อนในกิลด์",
-    dataSource: "Node War Meta Audit 2026",
-    lastVerified: "2026-09-01",
-    order: 10
   }
 ];

@@ -38,6 +38,10 @@ interface WorkerMapCanvasProps {
   rootId: number | null;
   resultNodeIds: number[] | null;
   onPickNode: (id: number) => void;
+  // Open the yields/coords popover for a node WITHOUT disturbing the
+  // terminal/root pair-picking flow (click still fills pairs; the hover
+  // name chip is the popover entry point).
+  onInspectNode?: (id: number) => void;
 }
 
 function toPixel(node: MapGraphNode): { x: number; y: number } | null {
@@ -53,6 +57,7 @@ export const WorkerMapCanvas: React.FC<WorkerMapCanvasProps> = ({
   rootId,
   resultNodeIds,
   onPickNode,
+  onInspectNode,
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [viewBox, setViewBox] = useState({ x: 0, y: 0, w: MAP_WIDTH, h: MAP_HEIGHT });
@@ -239,9 +244,16 @@ export const WorkerMapCanvas: React.FC<WorkerMapCanvasProps> = ({
       </svg>
 
       {hoverId !== null && graph[String(hoverId)]?.name && (
-        <div className="absolute top-2 left-2 px-2 py-1 rounded bg-black/80 text-white text-xs font-mono pointer-events-none">
-          {graph[String(hoverId)].name}
-        </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onInspectNode && hoverId !== null) onInspectNode(hoverId);
+          }}
+          title="คลิกเพื่อดูพิกัด + yields"
+          className="absolute top-2 left-2 px-2 py-1 rounded bg-black/80 text-white text-xs font-mono hover:bg-black hover:underline underline-offset-2 text-left"
+        >
+          {graph[String(hoverId)].name} ⓘ
+        </button>
       )}
 
       <div className="absolute bottom-2 right-2 flex gap-1.5">

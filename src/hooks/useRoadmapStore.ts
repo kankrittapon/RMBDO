@@ -28,6 +28,7 @@ const STORAGE_KEY_V1 = 'bdo_progression_state_v1';
 export const initialEmptyProfile: PlayerProfile = {
   version: 'v2',
   hasCompletedSetup: false,
+  primaryPaths: ['grind', 'life'],
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   stats: {
@@ -112,15 +113,7 @@ export const initialEmptyProfile: PlayerProfile = {
     krogdalo_doom: false,
     merchant_ring_1: false
   },
-  warReadinessChecks: {
-    gs_pillar: false,
-    permanent_pillar: false,
-    infinite_potion_pillar: false,
-    fairy_tent_pillar: false,
-    buffs_pillar: false,
-    pvp_crystals_pillar: false,
-    class_mastery_pillar: false
-  },
+  checkpointOverrides: {},
   safetyItemLocks: {
     gem_twilight: true,
     flame_primordial: true,
@@ -173,6 +166,8 @@ export function useRoadmapStore() {
           if (!parsed.slumberingOriginTasks) parsed.slumberingOriginTasks = initialEmptyProfile.slumberingOriginTasks;
           if (!parsed.kharazadTasks) parsed.kharazadTasks = initialEmptyProfile.kharazadTasks;
           if (!parsed.subCourseProgress) parsed.subCourseProgress = initialEmptyProfile.subCourseProgress;
+          if (!parsed.primaryPaths) parsed.primaryPaths = initialEmptyProfile.primaryPaths;
+          if (!parsed.checkpointOverrides) parsed.checkpointOverrides = {};
           setProfile(parsed);
         }
       }
@@ -223,7 +218,10 @@ export function useRoadmapStore() {
           const cloudUpdatedAt = new Date(data.updated_at).getTime();
           const localUpdatedAt = new Date(profile.updatedAt).getTime();
           if (cloudUpdatedAt > localUpdatedAt) {
-            setProfile(data.profile as PlayerProfile);
+            const incoming = data.profile as PlayerProfile;
+            if (!incoming.primaryPaths) incoming.primaryPaths = initialEmptyProfile.primaryPaths;
+            if (!incoming.checkpointOverrides) incoming.checkpointOverrides = {};
+            setProfile(incoming);
           }
           // else: local is newer (or equal) - keep it, the push-effect
           // below will overwrite the cloud row with it shortly.
@@ -282,6 +280,32 @@ export function useRoadmapStore() {
 
   const setSetupCompleted = useCallback((completed: boolean = true) => {
     setProfile((prev) => ({ ...prev, hasCompletedSetup: completed }));
+  }, []);
+
+  const setPrimaryPaths = useCallback((paths: Array<'grind' | 'life'>) => {
+    const clean = paths.length > 0 ? paths : (['grind', 'life'] as Array<'grind' | 'life'>);
+    setProfile((prev) => ({ ...prev, primaryPaths: clean }));
+  }, []);
+
+  const setCheckpointOverride = useCallback(
+    (nodeId: string, patch: { rewards?: string[]; requirements?: string[]; nextRecommendedStep?: string }) => {
+      setProfile((prev) => ({
+        ...prev,
+        checkpointOverrides: {
+          ...prev.checkpointOverrides,
+          [nodeId]: { ...patch, updatedAt: new Date().toISOString() },
+        },
+      }));
+    },
+    [],
+  );
+
+  const clearCheckpointOverride = useCallback((nodeId: string) => {
+    setProfile((prev) => {
+      const next = { ...prev.checkpointOverrides };
+      delete next[nodeId];
+      return { ...prev, checkpointOverrides: next };
+    });
   }, []);
 
   const setGearSlot = useCallback((slotId: string, slotData: Partial<PlayerGearSlot>) => {
@@ -396,16 +420,6 @@ export function useRoadmapStore() {
       treasurePieces: {
         ...prev.treasurePieces,
         [pieceId]: !prev.treasurePieces[pieceId]
-      }
-    }));
-  }, []);
-
-  const toggleWarReadinessCheck = useCallback((pillarId: string) => {
-    setProfile((prev) => ({
-      ...prev,
-      warReadinessChecks: {
-        ...prev.warReadinessChecks,
-        [pillarId]: !prev.warReadinessChecks[pillarId]
       }
     }));
   }, []);
@@ -541,10 +555,6 @@ export function useRoadmapStore() {
     const treasureTotal = Object.keys(profile.treasurePieces).length;
     const treasureCompleted = Object.values(profile.treasurePieces).filter(Boolean).length;
 
-    // War Readiness
-    const warTotal = Object.keys(profile.warReadinessChecks).length;
-    const warCompleted = Object.values(profile.warReadinessChecks).filter(Boolean).length;
-
     return {
       season: { completed: seasonCompleted, total: seasonTotal, unknown: seasonUnknown, pct: Math.round((seasonCompleted / seasonTotal) * 100) },
       hyperboost: { completed: hbCompleted, total: hbTotal, unknown: hbUnknown, pct: Math.round((hbCompleted / hbTotal) * 100) },
@@ -552,8 +562,7 @@ export function useRoadmapStore() {
       olviaLife: { completed: lifeCompleted, total: lifeTotal, unknown: lifeUnknown, pct: Math.round((lifeCompleted / lifeTotal) * 100) },
       slumberingOrigin: { completed: slumberingOriginCompleted, total: slumberingOriginTotal, unknown: slumberingOriginUnknown, pct: Math.round((slumberingOriginCompleted / slumberingOriginTotal) * 100) },
       kharazad: { completed: kharazadCompleted, total: kharazadTotal, unknown: kharazadUnknown, pct: Math.round((kharazadCompleted / kharazadTotal) * 100) },
-      treasures: { completed: treasureCompleted, total: treasureTotal, pct: Math.round((treasureCompleted / treasureTotal) * 100) },
-      war: { completed: warCompleted, total: warTotal, pct: Math.round((warCompleted / warTotal) * 100) }
+      treasures: { completed: treasureCompleted, total: treasureTotal, pct: Math.round((treasureCompleted / treasureTotal) * 100) }
     };
   }, [profile]);
 
@@ -676,6 +685,9 @@ export function useRoadmapStore() {
     setSelectedClassId,
     updateStats,
     setSetupCompleted,
+    setPrimaryPaths,
+    setCheckpointOverride,
+    clearCheckpointOverride,
     setGearSlot,
     setSeasonTaskStatus,
     setHyperboostClaim,
@@ -686,7 +698,6 @@ export function useRoadmapStore() {
     setSubCourseProgress,
     setJournalChapterStatus,
     toggleTreasurePiece,
-    toggleWarReadinessCheck,
     toggleSafetyItemLock,
     updateCustomNotes,
     resetCategory,

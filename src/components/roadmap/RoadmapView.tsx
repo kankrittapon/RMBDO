@@ -27,12 +27,28 @@ export const RoadmapView: React.FC<RoadmapViewProps> = ({ store }) => {
     profile,
     progressStats,
     setSelectedDrawerNodeId,
+    setPrimaryPaths,
     setSeasonTaskStatus,
     setOlviaCombatTaskStatus,
     setOlviaLifeTaskStatus
   } = store;
 
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  // Path tab: which track this account pursues. Defaults from the
+  // account's primaryPaths (both = show everything).
+  const defaultPathTab =
+    profile.primaryPaths.length === 1 ? profile.primaryPaths[0] : 'both';
+  const [pathTab, setPathTab] = useState<'both' | 'grind' | 'life'>(defaultPathTab as 'both' | 'grind' | 'life');
+
+  const toggleAccountPath = (path: 'grind' | 'life') => {
+    const has = profile.primaryPaths.includes(path);
+    const next = has
+      ? profile.primaryPaths.filter((p) => p !== path)
+      : [...profile.primaryPaths, path];
+    // Never allow zero paths - fall back to both.
+    setPrimaryPaths(next.length > 0 ? next : ['grind', 'life']);
+    setPathTab(next.length === 1 ? (next[0] as 'grind' | 'life') : 'both');
+  };
 
   const categories = [
     { id: 'ALL', label: 'ทั้งหมด (All)' },
@@ -42,11 +58,11 @@ export const RoadmapView: React.FC<RoadmapViewProps> = ({ store }) => {
     { id: 'LIFE_SKILL', label: 'Olvia Life' },
     { id: 'ENDGAME_GEAR', label: 'ราชัน & เกราะเทพ' },
     { id: 'PERMANENT_STATS', label: 'บันทึกผจญภัย' },
-    { id: 'TREASURE', label: 'สมบัติโบราณ' },
-    { id: 'WAR_READY', label: 'ความพร้อม War' }
+    { id: 'TREASURE', label: 'สมบัติโบราณ' }
   ];
 
   const filteredCheckpoints = masterCheckpointsList.filter((cp) => {
+    if (pathTab !== 'both' && !(cp.paths ?? ['grind', 'life']).includes(pathTab)) return false;
     if (selectedCategory === 'ALL') return true;
     return cp.category === selectedCategory;
   });
@@ -73,9 +89,6 @@ export const RoadmapView: React.FC<RoadmapViewProps> = ({ store }) => {
     if (node.id === 'cp_infinite_potions') {
       return progressStats.treasures;
     }
-    if (node.id === 'cp_war_readiness') {
-      return progressStats.war;
-    }
     return null;
   };
 
@@ -97,6 +110,46 @@ export const RoadmapView: React.FC<RoadmapViewProps> = ({ store }) => {
               คลิกที่จุดตรวจเพื่อดูรายละเอียด ข้อกำหนด รางวัล คำเตือนความปลอดภัย และแผนงานขั้นถัดไป
             </p>
           </div>
+        </div>
+
+        {/* Account paths + Path Tabs */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-mono flex-wrap">
+          <span className="text-text-muted text-[11px]">สายบัญชี:</span>
+          {(['grind', 'life'] as const).map((p) => (
+            <button
+              key={`account-${p}`}
+              onClick={() => toggleAccountPath(p)}
+              title={p === 'grind' ? 'สายฟาร์มมอน / เกียร์' : 'สาย Life Skill'}
+              className={cn(
+                "px-2.5 py-1 rounded text-[11px] shrink-0 transition-colors border",
+                profile.primaryPaths.includes(p)
+                  ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300 font-bold"
+                  : "bg-bg-surface-2 text-text-muted hover:text-text-primary border-transparent"
+              )}
+            >
+              {p === 'grind' ? '⚔️ ฟาร์ม' : '🌾 Life'}
+            </button>
+          ))}
+          <span className="w-px h-4 bg-border-subtle mx-1 shrink-0" />
+          <span className="text-text-muted text-[11px]">ดู:</span>
+          {([
+            { id: 'both', label: 'ทั้งหมด' },
+            { id: 'grind', label: 'สายฟาร์ม' },
+            { id: 'life', label: 'สาย Life' },
+          ] as const).map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setPathTab(t.id)}
+              className={cn(
+                "px-2.5 py-1 rounded text-[11px] shrink-0 transition-colors",
+                pathTab === t.id
+                  ? "bg-brand-primary text-white font-bold"
+                  : "bg-bg-surface-2 text-text-muted hover:text-text-primary"
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
 
         {/* Category Filters */}
@@ -135,6 +188,11 @@ export const RoadmapView: React.FC<RoadmapViewProps> = ({ store }) => {
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-bg-surface-3 text-brand-primary font-bold">
                       จุดตรวจ #{node.order}
                     </span>
+                    {store.profile.checkpointOverrides?.[node.id] && (
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-300">
+                        user-corrected
+                      </span>
+                    )}
                     <span className="text-[10px] font-mono text-text-muted">
                       หมวด: {node.category}
                     </span>

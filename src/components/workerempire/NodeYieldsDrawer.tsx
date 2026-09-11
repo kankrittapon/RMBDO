@@ -41,6 +41,9 @@ interface NodeYieldsDrawerProps {
   onClose: () => void;
   // Called with the same waypointKey (node id) to prefill a solver pair.
   onSendToSolver: (waypointKey: number) => void;
+  // In-game map coordinates from the node graph (position.x/z). Optional:
+  // renders '—' when absent, never crashes.
+  position?: { x: number; y: number; z: number } | null;
 }
 
 const fmt = (n: number | null) =>
@@ -50,6 +53,7 @@ export const NodeYieldsDrawer: React.FC<NodeYieldsDrawerProps> = ({
   waypointKey,
   onClose,
   onSendToSolver,
+  position = null,
 }) => {
   const [data, setData] = useState<NodeDetailData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -152,6 +156,12 @@ export const NodeYieldsDrawer: React.FC<NodeYieldsDrawerProps> = ({
                 <p className="text-text-muted font-mono text-[10px]">REGION GROUP</p>
                 <p className="font-bold text-text-primary">
                   {data.regionGroup === null ? '—' : `#${data.regionGroup}`}
+                </p>
+              </div>
+              <div className="p-2 rounded-lg bg-bg-surface-2 border border-border-subtle col-span-2">
+                <p className="text-text-muted font-mono text-[10px]">พิกัดในเกม (IN-GAME COORDS)</p>
+                <p className="font-bold text-text-primary font-mono">
+                  {position ? `X ${Math.round(position.x).toLocaleString()} / Z ${Math.round(position.z).toLocaleString()}` : '—'}
                 </p>
               </div>
             </div>

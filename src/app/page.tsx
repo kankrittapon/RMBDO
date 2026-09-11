@@ -20,7 +20,6 @@ import { MarketPriceView } from '@/components/market/MarketPriceView';
 import { LifeSkillHubView } from '@/components/lifeskillhub/LifeSkillHubView';
 import { ClassGuidesView } from '@/components/classes/ClassGuidesView';
 import { LifeSkillDashboardView } from '@/components/lifeskills/LifeSkillDashboardView';
-import { WarReadinessView } from '@/components/war-readiness/WarReadinessView';
 import { WorkerEmpireView } from '@/components/workerempire/WorkerEmpireView';
 import { AccountSetupWizard } from '@/components/setup/AccountSetupWizard';
 import { MigrationModal } from '@/components/modals/MigrationModal';
@@ -127,8 +126,6 @@ export default function Home() {
         return <ClassGuidesView store={store as any} />;
       case 'lifeskills':
         return <LifeSkillDashboardView store={store as any} />;
-      case 'war':
-        return <WarReadinessView store={store as any} />;
       case 'worker_empire':
         return <WorkerEmpireView />;
       default:

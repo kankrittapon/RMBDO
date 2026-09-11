@@ -34,9 +34,21 @@ export interface PlayerCheckpointTask {
   completedAt?: string;
 }
 
+export type ProgressionPath = 'grind' | 'life';
+
+export interface CheckpointOverride {
+  rewards?: string[];
+  requirements?: string[];
+  nextRecommendedStep?: string;
+  updatedAt: string;
+}
+
 export interface PlayerProfile {
   version: 'v2';
   hasCompletedSetup: boolean;
+  // Which tracks this account pursues. Drives the roadmap's default path
+  // tab; both = show everything. Editable in RoadmapView.
+  primaryPaths: ProgressionPath[];
   createdAt: string;
   updatedAt: string;
   stats: PlayerStats;
@@ -50,7 +62,10 @@ export interface PlayerProfile {
   subCourseProgress: Record<string, number>;
   journalChapters: Record<string, CheckpointStatus>;
   treasurePieces: Record<string, boolean>;
-  warReadinessChecks: Record<string, boolean>;
+  // Per-checkpoint content corrections made by the user in-app (the TS
+  // data files are defaults, not fixed truth). Displayed with a
+  // user-corrected badge; revert restores file values.
+  checkpointOverrides: Record<string, CheckpointOverride>;
   safetyItemLocks: Record<string, boolean>;
   customNotes: string;
 }

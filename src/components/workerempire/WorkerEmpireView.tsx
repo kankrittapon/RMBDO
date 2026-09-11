@@ -386,6 +386,7 @@ export const WorkerEmpireView: React.FC = () => {
               rootId={activeRootId}
               resultNodeIds={result?.nodeIds ?? null}
               onPickNode={handleMapPickNode}
+              onInspectNode={(id) => setDrawerNodeId(id)}
             />
             <p className="text-[10px] text-text-muted">
               ลาก = แพน, scroll = ซูม • Node ที่ไม่ขึ้นบนแผนที่ (โซนใหม่ เช่น Land of the Morning
@@ -597,6 +598,7 @@ export const WorkerEmpireView: React.FC = () => {
             waypointKey={drawerNodeId}
             onClose={() => setDrawerNodeId(null)}
             onSendToSolver={sendNodeToSolver}
+            position={drawerNodeId !== null ? graph[drawerNodeId]?.position ?? null : null}
           />
         </>
       )}

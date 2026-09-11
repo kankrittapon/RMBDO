@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   X,
   CheckCircle2,
@@ -10,7 +10,9 @@ import {
   Info,
   ShieldAlert,
   Sparkles,
-  Layers
+  Layers,
+  Pencil,
+  RotateCcw
 } from 'lucide-react';
 import { masterCheckpointsList } from '@/data/progression/checkpoints';
 import { useRoadmapStore } from '@/hooks/useRoadmapStore';
@@ -24,10 +26,42 @@ interface CheckpointDetailDrawerProps {
 }
 
 export const CheckpointDetailDrawer: React.FC<CheckpointDetailDrawerProps> = ({ nodeId, onClose, store }) => {
+  const [editing, setEditing] = useState(false);
+  const [draftRewards, setDraftRewards] = useState('');
+  const [draftRequirements, setDraftRequirements] = useState('');
+  const [draftNext, setDraftNext] = useState('');
   if (!nodeId) return null;
 
-  const node = masterCheckpointsList.find((n) => n.id === nodeId);
-  if (!node) return null;
+  const base = masterCheckpointsList.find((n) => n.id === nodeId);
+  if (!base) return null;
+
+  // User overrides win over file defaults; revert restores file values.
+  const override = store.profile.checkpointOverrides?.[nodeId];
+  const node = override
+    ? {
+        ...base,
+        rewards: override.rewards ?? base.rewards,
+        requirements: override.requirements ?? base.requirements,
+        nextRecommendedStep: override.nextRecommendedStep ?? base.nextRecommendedStep,
+      }
+    : base;
+
+  const startEditing = () => {
+    setDraftRewards(node.rewards.join('\n'));
+    setDraftRequirements(node.requirements.join('\n'));
+    setDraftNext(node.nextRecommendedStep);
+    setEditing(true);
+  };
+
+  const saveEditing = () => {
+    const lines = (s: string) => s.split('\n').map((l) => l.trim()).filter(Boolean);
+    store.setCheckpointOverride(nodeId, {
+      rewards: lines(draftRewards),
+      requirements: lines(draftRequirements),
+      nextRecommendedStep: draftNext.trim() || base.nextRecommendedStep,
+    });
+    setEditing(false);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in">
@@ -46,6 +80,11 @@ export const CheckpointDetailDrawer: React.FC<CheckpointDetailDrawerProps> = ({ 
                 {node.title}
               </h2>
               <span className="text-[11px] font-mono text-text-muted">{node.englishTitle}</span>
+              {override && (
+                <span className="ml-2 text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-300">
+                  user-corrected • {new Date(override.updatedAt).toLocaleDateString('th-TH')}
+                </span>
+              )}
             </div>
             <button
               onClick={onClose}
@@ -79,6 +118,15 @@ export const CheckpointDetailDrawer: React.FC<CheckpointDetailDrawerProps> = ({ 
             <h4 className="font-bold text-text-primary text-[11px] uppercase tracking-wider">
               เงื่อนไขที่จำเป็น (Requirements):
             </h4>
+            {editing ? (
+              <textarea
+                value={draftRequirements}
+                onChange={(e) => setDraftRequirements(e.target.value)}
+                rows={4}
+                placeholder="ข้อละ 1 บรรทัด"
+                className="w-full p-2 rounded bg-bg-surface-3 border border-border-subtle font-mono text-[11px] text-text-primary"
+              />
+            ) : (
             <div className="space-y-1">
               {node.requirements.map((req, idx) => (
                 <div key={idx} className="p-2 rounded bg-bg-surface-3/80 border border-border-subtle/60 font-mono text-[11px] text-text-secondary flex items-center gap-2">
@@ -87,6 +135,7 @@ export const CheckpointDetailDrawer: React.FC<CheckpointDetailDrawerProps> = ({ 
                 </div>
               ))}
             </div>
+            )}
           </div>
 
           {/* Rewards */}
@@ -94,6 +143,15 @@ export const CheckpointDetailDrawer: React.FC<CheckpointDetailDrawerProps> = ({ 
             <h4 className="font-bold text-text-primary text-[11px] uppercase tracking-wider flex items-center gap-1.5">
               <Gift className="w-3.5 h-3.5 text-amber-400" /> ของรางวัลที่จะได้รับ (Rewards):
             </h4>
+            {editing ? (
+              <textarea
+                value={draftRewards}
+                onChange={(e) => setDraftRewards(e.target.value)}
+                rows={4}
+                placeholder="ข้อละ 1 บรรทัด"
+                className="w-full p-2 rounded bg-bg-surface-3 border border-border-subtle font-mono text-[11px] text-text-primary"
+              />
+            ) : (
             <div className="space-y-1">
               {node.rewards.map((rew, idx) => (
                 <div key={idx} className="p-2 rounded bg-bg-surface-3/80 border border-border-subtle/60 font-mono text-[11px] text-amber-300 flex items-center gap-2">
@@ -102,6 +160,7 @@ export const CheckpointDetailDrawer: React.FC<CheckpointDetailDrawerProps> = ({ 
                 </div>
               ))}
             </div>
+            )}
           </div>
 
           {/* Why Important & Unlocks */}
@@ -119,10 +178,19 @@ export const CheckpointDetailDrawer: React.FC<CheckpointDetailDrawerProps> = ({ 
           {/* Next Recommended Step */}
           <div className="p-3 rounded-lg bg-bg-surface-3 border border-border-subtle text-xs space-y-1">
             <span className="text-text-muted text-[10px] font-mono block">เป้าหมายที่ควรทำต่อไป:</span>
+            {editing ? (
+              <textarea
+                value={draftNext}
+                onChange={(e) => setDraftNext(e.target.value)}
+                rows={2}
+                className="w-full p-2 rounded bg-bg-surface-2 border border-border-subtle font-mono text-[11px] text-text-primary"
+              />
+            ) : (
             <p className="text-text-primary font-medium flex items-center gap-1.5">
               <ArrowRight className="w-3.5 h-3.5 text-brand-primary shrink-0" />
               <span>{node.nextRecommendedStep}</span>
             </p>
+            )}
           </div>
 
           {/* Metadata Footer */}
@@ -133,8 +201,42 @@ export const CheckpointDetailDrawer: React.FC<CheckpointDetailDrawerProps> = ({ 
 
         </div>
 
-        {/* Action Button */}
-        <div className="pt-3 border-t border-border-subtle">
+        {/* Action Buttons */}
+        <div className="pt-3 border-t border-border-subtle space-y-2">
+          {editing ? (
+            <div className="flex gap-2">
+              <button
+                onClick={saveEditing}
+                className="flex-1 py-2 rounded-lg bg-brand-primary text-white text-xs font-mono font-bold hover:opacity-90"
+              >
+                บันทึกการแก้ไข
+              </button>
+              <button
+                onClick={() => setEditing(false)}
+                className="flex-1 py-2 rounded-lg bg-bg-surface-3 hover:bg-bg-surface-2 border border-border-subtle text-xs font-mono text-text-primary"
+              >
+                ยกเลิก
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <button
+                onClick={startEditing}
+                className="flex-1 py-2 rounded-lg bg-bg-surface-3 hover:bg-bg-surface-2 border border-border-subtle text-xs font-mono text-text-primary flex items-center justify-center gap-1.5"
+              >
+                <Pencil className="w-3.5 h-3.5" /> แก้ไขข้อมูลจุดนี้
+              </button>
+              {override && (
+                <button
+                  onClick={() => store.clearCheckpointOverride(nodeId)}
+                  title="กลับไปใช้ค่าจากไฟล์ข้อมูล"
+                  className="px-3 py-2 rounded-lg bg-bg-surface-3 hover:bg-bg-surface-2 border border-border-subtle text-xs font-mono text-text-muted flex items-center gap-1"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" /> คืนค่าเดิม
+                </button>
+              )}
+            </div>
+          )}
           <button
             onClick={onClose}
             className="w-full py-2 rounded-lg bg-bg-surface-3 hover:bg-bg-surface-2 border border-border-subtle text-xs font-mono text-text-primary transition-colors"

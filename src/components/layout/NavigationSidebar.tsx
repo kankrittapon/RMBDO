@@ -37,7 +37,6 @@ export type NavTabId =
   | 'crafting'
   | 'classes'
   | 'lifeskills'
-  | 'war'
   | 'worker_empire';
 
 interface NavigationSidebarProps {
@@ -73,7 +72,7 @@ const navSections: NavSection[] = [
     items: [
       { id: 'dashboard', label: 'ภาพรวมบัญชี', englishLabel: 'Dashboard', icon: LayoutDashboard },
       { id: 'crafting', label: 'Life Skill Hub', englishLabel: 'วันนี้ทำอะไรดี', icon: ChefHat, badge: 'หลัก', badgeColor: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' },
-      { id: 'roadmap', label: 'เส้นทางพัฒนา', englishLabel: 'Roadmap Timeline', icon: Milestone, badge: '10 จุดตรวจ' },
+      { id: 'roadmap', label: 'เส้นทางพัฒนา', englishLabel: 'Roadmap Timeline', icon: Milestone, badge: '9 จุดตรวจ' },
     ],
   },
   {
@@ -109,10 +108,9 @@ const navSections: NavSection[] = [
   },
   {
     id: 'safety_war',
-    label: 'ความปลอดภัย & War',
+    label: 'ความปลอดภัย',
     items: [
       { id: 'safety', label: 'ความปลอดภัยไอเทม', englishLabel: 'Item Safety', icon: ShieldAlert, badge: 'กันพลาด' },
-      { id: 'war', label: 'ความพร้อม War', englishLabel: 'War Readiness', icon: Swords },
     ],
   },
 ];
