@@ -5,6 +5,9 @@ import { Network, Plus, Trash2, Loader2, Info, MapPin, Sparkles } from 'lucide-r
 import { cn } from '@/lib/utils';
 import { WorkerMapCanvas } from './WorkerMapCanvas';
 import { NodeYieldsDrawer } from './NodeYieldsDrawer';
+import { EmpireWizard } from './EmpireWizard';
+import { parseNodeInput, nodeLabel } from '@/lib/workerEmpire/nodeLabels';
+import { useThNames } from '@/hooks/useThNames';
 import { suggestNearestPlantzones, type NodeSuggestion } from '@/lib/workerEmpire/suggestNodes';
 
 // This view solves BDO's real worker-empire node-connection problem: given
@@ -40,32 +43,8 @@ interface GraphNode {
 
 type NodeGraph = Record<string, GraphNode>;
 
-// "Name (#id)" is what the datalist shows and what typing resolves back to
-// an id from - avoids needing a custom autocomplete component for 1025
-// options, and keeps numeric-id entry working too (typed input that parses
-// as a bare number and matches a real node is accepted as a fallback).
-function parseNodeInput(raw: string, graph: NodeGraph): number | null {
-  const trimmed = raw.trim();
-  if (!trimmed) return null;
-  const withHash = trimmed.match(/#(\d+)\)?\s*$/);
-  if (withHash) {
-    const id = Number(withHash[1]);
-    return graph[String(id)] ? id : null;
-  }
-  if (/^\d+$/.test(trimmed)) {
-    const id = Number(trimmed);
-    return graph[String(id)] ? id : null;
-  }
-  // Exact name match (case-insensitive) as a last resort, for anyone who
-  // types the name without picking from the datalist.
-  const lower = trimmed.toLowerCase();
-  const match = Object.values(graph).find((n) => n.name?.toLowerCase() === lower);
-  return match ? match.waypoint_key : null;
-}
-
-function nodeLabel(node: GraphNode): string {
-  return node.name ? `${node.name} (#${node.waypoint_key})` : `#${node.waypoint_key}`;
-}
+// parseNodeInput / nodeLabel live in @/lib/workerEmpire/nodeLabels so the
+// wizard shares the exact same parsing (see that file).
 
 interface TerminalRootPair {
   id: string;
@@ -79,6 +58,31 @@ interface SolveResult {
 }
 
 const STORAGE_KEY = 'rmbdo_worker_empire_pairs_v1';
+
+// Top-2 yields preview per suggested node (normal variant, priced items
+// first). One tiny fetch per row on suggest-run only - keeps the suggest
+// list scannable ("โหนดนี้ขุดได้อะไร") without opening every drawer.
+const SuggestRowYields: React.FC<{ waypointKey: number }> = ({ waypointKey }) => {
+  const { t } = useThNames();
+  const [text, setText] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/nodes/${waypointKey}`, { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json: { node?: { normal: { items: Array<{ name: string; value: number | null }> } } } | null) => {
+        if (cancelled || !json?.node) return;
+        const priced = json.node.normal.items.filter((it) => it.value !== null);
+        const top = (priced.length > 0 ? priced : json.node.normal.items).slice(0, 2);
+        if (top.length > 0) setText(`ได้: ${top.map((it) => t(it.name)).join(', ')}`);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [waypointKey]);
+  if (!text) return null;
+  return <span className="ml-2 text-emerald-400/90">{text}</span>;
+};
 
 function loadSavedPairs(): TerminalRootPair[] {
   try {
@@ -100,6 +104,9 @@ export const WorkerEmpireView: React.FC = () => {
   const [result, setResult] = useState<SolveResult | null>(null);
   const [solving, setSolving] = useState(false);
   const [solveError, setSolveError] = useState<string | null>(null);
+  // Wizard (guided: อยากได้อะไร → ติ๊กโหนด → คำนวณทีเดียว) is the default;
+  // manual pair entry stays for power users.
+  const [mode, setMode] = useState<'wizard' | 'manual'>('wizard');
 
   // Which pair + which side (terminal/root) a map click writes into. Clicking
   // the map is just an alternate way of filling in the same `pairs` state
@@ -249,6 +256,37 @@ export const WorkerEmpireView: React.FC = () => {
       .sort((a, b) => (a.name && b.name ? a.name.localeCompare(b.name) : 0));
   }, [graph]);
 
+  // Shared solve core: the wizard builds pairs programmatically while the
+  // manual form builds them from text inputs - both end up here.
+  const runSolver = (pairArrays: number[][]) => {
+    if (!router || pairArrays.length === 0) return;
+    setSolveError(null);
+    setResult(null);
+    setSolving(true);
+    try {
+      const [nodeIds, totalCp] = router.solveForTerminalPairs(pairArrays);
+      setResult({ nodeIds, totalCp });
+    } catch (err) {
+      setSolveError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSolving(false);
+    }
+  };
+
+  // Wizard handoff: selections become visible pairs (terminal = โหนด
+  // เป้าหมาย, root = เมืองฐาน) AND solve immediately - one click total.
+  const applyWizardPairs = (selections: Array<{ terminalId: number; rootId: number }>) => {
+    if (!graph) return;
+    const next: TerminalRootPair[] = selections.map((s) => ({
+      id: crypto.randomUUID(),
+      terminalText: nodeLabel(graph[String(s.terminalId)]),
+      rootText: nodeLabel(graph[String(s.rootId)]),
+    }));
+    setPairs(next);
+    setActivePairId(next.length > 0 ? next[0].id : null);
+    runSolver(selections.map((s) => [s.terminalId, s.rootId]));
+  };
+
   const solve = () => {
     if (!router || !graph) return;
     setSolveError(null);
@@ -276,16 +314,7 @@ export const WorkerEmpireView: React.FC = () => {
       return;
     }
 
-    setSolving(true);
-    try {
-      const pairArrays = resolved.map((r) => [r.terminal, r.root]);
-      const [nodeIds, totalCp] = router.solveForTerminalPairs(pairArrays);
-      setResult({ nodeIds, totalCp });
-    } catch (err) {
-      setSolveError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setSolving(false);
-    }
+    runSolver(resolved.map((r) => [r.terminal, r.root]) as number[][]);
   };
 
   const activeTerminalId = graph && activePair ? parseNodeInput(activePair.terminalText, graph) : null;
@@ -310,7 +339,7 @@ export const WorkerEmpireView: React.FC = () => {
           คำนวณ Node ที่ต้องเปิดเพื่อเชื่อม Worker Empire
         </h1>
         <p className="text-xs text-text-secondary leading-relaxed">
-          ใส่คู่ Node ID (terminal → root) แล้วระบบจะคำนวณชุด Node ที่ใช้ Contribution Point
+          ใส่คู่โหนด (โหนดเป้าหมาย → เมืองฐาน) แล้วระบบจะคำนวณชุด Node ที่ใช้ Contribution Point
           น้อยที่สุดที่เชื่อมทุกคู่เข้าด้วยกัน คำนวณด้วย solver จาก{' '}
           <a
             href="https://github.com/Thell/bdo-noderouter"
@@ -347,6 +376,35 @@ export const WorkerEmpireView: React.FC = () => {
 
       {status === 'ready' && graph && (
         <>
+          <div className="flex items-center gap-1.5 text-xs font-mono">
+            <button
+              onClick={() => setMode('wizard')}
+              className={cn(
+                'px-3 py-1.5 rounded-lg border font-bold',
+                mode === 'wizard'
+                  ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
+                  : 'bg-bg-surface-1 border-border-subtle text-text-muted',
+              )}
+            >
+              ✨ ตัวช่วยจัด Empire
+            </button>
+            <button
+              onClick={() => setMode('manual')}
+              className={cn(
+                'px-3 py-1.5 rounded-lg border',
+                mode === 'manual'
+                  ? 'bg-brand-primary/20 border-brand-primary/40 text-brand-primary font-bold'
+                  : 'bg-bg-surface-1 border-border-subtle text-text-muted',
+              )}
+            >
+              โหมดละเอียด (กรอกคู่เอง)
+            </button>
+          </div>
+
+          {mode === 'wizard' && (
+            <EmpireWizard graph={graph} solving={solving} onApply={applyWizardPairs} />
+          )}
+
           <div className="bg-bg-surface-1 border border-border-subtle rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider flex items-center gap-1.5">
@@ -363,8 +421,9 @@ export const WorkerEmpireView: React.FC = () => {
                       ? 'bg-red-500/20 border-red-500/40 text-red-300 font-bold'
                       : 'bg-bg-surface-2 border-border-subtle text-text-muted',
                   )}
+                  title="โหนดเป้าหมาย = โหนดที่อยากขุด (terminal)"
                 >
-                  Terminal
+                  🎯 เป้าหมาย
                 </button>
                 <button
                   onClick={() => setActiveRole('rootText')}
@@ -374,8 +433,9 @@ export const WorkerEmpireView: React.FC = () => {
                       ? 'bg-violet-500/20 border-violet-500/40 text-violet-300 font-bold'
                       : 'bg-bg-surface-2 border-border-subtle text-text-muted',
                   )}
+                  title="เมืองฐาน = เมืองที่ worker อยู่ (root)"
                 >
-                  Root
+                  🏠 เมืองฐาน
                 </button>
                 {!activePair && <span className="text-text-muted">(คลิก node แรกจะสร้างคู่ใหม่ให้เอง)</span>}
               </div>
@@ -394,6 +454,7 @@ export const WorkerEmpireView: React.FC = () => {
             </p>
           </div>
 
+          {mode === 'manual' && (
           <div className="bg-bg-surface-1 border border-border-subtle rounded-xl p-4 space-y-3">
             <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
@@ -437,6 +498,8 @@ export const WorkerEmpireView: React.FC = () => {
                           <span className="ml-2 text-text-muted font-mono">
                             {s.cpCost} CP • {s.hops} hop • {s.workerTypeCount} worker type
                           </span>
+                          <br />
+                          <SuggestRowYields waypointKey={s.waypointKey} />
                         </div>
                         <div className="flex items-center gap-1.5">
                           <button
@@ -459,11 +522,12 @@ export const WorkerEmpireView: React.FC = () => {
               </div>
             )}
           </div>
+          )}
 
           <div className="bg-bg-surface-1 border border-border-subtle rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider">
-                คู่ Terminal → Root ({pairs.length})
+                คู่ โหนดเป้าหมาย → เมืองฐาน ({pairs.length})
               </h3>
               <button
                 onClick={addPair}
@@ -491,7 +555,7 @@ export const WorkerEmpireView: React.FC = () => {
                   <input
                     type="text"
                     list="worker-empire-node-options"
-                    placeholder="พิมพ์ชื่อ Node เช่น Velia"
+                    placeholder="โหนดเป้าหมาย เช่น Velia"
                     value={pair.terminalText}
                     onFocus={() => {
                       setActivePairId(pair.id);
@@ -504,7 +568,7 @@ export const WorkerEmpireView: React.FC = () => {
                   <input
                     type="text"
                     list="worker-empire-node-options"
-                    placeholder="Root เช่น Heidel"
+                    placeholder="เมืองฐาน เช่น Heidel"
                     value={pair.rootText}
                     onFocus={() => {
                       setActivePairId(pair.id);
