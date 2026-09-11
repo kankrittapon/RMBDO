@@ -76,7 +76,11 @@ interface RawRow {
 
 function parseQty(s: string | null): number | null {
   if (!s) return null
-  const n = Number(s.replace(/,/g, "").trim())
+  // Ranges ("1~4" on mrecipe result rows - yield varies by skill) resolve
+  // to the leading (minimum) number rather than failing to null.
+  const m = s.replace(/,/g, "").trim().match(/^(-?[\d.]+)/)
+  if (!m) return null
+  const n = Number(m[1])
   return Number.isFinite(n) ? n : null
 }
 
@@ -86,9 +90,9 @@ function absUrl(src: string | null): string | null {
   return `https://bdocodex.com${src.startsWith("/") ? "" : "/"}${src}`
 }
 
-export async function scrapeBdocodexRecipe(id: number): Promise<BdocodexRecipe> {
-  const url = `https://bdocodex.com/us/recipe/${id}/`
-  console.log(`Scraping bdocodex recipe: ${url}`)
+export async function scrapeBdocodexRecipe(id: number, kind: "recipe" | "mrecipe" = "recipe"): Promise<BdocodexRecipe> {
+  const url = `https://bdocodex.com/us/${kind}/${id}/`
+  console.log(`Scraping bdocodex ${kind}: ${url}`)
 
   const { browser, page } = await launch()
   try {
@@ -119,10 +123,11 @@ export async function scrapeBdocodexRecipe(id: number): Promise<BdocodexRecipe> 
       const bodyEl = card.querySelector(".card-body")
       const bodyText = ((bodyEl ? bodyEl.textContent : "") || "").trim()
       const category = bodyText.match(/Recipe\s*([\p{L} ]+)/u)?.[1]?.trim() ?? null
-      // NOTE: textContent does NOT insert newlines for <br>, so "Skill
-      // level: Beginner 1<br>EXP: ..." arrives as one run - anchor the
-      // capture on the trailing EXP: marker instead of end-of-line.
-      const skillM = bodyText.match(/Skill level:\s*(.+?)\s*EXP:/)
+      // Skill level is always "Word Number" (Beginner 1, Skilled 6,
+      // Apprentice 10, Beginner 0) - match that shape directly instead of
+      // anchoring on a trailing EXP: marker, which mrecipe pages don't
+      // have (their card ends the line after the level).
+      const skillM = bodyText.match(/Skill level:\s*([A-Za-z]+\s+\d+)/)
       const skillLevel = skillM ? skillM[1].trim() : null
       const expM = bodyText.match(/EXP:\s*([0-9', ]+)/)
       const exp = expM ? expM[1].trim() : null
@@ -140,6 +145,23 @@ export async function scrapeBdocodexRecipe(id: number): Promise<BdocodexRecipe> 
         iconUrl: string | null
       }> = []
       const seen: Record<string, boolean> = {}
+      // Scope to the "- Crafting Materials" section ONLY: rows under
+      // "- Crafting Result" (base products + "Additional (random)
+      // products" like Alluvial Gold on mrecipe pages) are outputs, not
+      // inputs - collecting card-wide wrongly saved the random byproduct
+      // as an ingredient (confirmed on mrecipe/1432 before this guard).
+      // An anchor belongs to the section iff it sits after the Materials
+      // marker and (when a Result marker exists) before the Result marker.
+      let matEl: Element | null = null
+      let resEl: Element | null = null
+      const sectionSpans = card.querySelectorAll("span.yellow_text")
+      for (let s = 0; s < sectionSpans.length; s++) {
+        const txt = ((sectionSpans[s].textContent || "").trim())
+        if (txt.indexOf("Crafting Materials") !== -1 && !matEl) matEl = sectionSpans[s]
+        if (txt.indexOf("Crafting Result") !== -1 && !resEl) resEl = sectionSpans[s]
+      }
+      // (inlined, not a helper: const-arrows inside evaluate break under
+      // tsx keepNames - see NOTE above)
       const anchors = card.querySelectorAll('a.qtooltip[href^="' + prefix + 'item/"]')
       for (let i = 0; i < anchors.length; i++) {
         const a = anchors[i] as HTMLAnchorElement
@@ -148,6 +170,8 @@ export async function scrapeBdocodexRecipe(id: number): Promise<BdocodexRecipe> 
         if (!m) continue
         if (seen[m[1]]) continue // skip the duplicate icon/name anchor pair
         seen[m[1]] = true
+        if (matEl && (matEl.compareDocumentPosition(a) & 4) === 0) continue // before Materials section
+        if (resEl && (a.compareDocumentPosition(resEl) & 4) === 0) continue // inside/after Result section
         const wrap = a.closest(".iconset_wrapper_medium")
         const qtyEl = wrap ? wrap.querySelector(".quantity_small.nowrap") : null
         const qty = qtyEl ? ((qtyEl.textContent || "").trim() || null) : null
@@ -235,7 +259,7 @@ export async function scrapeBdocodexRecipe(id: number): Promise<BdocodexRecipe> 
     // item_name_translations. A TH row with no EN counterpart (or vice
     // versa) is skipped loudly, never guessed. One extra navigation per
     // recipe - acceptable for on-demand use, NOT for bulk.
-    const thUrl = `https://bdocodex.com/th/recipe/${id}/`
+    const thUrl = `https://bdocodex.com/th/${kind}/${id}/`
     const thNames: Array<{ en: string; th: string }> = []
     try {
       await page.goto(thUrl, { waitUntil: "domcontentloaded" })
@@ -326,6 +350,17 @@ export async function saveBdocodexRecipe(detail: BdocodexRecipe): Promise<void> 
   const client = new pg.Client({ connectionString: process.env.DATABASE_URL })
   try {
     await client.connect()
+    // recipe/ and mrecipe/ share one numeric ID space per URL pattern but
+    // are DIFFERENT namespaces (e.g. recipe/5 vs mrecipe/5 would collide on
+    // the PK below) - refuse to merge across kinds rather than corrupt.
+    const existing = await client.query(`SELECT source_url FROM bdocodex_recipes WHERE bdocodex_id = $1`, [detail.bdocodexId])
+    if (existing.rows.length > 0) {
+      const oldKind = (existing.rows[0].source_url as string).includes("/mrecipe/") ? "mrecipe" : "recipe"
+      const newKind = detail.sourceUrl.includes("/mrecipe/") ? "mrecipe" : "recipe"
+      if (oldKind !== newKind) {
+        throw new Error(`bdocodex id ${detail.bdocodexId} exists as ${oldKind} but new scrape is ${newKind} - refusing to merge across namespaces`)
+      }
+    }
     await client.query(
       `INSERT INTO bdocodex_recipes (bdocodex_id, recipe_name, category, skill_level, exp, icon_url, source_url, collected_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, now())
@@ -427,10 +462,11 @@ export async function scrapeThItemNames(itemIds: number[]): Promise<Array<{ en: 
 }
 
 // CLI: npm run collect:bdocodex -- <id> [category]
+//      npm run collect:bdocodex -- mrecipe <id> [category]
 //      npm run collect:th-names -- <bdocodex-item-id>
 // On-demand only - no bulk mode exists on purpose (see header comment).
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const mode = process.argv[2] === "item" ? "item" : "recipe"
+  const mode = process.argv[2] === "item" ? "item" : process.argv[2] === "mrecipe" ? "mrecipe" : "recipe"
   if (mode === "item") {
     const itemIds = process.argv.slice(3).map(Number)
     if (itemIds.length === 0 || itemIds.some((n) => !Number.isInteger(n) || n <= 0)) {
@@ -446,13 +482,15 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         process.exit(1)
       })
   } else {
-    const id = Number(process.argv[2])
-    const category = process.argv[3] ?? null
+    const kind = mode === "mrecipe" ? "mrecipe" : "recipe"
+    const id = Number(mode === "mrecipe" ? process.argv[3] : process.argv[2])
+    const category = (mode === "mrecipe" ? process.argv[4] : process.argv[3]) ?? null
     if (!Number.isInteger(id) || id <= 0) {
       console.error("Usage: npm run collect:bdocodex -- <id> [category]   e.g. 225 Cooking")
+      console.error("   or: npm run collect:bdocodex -- mrecipe <id> [category]   e.g. mrecipe 1432 Processing")
       process.exit(1)
     }
-    scrapeBdocodexRecipe(id)
+    scrapeBdocodexRecipe(id, kind)
       .then(async (d) => {
         if (category) d.category = category
         console.log(JSON.stringify(d, null, 2))

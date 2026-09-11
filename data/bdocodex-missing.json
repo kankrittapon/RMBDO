@@ -1,11 +1,490 @@
 {
-  "_comment": "Curated gap-fill list for the bdocodex supplemental source (npm run collect:bdocodex). Each entry is a recipe VERIFIED missing from bdolytics' Crafting Calculator. This list is a scope decision, not a technical limit: bdocodex category listings do render recipe links after JS load, so bulk harvesting would be technically possible - but per project anti-bulk policy only hand-verified missing recipes go here. Add entries as new gaps are confirmed (name + numeric bdocodex ID from the page URL /us/recipe/<id>/).",
+  "_comment": "Curated gap-fill list (see bdocodexRecipe.ts header: on-demand only, scope decision not technical limit). Entries added after verified scrape; variants recorded where found. Sweet Honey Wine was the original confirmed gap.",
   "recipes": [
+    {
+      "name": "Golden Hand Elixir",
+      "bdocodexId": 6,
+      "category": "Alchemy"
+    },
+    {
+      "name": "Elixir of Seal",
+      "bdocodexId": 16,
+      "category": "Alchemy"
+    },
+    {
+      "name": "Elixir of Resistance",
+      "bdocodexId": 22,
+      "category": "Alchemy"
+    },
+    {
+      "name": "Defense Elixir",
+      "bdocodexId": 27,
+      "category": "Alchemy"
+    },
+    {
+      "name": "Elixir of Endurance",
+      "bdocodexId": 30,
+      "category": "Alchemy"
+    },
+    {
+      "name": "Essence of Nature",
+      "bdocodexId": 41,
+      "category": "Cooking"
+    },
+    {
+      "name": "Melted Mythril Shard",
+      "bdocodexId": 50,
+      "category": "Processing"
+    },
+    {
+      "name": "White Sauce",
+      "bdocodexId": 106,
+      "category": "Cooking"
+    },
+    {
+      "name": "Aloe Yogurt",
+      "bdocodexId": 114,
+      "category": "Cooking"
+    },
+    {
+      "name": "Aloe Cookie",
+      "bdocodexId": 115,
+      "category": "Cooking"
+    },
+    {
+      "name": "Fish Fillet Chips",
+      "bdocodexId": 118,
+      "category": "Cooking"
+    },
+    {
+      "name": "Special Carrot Juice",
+      "bdocodexId": 121,
+      "category": "Cooking"
+    },
+    {
+      "name": "Grain Soup",
+      "bdocodexId": 124,
+      "category": "Cooking"
+    },
+    {
+      "name": "Fried Vegetables",
+      "bdocodexId": 125,
+      "category": "Cooking"
+    },
+    {
+      "name": "Fruit and Vegetable Salad",
+      "bdocodexId": 127,
+      "category": "Cooking"
+    },
+    {
+      "name": "Fruit Pudding",
+      "bdocodexId": 128,
+      "category": "Cooking"
+    },
+    {
+      "name": "Soft Bread",
+      "bdocodexId": 129,
+      "category": "Cooking"
+    },
+    {
+      "name": "Oatmeal",
+      "bdocodexId": 130,
+      "category": "Cooking"
+    },
+    {
+      "name": "Fruit Pie",
+      "bdocodexId": 133,
+      "category": "Cooking"
+    },
+    {
+      "name": "Ham Sandwich",
+      "bdocodexId": 136,
+      "category": "Cooking"
+    },
+    {
+      "name": "Fried Bird",
+      "bdocodexId": 142,
+      "category": "Cooking"
+    },
+    {
+      "name": "Steamed Bird",
+      "bdocodexId": 144,
+      "category": "Cooking"
+    },
+    {
+      "name": "Lizard Kebab",
+      "bdocodexId": 145,
+      "category": "Cooking"
+    },
+    {
+      "name": "Fried Fish",
+      "bdocodexId": 146,
+      "category": "Cooking"
+    },
+    {
+      "name": "Borscht",
+      "bdocodexId": 147,
+      "category": "Cooking"
+    },
+    {
+      "name": "Steamed Fish",
+      "bdocodexId": 148,
+      "category": "Cooking"
+    },
+    {
+      "name": "Desert Dumpling",
+      "bdocodexId": 149,
+      "category": "Cooking"
+    },
+    {
+      "name": "Meat Sandwich",
+      "bdocodexId": 154,
+      "category": "Cooking"
+    },
+    {
+      "name": "Meat Pasta",
+      "bdocodexId": 155,
+      "category": "Cooking"
+    },
+    {
+      "name": "Fish Soup",
+      "bdocodexId": 157,
+      "category": "Cooking"
+    },
+    {
+      "name": "Stir-Fried Seafood",
+      "bdocodexId": 159,
+      "category": "Cooking"
+    },
+    {
+      "name": "Dark Pudding",
+      "bdocodexId": 161,
+      "category": "Cooking"
+    },
+    {
+      "name": "Stir-Fried Meat",
+      "bdocodexId": 165,
+      "category": "Cooking"
+    },
+    {
+      "name": "Honeycomb Cookie",
+      "bdocodexId": 176,
+      "category": "Cooking"
+    },
+    {
+      "name": "Grilled Scorpion",
+      "bdocodexId": 197,
+      "category": "Cooking"
+    },
+    {
+      "name": "Freekeh Snake Stew",
+      "bdocodexId": 199,
+      "category": "Cooking"
+    },
+    {
+      "name": "Pistachio Fried Rice",
+      "bdocodexId": 208,
+      "category": "Cooking"
+    },
+    {
+      "name": "Butter-roasted Lobster",
+      "bdocodexId": 211,
+      "category": "Cooking"
+    },
+    {
+      "name": "Rainbow Button Mushroom Sandwich",
+      "bdocodexId": 213,
+      "category": "Cooking"
+    },
+    {
+      "name": "Rainbow Button Mushroom Cheese Melt",
+      "bdocodexId": 214,
+      "category": "Cooking"
+    },
+    {
+      "name": "Griffon's Elixir",
+      "bdocodexId": 217,
+      "category": "Alchemy"
+    },
     {
       "name": "Sweet Honey Wine",
       "bdocodexId": 225,
-      "category": "Cooking",
-      "note": "Confirmed absent from all 4 bdolytics Cooking pages (152 recipes). Ingredients: Top-quality Cooking Honey x2, Full-bodied Makgeolli x4, Sugar x10, Apple x2."
+      "category": "Cooking"
+    },
+    {
+      "name": "Five-Grain Chicken Porridge",
+      "bdocodexId": 227,
+      "category": "Cooking"
+    },
+    {
+      "name": "Ghormeh Sabzi",
+      "bdocodexId": 230,
+      "category": "Cooking"
+    },
+    {
+      "name": "Skewered Llama Cheese Melt",
+      "bdocodexId": 231,
+      "category": "Cooking"
+    },
+    {
+      "name": "Hunter's Salad",
+      "bdocodexId": 331,
+      "category": "Cooking"
+    },
+    {
+      "name": "Savory Steak",
+      "bdocodexId": 341,
+      "category": "Cooking"
+    },
+    {
+      "name": "Stir-Fried Bird",
+      "bdocodexId": 352,
+      "category": "Cooking"
+    },
+    {
+      "name": "Chicken Breast Salad",
+      "bdocodexId": 354,
+      "category": "Cooking"
+    },
+    {
+      "name": "Delotia Juice",
+      "bdocodexId": 355,
+      "category": "Cooking"
+    },
+    {
+      "name": "Delotia Milk Tea",
+      "bdocodexId": 357,
+      "category": "Cooking"
+    },
+    {
+      "name": "Delotia Tart",
+      "bdocodexId": 358,
+      "category": "Cooking"
+    },
+    {
+      "name": "Frank Sandwich",
+      "bdocodexId": 361,
+      "category": "Cooking"
+    },
+    {
+      "name": "Stir-Fried Bracken and Meat",
+      "bdocodexId": 362,
+      "category": "Cooking"
+    },
+    {
+      "name": "O'dyllita Meal",
+      "bdocodexId": 364,
+      "category": "Cooking"
+    },
+    {
+      "name": "Elixir of Skill",
+      "bdocodexId": 365,
+      "category": "Alchemy"
+    },
+    {
+      "name": "Elixir of Armor",
+      "bdocodexId": 368,
+      "category": "Alchemy"
+    },
+    {
+      "name": "Elixir of Brawn",
+      "bdocodexId": 381,
+      "category": "Alchemy"
+    },
+    {
+      "name": "Citron Juice",
+      "bdocodexId": 411,
+      "category": "Cooking"
+    },
+    {
+      "name": "Special Eilton Specialty Meal",
+      "bdocodexId": 416,
+      "category": "Cooking"
+    },
+    {
+      "name": "Mesima Rice Wine",
+      "bdocodexId": 419,
+      "category": "Cooking"
+    },
+    {
+      "name": "Fruit Sherbet",
+      "bdocodexId": 424,
+      "category": "Cooking"
+    },
+    {
+      "name": "Eilton Meal",
+      "bdocodexId": 429,
+      "category": "Cooking"
+    },
+    {
+      "name": "Bean Sprout Salad",
+      "bdocodexId": 444,
+      "category": "Cooking"
+    },
+    {
+      "name": "Cooked Rice",
+      "bdocodexId": 445,
+      "category": "Cooking"
+    },
+    {
+      "name": "Soybean Jjigae",
+      "bdocodexId": 448,
+      "category": "Cooking"
+    },
+    {
+      "name": "Mungbean Jeon",
+      "bdocodexId": 449,
+      "category": "Cooking"
+    },
+    {
+      "name": "Buckwheat Jelly",
+      "bdocodexId": 450,
+      "category": "Cooking"
+    },
+    {
+      "name": "Skewer",
+      "bdocodexId": 452,
+      "category": "Cooking"
+    },
+    {
+      "name": "Jujube Tea",
+      "bdocodexId": 455,
+      "category": "Cooking"
+    },
+    {
+      "name": "Roasted Silver Apricot",
+      "bdocodexId": 456,
+      "category": "Cooking"
+    },
+    {
+      "name": "Red Bean Sirutteok",
+      "bdocodexId": 457,
+      "category": "Cooking"
+    },
+    {
+      "name": "Red Bean Porridge",
+      "bdocodexId": 463,
+      "category": "Cooking"
+    },
+    {
+      "name": "Milk Tea",
+      "bdocodexId": 481,
+      "category": "Cooking"
+    },
+    {
+      "name": "Red Sauce",
+      "bdocodexId": 546,
+      "category": "Cooking"
+    },
+    {
+      "name": "Meat Pie",
+      "bdocodexId": 581,
+      "category": "Cooking"
+    },
+    {
+      "name": "Cheese Pie",
+      "bdocodexId": 587,
+      "category": "Cooking"
+    },
+    {
+      "name": "Omelet",
+      "bdocodexId": 588,
+      "category": "Cooking"
+    },
+    {
+      "name": "Delotia Pudding",
+      "bdocodexId": 590,
+      "category": "Cooking"
+    },
+    {
+      "name": "Birch Plank",
+      "bdocodexId": 591,
+      "category": "Processing"
+    },
+    {
+      "name": "Boiled Bird Eggs",
+      "bdocodexId": 592,
+      "category": "Cooking"
+    },
+    {
+      "name": "Meat Croquette",
+      "bdocodexId": 594,
+      "category": "Cooking"
+    },
+    {
+      "name": "Palm Plank",
+      "bdocodexId": 601,
+      "category": "Processing"
+    },
+    {
+      "name": "Elder Tree Plank",
+      "bdocodexId": 603,
+      "category": "Processing"
+    },
+    {
+      "name": "Meat Stew",
+      "bdocodexId": 605,
+      "category": "Cooking"
+    },
+    {
+      "name": "Meat Soup",
+      "bdocodexId": 627,
+      "category": "Cooking"
+    },
+    {
+      "name": "Lean Meat Salad",
+      "bdocodexId": 628,
+      "category": "Cooking"
+    },
+    {
+      "name": "Grilled Sausage",
+      "bdocodexId": 630,
+      "category": "Cooking"
+    },
+    {
+      "name": "Calpheon Meal",
+      "bdocodexId": 639,
+      "category": "Cooking"
+    },
+    {
+      "name": "Mediah Meal",
+      "bdocodexId": 640,
+      "category": "Cooking"
+    },
+    {
+      "name": "Fancy Reptile Skin",
+      "bdocodexId": 868,
+      "category": "Processing"
+    },
+    {
+      "name": "Freekeh Flour",
+      "bdocodexId": 909,
+      "category": "Processing"
+    },
+    {
+      "name": "Purified Water",
+      "bdocodexId": 1432,
+      "category": "Processing"
+    },
+    {
+      "name": "Thuja Plank",
+      "bdocodexId": 2060,
+      "category": "Processing"
+    },
+    {
+      "name": "Delotia Powder",
+      "bdocodexId": 2410,
+      "category": "Processing"
+    },
+    {
+      "name": "Mythical Powder",
+      "bdocodexId": 2460,
+      "category": "Processing"
+    },
+    {
+      "name": "Old Moon Censer",
+      "bdocodexId": 6351,
+      "category": "Processing"
     }
   ]
 }
