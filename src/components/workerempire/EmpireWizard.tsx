@@ -4,8 +4,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Wand2, Loader2, Send, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { parseNodeInput, nodeLabel } from '@/lib/workerEmpire/nodeLabels';
-import { suggestNearestPlantzones } from '@/lib/workerEmpire/suggestNodes';
-import type { SuggestGraphNode } from '@/lib/workerEmpire/suggestNodes';
+import { estimateBaseCosts, dijkstra } from '@/lib/workerEmpire/bestBase';
+import type { DijkstraNode } from '@/lib/workerEmpire/bestBase';
 import { useThNames } from '@/hooks/useThNames';
 
 // Minimal node shape the wizard needs. WorkerEmpireView's richer GraphNode
@@ -14,6 +14,7 @@ export interface WizardGraphNode {
   waypoint_key: number;
   name: string | null;
   is_base_town: boolean;
+  is_warehouse_town?: boolean;
 }
 
 interface WizardHit {
@@ -30,11 +31,19 @@ interface WizardHit {
 interface Candidate {
   waypointKey: number;
   name: string | null;
-  cpCost: number; // path CP from the base town (Dijkstra, real - not the node's own cost)
+  cpCost: number; // path CP from the WINNING base (Dijkstra, real - not the node's own cost)
   items: Array<{ resource: string; qty: number | null; value: number | null }>;
   totalValue: number; // Σ priced values for the picked resources (this worker kind)
   unpricedCount: number;
   valuePerCp: number | null; // null when cpCost is 0 (free node - shown, not ranked)
+}
+
+interface WonBase {
+  townId: number;
+  name: string | null;
+  exactTotal: number | null; // real solver total, null = solver failed (estimate shown instead)
+  estTotal: number;
+  runnersUp: Array<{ townId: number; name: string | null; estTotal: number }>;
 }
 
 interface EmpireWizardProps {
@@ -43,24 +52,28 @@ interface EmpireWizardProps {
   // Selections become solver pairs (terminal = โหนดเป้าหมาย, root =
   // เมืองฐาน) and solve immediately - one click total.
   onApply: (selections: Array<{ terminalId: number; rootId: number }>) => void;
+  // Exact total-CP probe (WASM solver, sync). Null on solver error.
+  onSolveTotal: (pairArrays: number[][]) => number | null;
 }
 
 const norm = (s: string) => s.trim().toLowerCase();
 const fmt = (n: number | null) =>
   n === null ? '—' : n.toLocaleString('en-US', { maximumFractionDigits: 0 });
 
-export const EmpireWizard: React.FC<EmpireWizardProps> = ({ graph, solving, onApply }) => {
+export const EmpireWizard: React.FC<EmpireWizardProps> = ({ graph, solving, onApply, onSolveTotal }) => {
   const { t } = useThNames();
   const [allResources, setAllResources] = useState<string[]>([]);
   const [query, setQuery] = useState('');
   const [picked, setPicked] = useState<string[]>([]);
-  const [baseText, setBaseText] = useState('');
   const [kind, setKind] = useState<'normal' | 'giant'>('normal');
   const [budget, setBudget] = useState('');
   const [candidates, setCandidates] = useState<Candidate[] | null>(null);
+  const [wonBase, setWonBase] = useState<WonBase | null>(null);
   const [checked, setChecked] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showBaseOverride, setShowBaseOverride] = useState(false);
+  const [overrideBase, setOverrideBase] = useState('');
 
   useEffect(() => {
     fetch('/api/node-resource-names', { cache: 'no-store' })
@@ -86,52 +99,92 @@ export const EmpireWizard: React.FC<EmpireWizardProps> = ({ graph, solving, onAp
     if (!hit || picked.includes(hit)) return;
     setPicked((prev) => [...prev, hit]);
     setCandidates(null);
+    setWonBase(null);
   };
 
   const toggleCheck = (key: number) => {
     setChecked((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
   };
 
-  const runWizard = async () => {
+  const runWizard = async (forcedBaseId?: number) => {
     setError(null);
     setCandidates(null);
-    const baseId = parseNodeInput(baseText, graph);
-    if (baseId === null) {
-      setError('หาเมืองฐานไม่เจอ - เลือกจากรายการ autocomplete');
-      return;
-    }
-    if (!graph[String(baseId)].is_base_town) {
-      setError(`${graph[String(baseId)].name ?? `#${baseId}`} ไม่ใช่ Base Town - เลือก Base Town ที่คุณมีจริง`);
-      return;
-    }
+    setWonBase(null);
     if (picked.length === 0) {
       setError('เลือกของที่อยากได้อย่างน้อย 1 อย่างก่อน');
       return;
     }
     setLoading(true);
     try {
-      // Path CP per node from THIS base (single Dijkstra pass, not per node).
-      const cpMap = new Map<number, number>();
-      for (const s of suggestNearestPlantzones(
-        graph as unknown as Record<string, SuggestGraphNode>,
-        baseId,
-        100000,
-      )) {
-        cpMap.set(s.waypointKey, s.cpCost);
-      }
-      // One lookup per picked resource, merged by node below. Exact-match
-      // only: the API searches ILIKE, so near-misses are dropped here.
-      const byNode = new Map<number, Candidate>();
+      // Candidate node set first (no base needed): one lookup per picked
+      // resource, exact-match only (API searches ILIKE, near-misses die here).
+      const nodeIds = new Set<number>();
+      const hitsByResource = new Map<string, WizardHit[]>();
       for (const resource of picked) {
         const res = await fetch(
           `/api/nodes?resource=${encodeURIComponent(resource)}&kind=${kind}`,
           { cache: 'no-store' },
         );
         const json: { nodes?: WizardHit[] } = await res.json();
-        for (const h of json.nodes ?? []) {
-          if (norm(h.matchedName) !== norm(resource)) continue;
-          const cp = cpMap.get(h.waypointKey);
-          if (cp === undefined) continue; // unreachable from this base
+        const exact = (json.nodes ?? []).filter((h) => norm(h.matchedName) === norm(resource));
+        hitsByResource.set(resource, exact);
+        for (const h of exact) nodeIds.add(h.waypointKey);
+      }
+      if (nodeIds.size === 0) {
+        setError('ไม่พบโหนดที่ขุดของที่เลือก - ลองเปลี่ยนของ');
+        return;
+      }
+      const towns = Object.values(graph)
+        .filter((n) => n.is_base_town)
+        .map((n) => ({ id: n.waypoint_key, name: n.name, isWarehouse: n.is_warehouse_town ?? false }));
+      // Winner: estimate all towns, exact-solve the top 3 with the real
+      // solver, take the minimum. Manual override skips straight to it.
+      let winner: WonBase;
+      if (forcedBaseId !== undefined) {
+        const node = graph[String(forcedBaseId)];
+        winner = {
+          townId: forcedBaseId,
+          name: node?.name ?? null,
+          exactTotal: null,
+          estTotal: 0,
+          runnersUp: [],
+        };
+      } else {
+        const estimates = estimateBaseCosts(
+          graph as unknown as Record<string, DijkstraNode>,
+          Array.from(nodeIds),
+          towns,
+        ).slice(0, 3);
+        if (estimates.length === 0) {
+          setError('หาเมืองฐานที่เชื่อมถึงได้ไม่เจอ');
+          return;
+        }
+        const ids = Array.from(nodeIds);
+        let best: { townId: number; total: number } | null = null;
+        for (const e of estimates) {
+          const total = onSolveTotal(ids.map((id) => [id, e.townId]));
+          if (total !== null && (best === null || total < best.total)) {
+            best = { townId: e.townId, total };
+          }
+        }
+        const win = estimates.find((e) => best !== null && e.townId === best.townId) ?? estimates[0];
+        winner = {
+          townId: win.townId,
+          name: win.name,
+          exactTotal: best !== null && best.townId === win.townId ? best.total : null,
+          estTotal: win.estCp,
+          runnersUp: estimates
+            .filter((e) => e.townId !== win.townId)
+            .map((e) => ({ townId: e.townId, name: e.name, estTotal: e.estCp })),
+        };
+      }
+      // Rank candidates by value/CP from the winning base.
+      const dist = dijkstra(graph as unknown as Record<string, DijkstraNode>, winner.townId);
+      const byNode = new Map<number, Candidate>();
+      for (const [resource, hits] of Array.from(hitsByResource.entries())) {
+        for (const h of hits) {
+          const cp = dist.get(h.waypointKey);
+          if (cp === undefined) continue; // unreachable from the winner
           const qty = kind === 'giant' ? h.giantQty : h.normalQty;
           const value = kind === 'giant' ? h.giantValue : h.normalValue;
           let c = byNode.get(h.waypointKey);
@@ -156,11 +209,9 @@ export const EmpireWizard: React.FC<EmpireWizardProps> = ({ graph, solving, onAp
         ...c,
         valuePerCp: c.cpCost > 0 ? c.totalValue / c.cpCost : null,
       }));
-      // Ranked first, free/unrankable nodes last (never hidden).
       list.sort((a, b) => (b.valuePerCp ?? -1) - (a.valuePerCp ?? -1));
       setCandidates(list);
-      // Pre-check the top 10 by value/CP - the user unchecks what they
-      // don't want before the one-click solve.
+      setWonBase(winner);
       setChecked(list.slice(0, 10).map((c) => c.waypointKey));
     } catch {
       setError('ค้นหาโหนดไม่สำเร็จ - ลองใหม่อีกครั้ง');
@@ -169,7 +220,17 @@ export const EmpireWizard: React.FC<EmpireWizardProps> = ({ graph, solving, onAp
     }
   };
 
-  const baseId = parseNodeInput(baseText, graph);
+  const applyOverride = () => {
+    const id = parseNodeInput(overrideBase, graph);
+    const node = id !== null ? graph[String(id)] : undefined;
+    if (id === null || !node || !node.is_base_town) {
+      setError('เมืองฐานไม่ถูกต้อง - เลือกจากรายการ autocomplete');
+      return;
+    }
+    setShowBaseOverride(false);
+    void runWizard(id);
+  };
+
   const checkedList = (candidates ?? []).filter((c) => checked.includes(c.waypointKey));
   const checkedValue = checkedList.reduce((s, c) => s + c.totalValue, 0);
   const checkedCpUpper = checkedList.reduce((s, c) => s + c.cpCost, 0);
@@ -184,10 +245,10 @@ export const EmpireWizard: React.FC<EmpireWizardProps> = ({ graph, solving, onAp
         ตัวช่วยจัด Empire: อยากได้อะไร → ติ๊กโหนด → คำนวณทีเดียว
       </h3>
 
-      {/* Step 1: resources + base */}
+      {/* Step 1: resources (no base town asked - the system picks it) */}
       <div className="space-y-2">
         <p className="text-[11px] font-mono text-text-muted">
-          ขั้น 1 — ของที่อยากได้ + เมืองฐานของคุณ
+          ขั้น 1 — ของที่อยากได้ (ระบบเลือกเมืองฐานที่ถูกสุดให้เอง)
         </p>
         <datalist id="wizard-resource-options">
           {allResources.map((r) => (
@@ -230,6 +291,7 @@ export const EmpireWizard: React.FC<EmpireWizardProps> = ({ graph, solving, onAp
                   onClick={() => {
                     setPicked((prev) => prev.filter((x) => x !== p));
                     setCandidates(null);
+                    setWonBase(null);
                   }}
                   className="hover:text-white"
                   aria-label={`ลบ ${p}`}
@@ -241,27 +303,12 @@ export const EmpireWizard: React.FC<EmpireWizardProps> = ({ graph, solving, onAp
           </div>
         )}
         <div className="flex items-center gap-2 flex-wrap">
-          <datalist id="wizard-base-options">
-            {baseOptions.map((n) => (
-              <option key={n.waypoint_key} value={nodeLabel(n)} />
-            ))}
-          </datalist>
-          <input
-            type="text"
-            list="wizard-base-options"
-            placeholder="เมืองฐาน เช่น Velia"
-            value={baseText}
-            onChange={(e) => {
-              setBaseText(e.target.value);
-              setCandidates(null);
-            }}
-            className="flex-1 min-w-[140px] bg-bg-surface-2 border border-border-subtle rounded-lg px-3 py-1.5 text-sm text-text-primary"
-          />
           <div className="flex items-center gap-1 text-[11px] font-mono">
             <button
               onClick={() => {
                 setKind('normal');
                 setCandidates(null);
+                setWonBase(null);
               }}
               className={cn(
                 'px-2 py-1.5 rounded-lg border',
@@ -276,6 +323,7 @@ export const EmpireWizard: React.FC<EmpireWizardProps> = ({ graph, solving, onAp
               onClick={() => {
                 setKind('giant');
                 setCandidates(null);
+                setWonBase(null);
               }}
               className={cn(
                 'px-2 py-1.5 rounded-lg border',
@@ -296,15 +344,65 @@ export const EmpireWizard: React.FC<EmpireWizardProps> = ({ graph, solving, onAp
             className="w-36 bg-bg-surface-2 border border-border-subtle rounded-lg px-3 py-1.5 text-sm font-mono text-text-primary"
           />
           <button
-            onClick={runWizard}
+            onClick={() => void runWizard()}
             disabled={loading}
             className="px-3 py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono font-bold hover:bg-emerald-500/30 transition-colors whitespace-nowrap disabled:opacity-50"
           >
-            {loading ? 'กำลังหา...' : 'หาโหนดให้หน่อย'}
+            {loading ? 'กำลังหา...' : 'หาโหนด + เมืองที่คุ้มสุด'}
           </button>
         </div>
         {error && <p className="text-xs text-red-400">{error}</p>}
       </div>
+
+      {/* Winning base */}
+      {wonBase && !loading && (
+        <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-xs space-y-1">
+          <p className="text-emerald-300 font-bold">
+            🏠 เมืองฐานที่คุ้มสุด: {wonBase.name ?? `#${wonBase.townId}`}
+            {wonBase.exactTotal !== null ? (
+              <span className="ml-2 font-mono">รวม {fmt(wonBase.exactTotal)} CP (เลขจริงจาก solver)</span>
+            ) : (
+              <span className="ml-2 font-mono">ประมาณ {fmt(wonBase.estTotal)} CP</span>
+            )}
+          </p>
+          {wonBase.runnersUp.length > 0 && (
+            <p className="text-text-muted font-mono text-[11px]">
+              รองลงมา:{' '}
+              {wonBase.runnersUp.map((r) => `${r.name ?? `#${r.townId}`} ~${fmt(r.estTotal)}`).join(' • ')}
+            </p>
+          )}
+          {!showBaseOverride ? (
+            <button
+              onClick={() => setShowBaseOverride(true)}
+              className="text-[11px] font-mono text-text-muted underline underline-offset-2 hover:text-text-primary"
+            >
+              เปลี่ยนเมืองเอง
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <datalist id="wizard-override-options">
+                {baseOptions.map((n) => (
+                  <option key={n.waypoint_key} value={nodeLabel(n)} />
+                ))}
+              </datalist>
+              <input
+                type="text"
+                list="wizard-override-options"
+                placeholder="พิมพ์ชื่อเมือง หรือ Node ID"
+                value={overrideBase}
+                onChange={(e) => setOverrideBase(e.target.value)}
+                className="flex-1 bg-bg-surface-2 border border-border-subtle rounded-lg px-3 py-1 text-xs text-text-primary"
+              />
+              <button
+                onClick={applyOverride}
+                className="px-2 py-1 rounded-lg bg-bg-surface-3 border border-border-subtle text-[11px] font-mono text-text-primary"
+              >
+                ใช้เมืองนี้
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Step 2: candidates */}
       {loading && (
@@ -319,9 +417,7 @@ export const EmpireWizard: React.FC<EmpireWizardProps> = ({ graph, solving, onAp
             ขั้น 2 — ติ๊กโหนดที่เอา (ติ๊กมาให้แล้วตามคุ้มสุด, {kind === 'giant' ? 'เรียงแบบ Giant' : 'เรียงแบบ Normal'})
           </p>
           {candidates.length === 0 ? (
-            <p className="text-xs text-text-muted">
-              ไม่พบโหนดที่ขุดของที่เลือกจากเมืองฐานนี้ — ลองเปลี่ยนเมืองฐานหรือของ
-            </p>
+            <p className="text-xs text-text-muted">ไม่พบโหนดที่ขุดของที่เลือก - ลองเปลี่ยนของ</p>
           ) : (
             candidates.map((c) => {
               const on = checked.includes(c.waypointKey);
@@ -362,7 +458,7 @@ export const EmpireWizard: React.FC<EmpireWizardProps> = ({ graph, solving, onAp
       )}
 
       {/* Step 3: apply + solve */}
-      {candidates !== null && candidates.length > 0 && (
+      {candidates !== null && candidates.length > 0 && wonBase && (
         <div className="space-y-2 border-t border-border-subtle pt-3">
           <div className="flex items-center justify-between text-xs font-mono flex-wrap gap-2">
             <span className="text-text-secondary">
@@ -375,12 +471,12 @@ export const EmpireWizard: React.FC<EmpireWizardProps> = ({ graph, solving, onAp
           </div>
           <button
             onClick={() => {
-              if (baseId === null || checkedList.length === 0) return;
+              if (checkedList.length === 0) return;
               onApply(
-                checkedList.map((c) => ({ terminalId: c.waypointKey, rootId: baseId })),
+                checkedList.map((c) => ({ terminalId: c.waypointKey, rootId: wonBase.townId })),
               );
             }}
-            disabled={solving || checkedList.length === 0 || baseId === null}
+            disabled={solving || checkedList.length === 0}
             className={cn(
               'w-full py-2 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-1.5',
               solving || checkedList.length === 0
@@ -389,7 +485,7 @@ export const EmpireWizard: React.FC<EmpireWizardProps> = ({ graph, solving, onAp
             )}
           >
             <Send className="w-4 h-4" />
-            {solving ? 'กำลังคำนวณ...' : `คำนวณ Empire (${checkedList.length} โหนด → ${baseId !== null ? (graph[String(baseId)]?.name ?? 'เมืองฐาน') : ''})`}
+            {solving ? 'กำลังคำนวณ...' : `คำนวณ Empire (${checkedList.length} โหนด → ${wonBase.name ?? 'เมืองฐาน'})`}
           </button>
         </div>
       )}

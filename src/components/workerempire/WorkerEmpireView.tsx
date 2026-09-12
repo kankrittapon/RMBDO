@@ -7,6 +7,7 @@ import { WorkerMapCanvas } from './WorkerMapCanvas';
 import { NodeYieldsDrawer } from './NodeYieldsDrawer';
 import { EmpireWizard } from './EmpireWizard';
 import { parseNodeInput, nodeLabel } from '@/lib/workerEmpire/nodeLabels';
+import { estimateBaseCosts } from '@/lib/workerEmpire/bestBase';
 import { useThNames } from '@/hooks/useThNames';
 import { suggestNearestPlantzones, type NodeSuggestion } from '@/lib/workerEmpire/suggestNodes';
 
@@ -111,7 +112,6 @@ export const WorkerEmpireView: React.FC = () => {
   // on the map distinctly from the green optimal-path result.
   const [highlightIds, setHighlightIds] = useState<number[] | null>(null);
   const [focusNonce, setFocusNonce] = useState(0);
-  const [alchemyBase, setAlchemyBase] = useState('');
   const [alchemyError, setAlchemyError] = useState<string | null>(null);
 
   // Curated 2026-09-12 from live node_resources × market_items analysis
@@ -123,25 +123,40 @@ export const WorkerEmpireView: React.FC = () => {
   const runAlchemyPreset = () => {
     if (!graph) return;
     setAlchemyError(null);
-    const baseId = parseNodeInput(alchemyBase, graph);
-    if (baseId === null) {
-      setAlchemyError('หาเมืองฐานไม่เจอ - เลือกจากรายการ autocomplete');
-      return;
-    }
-    if (!graph[String(baseId)].is_base_town) {
-      setAlchemyError('เลือก Base Town ที่คุณมีจริง');
-      return;
-    }
+    // Auto-pick the cheapest base: estimate all towns, exact-solve the
+    // top 3 with the real solver, take the minimum. No base input - the
+    // user should never have to guess which town is best.
+    const towns = Object.values(graph)
+      .filter((n) => n.is_base_town)
+      .map((n) => ({ id: n.waypoint_key, name: n.name, isWarehouse: n.is_warehouse_town }));
     const targets = ALCHEMY_SAPS.filter((id) => graph[String(id)]);
+    const estimates = estimateBaseCosts(graph, targets, towns).slice(0, 3);
+    let best: { townId: number; total: number } | null = null;
+    for (const e of estimates) {
+      const total = solveTotal(targets.map((id) => [id, e.townId]));
+      if (total !== null && (best === null || total < best.total)) {
+        best = { townId: e.townId, total };
+      }
+    }
+    const winner =
+      best !== null
+        ? best.townId
+        : estimates.length > 0
+          ? estimates[0].townId
+          : null;
+    if (winner === null) {
+      setAlchemyError('หาเมืองฐานที่เชื่อมถึงได้ไม่เจอ');
+      return;
+    }
     const next: TerminalRootPair[] = targets.map((id) => ({
       id: crypto.randomUUID(),
       terminalText: nodeLabel(graph[String(id)]),
-      rootText: nodeLabel(graph[String(baseId)]),
+      rootText: nodeLabel(graph[String(winner)]),
     }));
     setPairs(next);
     setActivePairId(next.length > 0 ? next[0].id : null);
     setHighlightIds(targets);
-    runSolver(targets.map((id) => [id, baseId]));
+    runSolver(targets.map((id) => [id, winner]));
   };
 
   // Which pair + which side (terminal/root) a map click writes into. Clicking
@@ -309,6 +324,18 @@ export const WorkerEmpireView: React.FC = () => {
     }
   };
 
+  // Exact total-CP probe for a set of pairs (WASM, sync). Returns null on
+  // solver error - callers fall back to Dijkstra estimates.
+  const solveTotal = (pairArrays: number[][]): number | null => {
+    if (!router || pairArrays.length === 0) return null;
+    try {
+      const [, totalCp] = router.solveForTerminalPairs(pairArrays);
+      return totalCp as number;
+    } catch {
+      return null;
+    }
+  };
+
   // Wizard handoff: selections become visible pairs (terminal = โหนด
   // เป้าหมาย, root = เมืองฐาน) AND solve immediately - one click total.
   const applyWizardPairs = (selections: Array<{ terminalId: number; rootId: number }>) => {
@@ -438,7 +465,7 @@ export const WorkerEmpireView: React.FC = () => {
           </div>
 
           {mode === 'wizard' && (
-            <EmpireWizard graph={graph} solving={solving} onApply={applyWizardPairs} />
+            <EmpireWizard graph={graph} solving={solving} onApply={applyWizardPairs} onSolveTotal={solveTotal} />
           )}
 
           <div className="bg-bg-surface-1 border border-border-subtle rounded-xl p-4 space-y-3">
@@ -448,23 +475,15 @@ export const WorkerEmpireView: React.FC = () => {
             </h3>
             <p className="text-[11px] text-text-secondary">
               Birch #1904, Thuja #2117, White Cedar #1906, Maple #1891, Pine #910, Ash #160,
-              Snowfield Cedar #1771 — กดครั้งเดียวต่อเข้าเมืองฐานแล้วคำนวณทาง CP ถูกสุด
+              Snowfield Cedar #1771 — กดครั้งเดียว ระบบเลือกเมืองฐานที่ถูกสุดให้เองแล้วคำนวณทาง CP ถูกสุด
             </p>
             <div className="flex items-center gap-2">
-              <input
-                type="text"
-                list="worker-empire-node-options"
-                placeholder="เมืองฐาน เช่น Velia"
-                value={alchemyBase}
-                onChange={(e) => setAlchemyBase(e.target.value)}
-                className="flex-1 bg-bg-surface-2 border border-border-subtle rounded-lg px-3 py-1.5 text-sm text-text-primary"
-              />
               <button
                 onClick={runAlchemyPreset}
                 disabled={solving}
                 className="px-3 py-1.5 rounded-lg bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-mono font-bold hover:bg-red-500/30 transition-colors whitespace-nowrap disabled:opacity-50"
               >
-                {solving ? 'กำลังคำนวณ...' : 'ปักจุดแดง + คำนวณ'}
+                {solving ? 'กำลังคำนวณ...' : 'หาเมืองถูกสุด + ปักจุดแดง + คำนวณ'}
               </button>
               <button
                 onClick={() => setFocusNonce((n) => n + 1)}
