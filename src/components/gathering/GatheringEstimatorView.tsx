@@ -170,7 +170,10 @@ export const GatheringEstimatorView: React.FC = () => {
           {gatheringRoutes.map((r) => (
             <button
               key={r.id}
-              onClick={() => set('routeId', r.id)}
+              onClick={() => {
+                set('routeId', r.id);
+                set('yieldMult', String(r.defaultYieldMult ?? 1));
+              }}
               className={cn(
                 'px-3 py-1.5 rounded-lg text-xs font-mono border font-bold',
                 route.id === r.id

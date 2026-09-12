@@ -20,6 +20,9 @@ export interface GatheringRoute {
   baseYieldPerAction: number;
   baseYieldSource: string;
   energyCostPerAction: number;
+  // Route-specific calibrated multiplier default (see scorpion route).
+  // Absent = 1.
+  defaultYieldMult?: number;
   // Rare proc names for price lookup + expected-count display. Per-item
   // drop SHARES are not published anywhere trustworthy, so the estimator
   // shows total expected rare procs (count) and lets each rare be priced
@@ -63,20 +66,27 @@ export const gatheringRoutes: GatheringRoute[] = [
   {
     id: "scorpion-valencia",
     name: "Scorpion Meat",
-    spot: "TBD - ยังไม่เจอลูป (Valencia desert scorpions, Pilgrim's Haven area candidate)",
+    spot: "TBD - mixed Scorpion + Snake loop (spot unconfirmed, user session 2026-09-12)",
     tool: "Butcher knife",
     baseYieldPerAction: 4.2,
-    baseYieldSource: "meat-model default, UNCONFIRMED for scorpions - tune after finding the loop",
+    baseYieldSource: "meat-model default; calibrated with yieldMult 1.15 below",
     energyCostPerAction: 1,
+    // Calibrated so the estimator reproduces the user's measured session:
+    // 293 energy / 28 min -> ~5,290 base vs 6,100 actual => mult ~1.15
+    // (hedgehogs + spot density). Stated openly, not hidden.
+    defaultYieldMult: 1.15,
     rares: [
-      { name: "Scorpion Blood", note: "expected rare (verify in-game)" },
+      { name: "Sharp Black Crystal Shard", note: "user session: 86/hr" },
+      { name: "Black Gem Fragment", note: "user session: 309/hr" },
+      { name: "Faint Wildsoul", note: "user session: 49/hr" },
+      { name: "Fairy Powder", note: "user session: 561/hr, NO live price in DB" },
     ],
     benchmark: {
-      mastery: 0,
-      meatPerHour: 0,
-      totalSilverPerHour: [0, 0],
+      mastery: 1800,
+      meatPerHour: 13071,
+      totalSilverPerHour: [1.9e9, 1.9e9],
       agris: false,
-      source: "NONE YET - no community benchmark found; meat price 93,500 is the only hard number (thin market, stock 0 at check)",
+      source: "user session 2026-09-12: 28 min, mastery 1600-2000 (uncertain, midpoint 1800 used), energy 293, no Agris; scorpion 4,286/hr + snake 8,786/hr; excludes Fairy Powder (unpriced); scorpion price thin (stock 0)",
     },
   },
 ];
