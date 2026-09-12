@@ -23,6 +23,7 @@
     "collect:th-names": "npm run collect:th-names -w collector",
     "collect:th-names-bdolytics": "npm run collect:th-names-bdolytics -w collector",
     "collect:th-names-lists": "npm run collect:th-names-lists -w collector",
+    "collect:gathering-brackets": "npm run collect:gathering-brackets -w collector",
     "th-names-items": "node --env-file=.env scripts/th-names-items.mjs",
     "bdocodex-find": "node --env-file=.env scripts/bdocodex-find.mjs",
     "collect:all": "npm run collect:all -w collector",

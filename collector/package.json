@@ -15,6 +15,7 @@
     "collect:th-names": "tsx src/scrapers/bdocodexRecipe.ts item",
     "collect:th-names-bdolytics": "tsx src/scrapers/thNamesBatch.ts",
     "collect:th-names-lists": "tsx src/scrapers/thNamesLists.ts",
+    "collect:gathering-brackets": "tsx src/scrapers/gatheringBrackets.ts",
     "collect:daily": "npm run collect:market && npm run collect:crafting",
     "collect:all": "npm run collect:fishing && npm run collect:grindspots && npm run collect:market && npm run collect:crafting"
   },

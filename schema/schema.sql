@@ -458,6 +458,26 @@ CREATE TABLE item_name_translations (
 CREATE INDEX idx_item_name_translations_th ON item_name_translations(th_name);
 
 -- ---------------------------------------------------------
+-- Gathering mastery brackets (2026-09-11). Static game math, scraped once
+-- from bdocodex.com/us/gatheringmastery/. Keep in sync with
+-- schema/migrations/004_gathering_brackets.sql.
+-- ---------------------------------------------------------
+
+CREATE TABLE gathering_mastery_brackets (
+    mastery             INT PRIMARY KEY,
+    common_chance       NUMERIC NOT NULL,
+    common_amount       NUMERIC NOT NULL,
+    special_chance      NUMERIC NOT NULL,
+    special_amount      NUMERIC NOT NULL,
+    rare_chance         NUMERIC NOT NULL,
+    rare_amount         NUMERIC NOT NULL,
+    very_rare_chance    NUMERIC NOT NULL,
+    very_rare_amount    NUMERIC NOT NULL,
+    source              TEXT NOT NULL DEFAULT 'bdocodex-gatheringmastery',
+    collected_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- ---------------------------------------------------------
 -- Indexes
 -- ---------------------------------------------------------
 
