@@ -71,13 +71,16 @@ export const GatheringEstimatorView: React.FC = () => {
   const route = gatheringRoutes.find((r) => r.id === inputs.routeId) ?? gatheringRoutes[0];
 
   // Live prices: route meat + each rare (display only, editable override).
+  // Re-fetches when the route changes; meat price key follows the route.
+  const meatName = route.id === 'scorpion-valencia' ? 'Scorpion Meat' : 'Deer Meat';
   useEffect(() => {
     let cancelled = false;
-    fetch(`/api/market-items?q=${encodeURIComponent('Deer Meat')}`, { cache: 'no-store' })
+    setLivePrice(null);
+    fetch(`/api/market-items?q=${encodeURIComponent(meatName)}`, { cache: 'no-store' })
       .then((res) => res.json())
       .then((data: { items?: Array<{ itemName: string; price: number | null }> }) => {
         if (cancelled) return;
-        const hit = (data.items ?? []).find((i) => i.itemName.toLowerCase() === 'deer meat');
+        const hit = (data.items ?? []).find((i) => i.itemName.toLowerCase() === meatName.toLowerCase());
         if (hit?.price !== null && hit?.price !== undefined) setLivePrice(Number(hit.price));
       })
       .catch(() => {});
@@ -103,7 +106,7 @@ export const GatheringEstimatorView: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [route]);
+  }, [route, meatName]);
 
   const set = (key: keyof EstInputs, value: string | boolean) =>
     setInputs((prev) => ({ ...prev, [key]: value }));
@@ -163,6 +166,22 @@ export const GatheringEstimatorView: React.FC = () => {
       </div>
 
       <div className="bg-bg-surface-1 border border-border-subtle rounded-xl p-4 space-y-3">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {gatheringRoutes.map((r) => (
+            <button
+              key={r.id}
+              onClick={() => set('routeId', r.id)}
+              className={cn(
+                'px-3 py-1.5 rounded-lg text-xs font-mono border font-bold',
+                route.id === r.id
+                  ? 'bg-brand-primary/15 border-brand-primary/40 text-text-primary'
+                  : 'bg-bg-surface-3 border-border-subtle text-text-muted hover:text-text-primary',
+              )}
+            >
+              {r.name}
+            </button>
+          ))}
+        </div>
         <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider">
           {route.name} @ {route.spot} ({route.tool})
         </h3>
@@ -237,12 +256,20 @@ export const GatheringEstimatorView: React.FC = () => {
 
             <div className="flex items-start gap-2 text-[11px] text-text-muted p-2 rounded-lg bg-bg-surface-2 border border-border-subtle">
               <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              {route.benchmark.meatPerHour > 0 ? (
               <p className="leading-relaxed">
-                เทียบ benchmark: mastery 2500 ไม่ใช้ Agris ชุมชนวัดได้เนื้อ ~20,000/ชม. รวม ~1.2–1.5B/ชม. ({route.benchmark.source})
+                เทียบ benchmark: mastery {route.benchmark.mastery} ไม่ใช้ Agris ชุมชนวัดได้เนื้อ ~{fmt(route.benchmark.meatPerHour)}/ชม. รวม ~{fmt(route.benchmark.totalSilverPerHour[0])}–{fmt(route.benchmark.totalSilverPerHour[1])}/ชม. ({route.benchmark.source})
                 — ถ้าเลขข้างบนห่างเยอะ ปรับ Yield multiplier (hedgehog + ความแน่นจุดต่างกัน) อย่าปรับ mastery หนีความจริง.
                 สูตร: actions = min(energy ÷ {route.energyCostPerAction}, pace × 60 × ชม.) → เนื้อ = actions × {route.baseYieldPerAction} × (1 + bracket) × mult{inputs.agris ? ' × 1.1 (Agris)' : ''}.
                 Rare ไม่ตีเป็นเงินให้เพราะสัดส่วนต่อชิ้นไม่มีแหล่งเชื่อถือได้ — RNG รายชั่วโมงแกว่งได้เสมอ.
               </p>
+              ) : (
+              <p className="leading-relaxed">
+                ยังไม่มี benchmark ชุมชนสำหรับสายนี้ ({route.benchmark.source})
+                — เลขข้างบนมาจากสูตร bracket × ราคา live ล้วนๆ เทียบกับสายกวางแล้วค่อยตัดสินใจ.
+                สูตร: actions = min(energy ÷ {route.energyCostPerAction}, pace × 60 × ชม.) → เนื้อ = actions × {route.baseYieldPerAction} × (1 + bracket) × mult{inputs.agris ? ' × 1.1 (Agris)' : ''}.
+              </p>
+              )}
             </div>
           </>
         )}

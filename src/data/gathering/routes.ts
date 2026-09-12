@@ -60,4 +60,23 @@ export const gatheringRoutes: GatheringRoute[] = [
       source: "PuteraGaming 5-hour test, Asia region, 2025 (RNG-dependent, Arca carry varies)",
     },
   },
+  {
+    id: "scorpion-valencia",
+    name: "Scorpion Meat",
+    spot: "TBD - ยังไม่เจอลูป (Valencia desert scorpions, Pilgrim's Haven area candidate)",
+    tool: "Butcher knife",
+    baseYieldPerAction: 4.2,
+    baseYieldSource: "meat-model default, UNCONFIRMED for scorpions - tune after finding the loop",
+    energyCostPerAction: 1,
+    rares: [
+      { name: "Scorpion Blood", note: "expected rare (verify in-game)" },
+    ],
+    benchmark: {
+      mastery: 0,
+      meatPerHour: 0,
+      totalSilverPerHour: [0, 0],
+      agris: false,
+      source: "NONE YET - no community benchmark found; meat price 93,500 is the only hard number (thin market, stock 0 at check)",
+    },
+  },
 ];

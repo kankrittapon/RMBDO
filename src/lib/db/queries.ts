@@ -270,6 +270,24 @@ async function getLatestPrices(names: string[]): Promise<Map<string, number>> {
   return map
 }
 
+/** Latest live stock per item name (same row as the price above). Stock 0
+ *  means the price is a last-trade print with nothing listed - callers
+ *  must warn, not present it as obtainable. */
+async function getLatestStocks(names: string[]): Promise<Map<string, number>> {
+  const pool = getPool()
+  const map = new Map<string, number>()
+  if (names.length === 0) return map
+  const { rows } = await pool.query(
+    `SELECT DISTINCT ON (item_name) item_name, stock FROM market_items
+     WHERE item_name = ANY($1) ORDER BY item_name, collected_at DESC`,
+    [names],
+  )
+  for (const r of rows) {
+    if (r.stock !== null) map.set(r.item_name, Number(r.stock))
+  }
+  return map
+}
+
 function buildVariant(
   workerKind: "normal" | "giant",
   base: { itemId: number | null; name: string; quantity: number }[],
@@ -477,6 +495,11 @@ export interface BdocodexIngredientRow {
   quantity: number
   isBase: boolean
   iconUrl: string | null
+  // Live Central Market price/stock (latest row by name). May be null
+  // (unlisted) or carry stock 0 (last-trade price, possibly unobtainable) -
+  // callers must surface both states, never treat the price as firm.
+  price: number | null
+  stock: number | null
   // Cross-source sub-recipe link, resolved at READ time (never stored):
   // exact name match (trim + case-insensitive) against recipe outputs in
   // BOTH tables. bdolytics wins ties (full tree + live prices). Near-miss
@@ -534,7 +557,10 @@ export async function getBdocodexDetail(id: number): Promise<{
     [id],
   )
   // Batch-resolve sub-recipes: one query per table, exact lower() match.
+  // Batch-resolve live prices + stock the same way (one query each).
   const names = ing.rows.map((r) => r.ingredient_name as string)
+  const prices = await getLatestPrices(names)
+  const stocks = await getLatestStocks(names)
   const bdolyticsByName = new Map<string, string>()
   const bdocodexByName = new Map<string, number>()
   if (names.length > 0) {
@@ -580,6 +606,8 @@ export async function getBdocodexDetail(id: number): Promise<{
         quantity: Number(r.quantity),
         isBase: r.is_base,
         iconUrl: r.icon_url,
+        price: prices.get(r.ingredient_name as string) ?? null,
+        stock: stocks.get(r.ingredient_name as string) ?? null,
         subRecipe:
           slug !== undefined
             ? ({ source: "bdolytics", slug } as const)

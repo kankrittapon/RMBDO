@@ -162,7 +162,7 @@ export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = nu
   }
   interface BdocodexDetail {
     recipe: BdocodexRecipe;
-    ingredients: Array<{ itemId: number | null; name: string; quantity: number; isBase: boolean; iconUrl: string | null; subRecipe: { source: 'bdolytics'; slug: string } | { source: 'bdocodex'; id: number } | null }>;
+    ingredients: Array<{ itemId: number | null; name: string; quantity: number; isBase: boolean; iconUrl: string | null; price: number | null; stock: number | null; subRecipe: { source: 'bdolytics'; slug: string } | { source: 'bdocodex'; id: number } | null }>;
     source: string;
   }
   const [supp, setSupp] = useState<BdocodexRecipe[]>([]);
@@ -927,8 +927,41 @@ export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = nu
                 <div className="space-y-2">
                   <h3 className="text-xs font-bold text-text-primary">
                     Ingredients — Shortage Calculator
-                    <span className="ml-2 font-normal text-text-muted">(ราคา: ไม่มี — คิดแค่จำนวนขาด)</span>
+                    <span className="ml-2 font-normal text-text-muted">(ต้นทุน live ไม่ใช่กำไร)</span>
                   </h3>
+                  {(() => {
+                    const batch = Math.max(1, batchCount || 1);
+                    let floor: number | null = 0;
+                    let unpriced = 0;
+                    let thin: string[] = [];
+                    for (const ing of suppDetail.ingredients) {
+                      if (ing.price === null) {
+                        floor = null;
+                        unpriced += 1;
+                      } else if (floor !== null) {
+                        floor += ing.price * ing.quantity * batch;
+                      }
+                      if (ing.price !== null && (ing.stock === null || ing.stock === 0)) {
+                        thin.push(ing.name);
+                      }
+                    }
+                    return (
+                      <div className="p-2.5 rounded-lg bg-bg-surface-2 border border-border-subtle text-xs font-mono space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-text-muted">ต้นทุนวัตถุดิบ x{batch} (live floor)</span>
+                          <span className="font-bold text-amber-300">
+                            {floor === null ? `ไม่ครบ (${unpriced} อย่างไม่มีราคา)` : fmtSilver(floor)}
+                          </span>
+                        </div>
+                        {thin.length > 0 && (
+                          <p className="text-[11px] text-red-300">
+                            ⚠ ตลาดบาง/ไม่มีของ: {thin.join(', ')} — ราคาเป็น last-trade อาจซื้อจริงไม่ได้
+                          </p>
+                        )}
+                        <p className="text-[10px] text-text-muted">ไม่รวมภาษี/โบนัส — ไม่ใช่ Silver/Hour</p>
+                      </div>
+                    );
+                  })()}
                   <div className="space-y-1.5">
                     {suppDetail.ingredients.map((ing, idx) => (
                       <IngredientTreeNode
@@ -936,8 +969,8 @@ export const LifeSkillHubView: React.FC<LifeSkillHubViewProps> = ({ session = nu
                         ingredient={{
                           name: ing.name,
                           quantity: ing.quantity,
-                          unitPrice: null,
-                          totalCost: null,
+                          unitPrice: ing.price,
+                          totalCost: ing.price !== null ? ing.price * ing.quantity : null,
                           isSubRecipe: ing.subRecipe !== null,
                           subRecipeSlug: null,
                           subRecipe: ing.subRecipe ?? undefined,
