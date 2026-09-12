@@ -42,6 +42,11 @@ interface WorkerMapCanvasProps {
   // terminal/root pair-picking flow (click still fills pairs; the hover
   // name chip is the popover entry point).
   onInspectNode?: (id: number) => void;
+  // Red-dot layer (e.g. the alchemy preset targets) - drawn UNDER result
+  // green but ABOVE plain nodes, so green optimal-path stays on top.
+  highlightNodeIds?: number[] | null;
+  // Zoom-to-fit signal: parent bumps nonce to re-fit these ids.
+  focusSignal?: { ids: number[]; nonce: number } | null;
 }
 
 function toPixel(node: MapGraphNode): { x: number; y: number } | null {
@@ -58,6 +63,8 @@ export const WorkerMapCanvas: React.FC<WorkerMapCanvasProps> = ({
   resultNodeIds,
   onPickNode,
   onInspectNode,
+  highlightNodeIds = null,
+  focusSignal = null,
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [viewBox, setViewBox] = useState({ x: 0, y: 0, w: MAP_WIDTH, h: MAP_HEIGHT });
@@ -73,6 +80,34 @@ export const WorkerMapCanvas: React.FC<WorkerMapCanvasProps> = ({
   }, [graph]);
 
   const resultSet = useMemo(() => (resultNodeIds ? new Set(resultNodeIds) : null), [resultNodeIds]);
+  const highlightSet = useMemo(
+    () => (highlightNodeIds ? new Set(highlightNodeIds) : null),
+    [highlightNodeIds],
+  );
+
+  // Zoom-to-fit on focusSignal.nonce bumps (parent's "zoom to red dots"
+  // button). Fits the signal ids with padding; ids off this map render
+  // (LoML-era nodes) are skipped - they still appear in the side list.
+  useEffect(() => {
+    if (!focusSignal || focusSignal.ids.length === 0) return;
+    const pts = focusSignal.ids
+      .map((id) => graph[String(id)])
+      .filter((n) => n)
+      .map((n) => toPixel(n))
+      .filter((p): p is { x: number; y: number } => p !== null);
+    if (pts.length === 0) return;
+    const xs = pts.map((p) => p.x);
+    const ys = pts.map((p) => p.y);
+    const padX = MAP_WIDTH * 0.08;
+    const padY = MAP_HEIGHT * 0.08;
+    const x0 = Math.max(0, Math.min(...xs) - padX);
+    const x1 = Math.min(MAP_WIDTH, Math.max(...xs) + padX);
+    const y0 = Math.max(0, Math.min(...ys) - padY);
+    const y1 = Math.min(MAP_HEIGHT, Math.max(...ys) + padY);
+    const w = Math.max(x1 - x0, MAP_WIDTH / 20);
+    setViewBox(clampViewBox({ x: x0, y: y0, w, h: w * (MAP_HEIGHT / MAP_WIDTH) }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusSignal?.nonce]);
 
   const edges = useMemo(() => {
     if (!resultSet) return [];
@@ -203,6 +238,7 @@ export const WorkerMapCanvas: React.FC<WorkerMapCanvasProps> = ({
           const isTerminal = node.waypoint_key === terminalId;
           const isRoot = node.waypoint_key === rootId;
           const isActivated = resultSet?.has(node.waypoint_key) ?? false;
+          const isHighlight = highlightSet?.has(node.waypoint_key) ?? false;
           const isHover = hoverId === node.waypoint_key;
 
           let fill = 'rgba(103,232,249,0.55)'; // plain node - cyan
@@ -213,6 +249,12 @@ export const WorkerMapCanvas: React.FC<WorkerMapCanvasProps> = ({
           } else if (node.is_town) {
             fill = '#60a5fa';
             r = markerRadius;
+          }
+          // Red-dot layer UNDER result green: a node on the optimal path
+          // stays green even when also highlighted.
+          if (isHighlight) {
+            fill = '#ef4444';
+            r = Math.max(r, markerRadius * 1.1);
           }
           if (isActivated) {
             fill = '#34d399';
@@ -270,6 +312,7 @@ export const WorkerMapCanvas: React.FC<WorkerMapCanvasProps> = ({
         <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-violet-400 inline-block" /> Root</div>
         <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-400 inline-block" /> Base Town</div>
         <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" /> เปิดแล้ว (ผลลัพธ์)</div>
+        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500 inline-block" /> เป้าหมาย (preset)</div>
       </div>
     </div>
   );

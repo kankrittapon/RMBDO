@@ -107,6 +107,42 @@ export const WorkerEmpireView: React.FC = () => {
   // Wizard (guided: อยากได้อะไร → ติ๊กโหนด → คำนวณทีเดียว) is the default;
   // manual pair entry stays for power users.
   const [mode, setMode] = useState<'wizard' | 'manual'>('wizard');
+  // Red-dot layer: curated alchemy sap targets (see ALCHEMY_SAPS). Drawn
+  // on the map distinctly from the green optimal-path result.
+  const [highlightIds, setHighlightIds] = useState<number[] | null>(null);
+  const [focusNonce, setFocusNonce] = useState(0);
+  const [alchemyBase, setAlchemyBase] = useState('');
+  const [alchemyError, setAlchemyError] = useState<string | null>(null);
+
+  // Curated 2026-09-12 from live node_resources × market_items analysis
+  // (Birch #1904 best value/CP, Thuja #2117, White Cedar #1906, Maple
+  // #1891, Pine #910, Ash #160, Snowfield Cedar #1771). Fir Sap skipped
+  // (6x cheaper - buy it). Revisit if market moves.
+  const ALCHEMY_SAPS = [1904, 2117, 1906, 1891, 910, 160, 1771];
+
+  const runAlchemyPreset = () => {
+    if (!graph) return;
+    setAlchemyError(null);
+    const baseId = parseNodeInput(alchemyBase, graph);
+    if (baseId === null) {
+      setAlchemyError('หาเมืองฐานไม่เจอ - เลือกจากรายการ autocomplete');
+      return;
+    }
+    if (!graph[String(baseId)].is_base_town) {
+      setAlchemyError('เลือก Base Town ที่คุณมีจริง');
+      return;
+    }
+    const targets = ALCHEMY_SAPS.filter((id) => graph[String(id)]);
+    const next: TerminalRootPair[] = targets.map((id) => ({
+      id: crypto.randomUUID(),
+      terminalText: nodeLabel(graph[String(id)]),
+      rootText: nodeLabel(graph[String(baseId)]),
+    }));
+    setPairs(next);
+    setActivePairId(next.length > 0 ? next[0].id : null);
+    setHighlightIds(targets);
+    runSolver(targets.map((id) => [id, baseId]));
+  };
 
   // Which pair + which side (terminal/root) a map click writes into. Clicking
   // the map is just an alternate way of filling in the same `pairs` state
@@ -406,6 +442,72 @@ export const WorkerEmpireView: React.FC = () => {
           )}
 
           <div className="bg-bg-surface-1 border border-border-subtle rounded-xl p-4 space-y-3">
+            <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" />
+              สายแปรธาตุ: ยางไม้ 7 ชนิด (จุดแดง)
+            </h3>
+            <p className="text-[11px] text-text-secondary">
+              Birch #1904, Thuja #2117, White Cedar #1906, Maple #1891, Pine #910, Ash #160,
+              Snowfield Cedar #1771 — กดครั้งเดียวต่อเข้าเมืองฐานแล้วคำนวณทาง CP ถูกสุด
+            </p>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                list="worker-empire-node-options"
+                placeholder="เมืองฐาน เช่น Velia"
+                value={alchemyBase}
+                onChange={(e) => setAlchemyBase(e.target.value)}
+                className="flex-1 bg-bg-surface-2 border border-border-subtle rounded-lg px-3 py-1.5 text-sm text-text-primary"
+              />
+              <button
+                onClick={runAlchemyPreset}
+                disabled={solving}
+                className="px-3 py-1.5 rounded-lg bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-mono font-bold hover:bg-red-500/30 transition-colors whitespace-nowrap disabled:opacity-50"
+              >
+                {solving ? 'กำลังคำนวณ...' : 'ปักจุดแดง + คำนวณ'}
+              </button>
+              <button
+                onClick={() => setFocusNonce((n) => n + 1)}
+                disabled={!highlightIds || highlightIds.length === 0}
+                title="ซูมแผนที่ไปหาจุดแดง"
+                className="px-3 py-1.5 rounded-lg bg-bg-surface-3 border border-border-subtle text-xs font-mono text-text-primary hover:bg-bg-surface-2 whitespace-nowrap disabled:opacity-50"
+              >
+                ซูมไปหาจุดแดง
+              </button>
+            </div>
+            {alchemyError && <p className="text-xs text-red-400">{alchemyError}</p>}
+            {highlightIds && highlightIds.length > 0 && graph && (
+              <div className="space-y-1.5">
+                {highlightIds.map((id) => {
+                  const n = graph[String(id)];
+                  if (!n) return null;
+                  return (
+                    <div
+                      key={id}
+                      onClick={() => setDrawerNodeId(id)}
+                      className="flex items-center justify-between p-2 rounded-lg bg-bg-surface-2 border border-border-subtle text-xs cursor-pointer hover:border-red-500/40"
+                      title="แตะเพื่อดูพิกัด + ของที่ขุดได้"
+                    >
+                      <div className="min-w-0">
+                        <span className="w-2 h-2 rounded-full bg-red-500 inline-block mr-1.5" />
+                        <span className="font-bold text-text-primary">{n.name ?? `#${id}`}</span>
+                        <span className="ml-2 text-text-muted font-mono text-[11px]">
+                          #{id} • X {Math.round(n.position.x).toLocaleString()} / Z{' '}
+                          {Math.round(n.position.z).toLocaleString()}
+                        </span>
+                      </div>
+                      <span className="text-text-muted font-mono shrink-0">{n.need_exploration_point} CP</span>
+                    </div>
+                  );
+                })}
+                <p className="text-[10px] text-text-muted">
+                  แตะแถวเพื่อดูพิกัด + ของที่ขุดได้ + ราคา • โหนดนอกภาพแผนที่ (โซนใหม่) มีแค่ในลิสต์นี้
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-bg-surface-1 border border-border-subtle rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider flex items-center gap-1.5">
                 <MapPin className="w-3.5 h-3.5" />
@@ -447,6 +549,8 @@ export const WorkerEmpireView: React.FC = () => {
               resultNodeIds={result?.nodeIds ?? null}
               onPickNode={handleMapPickNode}
               onInspectNode={(id) => setDrawerNodeId(id)}
+              highlightNodeIds={highlightIds}
+              focusSignal={highlightIds ? { ids: highlightIds, nonce: focusNonce } : null}
             />
             <p className="text-[10px] text-text-muted">
               ลาก = แพน, scroll = ซูม • Node ที่ไม่ขึ้นบนแผนที่ (โซนใหม่ เช่น Land of the Morning
