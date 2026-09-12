@@ -16,7 +16,8 @@ import {
   Coins,
   ChefHat,
   Target,
-  Network
+  Network,
+  Shovel
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -37,7 +38,8 @@ export type NavTabId =
   | 'crafting'
   | 'classes'
   | 'lifeskills'
-  | 'worker_empire';
+  | 'worker_empire'
+  | 'gathering';
 
 interface NavigationSidebarProps {
   activeTab: NavTabId;
@@ -102,6 +104,7 @@ const navSections: NavSection[] = [
       { id: 'classes', label: 'อาชีพ', englishLabel: 'Class Guides', icon: BookOpen },
       { id: 'lifeskills', label: 'สายอาชีพ Life', englishLabel: 'Life Skills', icon: Wheat },
       { id: 'worker_empire', label: 'วางแผน Worker Empire', englishLabel: 'Node Optimizer', icon: Network, badge: 'ใหม่', badgeColor: 'bg-red-500/20 text-red-400 border border-red-500/30' },
+      { id: 'gathering', label: 'ประมาณรวบรวม', englishLabel: 'Gathering Estimator', icon: Shovel, badge: 'ใหม่', badgeColor: 'bg-red-500/20 text-red-400 border border-red-500/30' },
       { id: 'spots', label: 'จุดฟาร์ม', englishLabel: 'Grind Spots', icon: MapPin },
       { id: 'treasures', label: 'สมบัติโบราณ', englishLabel: 'Treasures', icon: Sparkles },
     ],

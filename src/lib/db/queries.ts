@@ -420,6 +420,39 @@ export async function getItemNameTranslations(): Promise<Record<string, string>>
   return map
 }
 
+export interface GatheringBracket {
+  mastery: number
+  commonChance: number
+  commonAmount: number
+  specialChance: number
+  specialAmount: number
+  rareChance: number
+  rareAmount: number
+  veryRareChance: number
+  veryRareAmount: number
+}
+
+/** All 61 gathering mastery brackets (0..3000 step 50), ascending. */
+export async function getGatheringBrackets(): Promise<GatheringBracket[]> {
+  const pool = getPool()
+  const { rows } = await pool.query(
+    `SELECT mastery, common_chance, common_amount, special_chance, special_amount,
+            rare_chance, rare_amount, very_rare_chance, very_rare_amount
+     FROM gathering_mastery_brackets ORDER BY mastery ASC`,
+  )
+  return rows.map((r) => ({
+    mastery: r.mastery,
+    commonChance: Number(r.common_chance),
+    commonAmount: Number(r.common_amount),
+    specialChance: Number(r.special_chance),
+    specialAmount: Number(r.special_amount),
+    rareChance: Number(r.rare_chance),
+    rareAmount: Number(r.rare_amount),
+    veryRareChance: Number(r.very_rare_chance),
+    veryRareAmount: Number(r.very_rare_amount),
+  }))
+}
+
 // ---------------------------------------------------------------------------
 // bdocodex supplemental recipes. Separate tables, separate functions -
 // NEVER merged into the bdolytics crafting_recipes queries above. These
